@@ -35,7 +35,7 @@ Examples:
 		UsageFunc: func() {
 			fmt.Fprintf(flag.CommandLine.Output(), "Usage of 'wrench %s':\n", flagSet.Name())
 			flagSet.PrintDefaults()
-			fmt.Println(usage)
+			fmt.Printf("%s", usage)
 		},
 	})
 }
