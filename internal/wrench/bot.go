@@ -24,7 +24,14 @@ func (b *Bot) loadConfig() error {
 	}
 	if b.ConfigFile != "" {
 		_, err := toml.DecodeFile(b.ConfigFile, &b.Config)
+		if errors.Is(err, os.ErrNotExist) {
+			_, err := toml.DecodeFile("../wrench-private/config.toml", &b.Config)
+			return err
+		}
 		return err
+	}
+	if b.Config.LetsEncryptCacheDir == "" {
+		b.Config.LetsEncryptCacheDir = "cache"
 	}
 	return errors.New("expected Config or ConfigFile to be specified")
 }
@@ -37,9 +44,11 @@ func (b *Bot) Start() error {
 	if err := b.loadConfig(); err != nil {
 		return errors.Wrap(err, "loading config")
 	}
-
 	if err := b.discordStart(); err != nil {
 		return errors.Wrap(err, "discord")
+	}
+	if err := b.httpStart(); err != nil {
+		return errors.Wrap(err, "http")
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
@@ -54,6 +63,9 @@ func (b *Bot) Start() error {
 func (b *Bot) Stop() error {
 	if err := b.discordStop(); err != nil {
 		return errors.Wrap(err, "discord")
+	}
+	if err := b.httpStop(); err != nil {
+		return errors.Wrap(err, "http")
 	}
 	return nil
 }
