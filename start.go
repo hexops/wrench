@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hexops/cmder"
+	"github.com/hexops/wrench/internal/wrench"
 )
 
 func init() {
@@ -19,12 +20,15 @@ Examples:
 
 	// Parse flags for our subcommand.
 	flagSet := flag.NewFlagSet("start", flag.ExitOnError)
+	configFile := flagSet.String("config", "config.toml", "Path to TOML configuration file (see config.go)")
 
 	// Handles calls to our subcommand.
 	handler := func(args []string) error {
 		_ = flagSet.Parse(args)
-		fmt.Println("sorry, I can't do anything right now. Maybe some day.")
-		return nil
+		bot := wrench.Bot{
+			ConfigFile: *configFile,
+		}
+		return bot.Start()
 	}
 
 	// Register the command.
