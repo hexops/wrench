@@ -11,8 +11,6 @@ import (
 // commands contains all registered subcommands.
 var commands cmder.Commander
 
-// Our help text for this command.
-// Consult "go help" for inspiration on how to word yours.
 var usageText = `wrench: let's fix this!
 
 Usage:
