@@ -3,9 +3,11 @@ package wrench
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/BurntSushi/toml"
@@ -17,8 +19,9 @@ type Bot struct {
 	ConfigFile string
 	Config     *Config
 
-	store          *Store
-	discordSession *discordgo.Session
+	store             *Store
+	discordSession    *discordgo.Session
+	webHookGitHubSelf sync.Mutex
 }
 
 func (b *Bot) loadConfig() error {
@@ -46,8 +49,25 @@ func (b *Bot) loadConfig() error {
 }
 
 func (b *Bot) logf(format string, v ...any) {
+	b.idLogf("general", format, v...)
+}
+
+func (b *Bot) idLogf(id, format string, v ...any) {
 	log.Printf(format, v...)
-	b.store.Log(context.Background(), "general", fmt.Sprintf(format, v...))
+	b.store.Log(context.Background(), id, fmt.Sprintf(format, v...))
+}
+
+func (b *Bot) idWriter(id string) io.Writer {
+	return writerFunc(func(p []byte) (n int, err error) {
+		b.idLogf(id, "%s", p)
+		return len(p), nil
+	})
+}
+
+type writerFunc func(p []byte) (n int, err error)
+
+func (w writerFunc) Write(p []byte) (n int, err error) {
+	return w(p)
 }
 
 func (b *Bot) Start() error {
@@ -67,10 +87,12 @@ func (b *Bot) Start() error {
 		return errors.Wrap(err, "http")
 	}
 
+	b.discord(":wrench~1: A new day, a new me. Just rebuilt myself!")
+
 	// Wait here until CTRL-C or other term signal is received.
 	b.logf("Running (press CTRL-C to exit.)")
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
 	return errors.Wrap(b.Stop(), "Stop")
