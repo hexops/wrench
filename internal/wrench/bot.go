@@ -87,7 +87,7 @@ func (b *Bot) Start() error {
 		return errors.Wrap(err, "http")
 	}
 
-	b.discord("<:wrench:1013705194736975883> A new day, a new me. Just rebuilt myself!")
+	b.discord("A new day, a new me. Just rebuilt myself!")
 
 	// Wait here until CTRL-C or other term signal is received.
 	b.logf("Running (press CTRL-C to exit.)")
