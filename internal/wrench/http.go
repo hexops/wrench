@@ -103,7 +103,7 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 	defer b.webHookGitHubSelf.Unlock()
 
 	b.idLogf("restart-self", "👀 I see new changes")
-	b.runScript("restart-self", `
+	err = b.runScript("restart-self", `
 #!/usr/bin/env bash
 set -exuo pipefail
 
@@ -114,6 +114,11 @@ git reset --hard origin/main
 go build -o wrench .
 sudo mv wrench /usr/local/bin/wrench
 `)
+	if err != nil {
+		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
+		b.idLogf("restart-self", "build failure!")
+		return nil
+	}
 
 	b.idLogf("restart-self", "build success! restarting..")
 
