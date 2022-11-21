@@ -107,8 +107,10 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 #!/usr/bin/env bash
 set -exuo pipefail
 	
-git clone https://github.com/hexops/wrench
+git clone https://github.com/hexops/wrench || true
 cd wrench/
+git fetch
+git reset --hard origin/main
 go build -o wrench .
 sudo mv wrench /usr/local/bin/wrench
 `)
