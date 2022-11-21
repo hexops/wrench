@@ -3,7 +3,6 @@ package wrench
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -79,9 +78,9 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 		return nil
 	}
 
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := github.ValidatePayload(r, []byte(b.Config.GitHubWebHookSecret))
 	if err != nil {
-		return errors.Wrap(err, "reading body")
+		return errors.Wrap(err, "ValidatePayload")
 	}
 	defer r.Body.Close()
 
