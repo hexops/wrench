@@ -10,6 +10,9 @@ func (b *Bot) discordStart() error {
 		b.logf("discord: disabled (config.DiscordBotToken not configured)")
 		return nil
 	}
+	if b.Config.DiscordGuildID == "" {
+		return errors.New("discord: config.DiscordGuildID not configured but is required if DiscordBotToken present")
+	}
 
 	var err error
 	b.discordSession, err = discordgo.New("Bot " + b.Config.DiscordBotToken)
