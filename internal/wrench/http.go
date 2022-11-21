@@ -106,7 +106,7 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 	b.runScript("restart-self", `
 #!/usr/bin/env bash
 set -exuo pipefail
-	
+
 git clone https://github.com/hexops/wrench || true
 cd wrench/
 git fetch
@@ -120,7 +120,7 @@ sudo mv wrench /usr/local/bin/wrench
 	return b.runScript("restart-self", `
 #!/usr/bin/env bash
 set -exuo pipefail
-	
+
 sudo systemctl restart wrench
 `)
 }
