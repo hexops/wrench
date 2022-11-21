@@ -51,6 +51,12 @@ func (b *Bot) logf(format string, v ...any) {
 }
 
 func (b *Bot) Start() error {
+	var err error
+	b.store, err = OpenStore("wrench.db")
+	if err != nil {
+		return errors.Wrap(err, "OpenStore")
+	}
+
 	if err := b.loadConfig(); err != nil {
 		return errors.Wrap(err, "loading config")
 	}
@@ -59,12 +65,6 @@ func (b *Bot) Start() error {
 	}
 	if err := b.httpStart(); err != nil {
 		return errors.Wrap(err, "http")
-	}
-
-	var err error
-	b.store, err = OpenStore("store.db")
-	if err != nil {
-		return errors.Wrap(err, "OpenStore")
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
