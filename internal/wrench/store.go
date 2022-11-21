@@ -33,7 +33,7 @@ func (s *Store) ensureSchema() error {
 	_, err := s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS logs (
 			logid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-			timestamp INTEGER NOT NULL,
+			timestamp TIMESTAMP NOT NULL,
 			id TEXT NOT NULL,
 			message TEXT NOT NULL
 		);
@@ -58,7 +58,7 @@ type Log struct {
 }
 
 func (s *Store) Logs(ctx context.Context, id string) ([]Log, error) {
-	q := sqlf.Sprintf(`SELECT (timestamp, message) FROM logs WHERE id=%v ORDER BY timestamp`, id)
+	q := sqlf.Sprintf(`SELECT timestamp, message FROM logs WHERE id=%v ORDER BY timestamp`, id)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
