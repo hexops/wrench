@@ -20,11 +20,14 @@ type Config struct {
 	// server and Copy ID)
 	DiscordGuildID string
 
+	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
+	DiscordChannel string
+
 	// (optional) Directory for caching LetsEncrypt certificates
-	LetsEncryptCacheDir string `toml:"omitempty"`
+	LetsEncryptCacheDir string `toml:"LetsEncryptCacheDir,omitempty"`
 
 	// (optional) Email to use for LetsEncrypt notifications
-	LetsEncryptEmail string `toml:"omitempty"`
+	LetsEncryptEmail string `toml:"LetsEncryptEmail,omitempty"`
 
 	// (optional) When specified, this is an arbitrary secret of your choosing which can be used to
 	// send GitHub webhook events from the github.com/hexops/wrench repository itself to Wrench. It
@@ -32,5 +35,5 @@ type Config struct {
 	//
 	// The webhook URL should be: /webhook/github/self
 	//
-	GitHubWebHookSecret string `toml:"omitempty"`
+	GitHubWebHookSecret string `toml:"GitHubWebHookSecret,omitempty"`
 }

@@ -36,6 +36,9 @@ func (b *Bot) loadConfig() error {
 	if b.Config.LetsEncryptCacheDir == "" {
 		b.Config.LetsEncryptCacheDir = "cache"
 	}
+	if b.Config.DiscordChannel == "" {
+		b.Config.DiscordChannel = "wrench"
+	}
 	return nil
 }
 

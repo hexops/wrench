@@ -1,6 +1,8 @@
 package wrench
 
 import (
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/errors"
 )
@@ -70,4 +72,36 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		s.ChannelMessageSend(m.ChannelID, "yes?")
 	}
 	return nil
+}
+
+func (b *Bot) discordSendMessageToChannel(dstChannel string, message string) error {
+	// Get channels for the guild
+	channels, err := b.discordSession.GuildChannels(b.Config.DiscordGuildID)
+	if err != nil {
+		return errors.Wrap(err, "GuildChannels")
+	}
+	for _, c := range channels {
+		// Check if channel is a guild text channel and not a voice or DM channel
+		if c.Type != discordgo.ChannelTypeGuildText {
+			continue
+		}
+		if c.Name != dstChannel {
+			continue
+		}
+		_, err := b.discordSession.ChannelMessageSend(c.ID, message)
+		if err != nil {
+			return errors.Wrap(err, "ChannelMessageSend")
+		}
+	}
+	b.logf("discord: unable to find destination channel: %v", dstChannel)
+	return nil
+}
+
+func (b *Bot) discord(format string, v ...any) {
+	b.logf(format, v...)
+	msg := fmt.Sprintf(format, v...)
+	err := b.discordSendMessageToChannel(b.Config.DiscordChannel, msg)
+	if err != nil {
+		b.logf("discord: failed to send message: %v: '%s'", err, msg)
+	}
 }
