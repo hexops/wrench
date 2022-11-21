@@ -126,7 +126,7 @@ sudo systemctl restart wrench
 }
 
 func (b *Bot) runScript(id string, script string) error {
-	file, err := os.CreateTemp("wrench", "script-"+id)
+	file, err := os.CreateTemp("", "script-"+id)
 	if err != nil {
 		return errors.Wrap(err, "CreateTemp")
 	}
@@ -139,6 +139,7 @@ func (b *Bot) runScript(id string, script string) error {
 
 	w := b.idWriter(id)
 	cmd := exec.Command("/usr/bin/env", "bash", file.Name())
+	cmd.Env = os.Environ()
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
