@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/hexops/wrench/internal/errors"
@@ -34,6 +36,7 @@ func (b *Bot) httpStart() error {
 		w.Write([]byte("Let's fix this!"))
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
+	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
 	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
@@ -95,5 +98,21 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 	}
 
 	b.discord("👀 I see new changes in %s", *e.Repo.Name)
+	return nil
+}
+
+func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
+	_, id := path.Split(r.URL.Path)
+	if id == "" {
+		id = "general"
+	}
+
+	logs, err := b.store.Logs(r.Context(), id)
+	if err != nil {
+		return errors.Wrap(err, "Logs")
+	}
+	for _, log := range logs {
+		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
+	}
 	return nil
 }
