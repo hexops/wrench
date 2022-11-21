@@ -65,9 +65,11 @@ func (b *Bot) httpStart() error {
 		go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
 
 		// Key and cert are provided by LetsEncrypt
-		return server.ListenAndServeTLS("", "")
+		go server.ListenAndServeTLS("", "")
+		return nil
 	}
-	return http.ListenAndServe(b.Config.Address, mux)
+	go http.ListenAndServe(b.Config.Address, mux)
+	return nil
 }
 
 func (b *Bot) httpStop() error {
@@ -143,8 +145,7 @@ func (b *Bot) runScript(id string, script string) error {
 	}
 
 	w := b.idWriter(id)
-	cmd := exec.Command("/usr/bin/env", "bash", file.Name())
-	cmd.Env = os.Environ()
+	cmd := exec.Command("bash", file.Name())
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
