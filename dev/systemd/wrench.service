@@ -1,0 +1,10 @@
+[Unit]
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/env bash /usr/local/bin/wrench-start.sh
+Restart=always
+RestartSec=0
+
+[Install]
+WantedBy=default.target
