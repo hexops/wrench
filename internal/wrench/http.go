@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -92,12 +94,58 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 		return errors.Wrap(err, "parsing webhook")
 	}
 
-	e, ok := event.(*github.PushEvent)
+	_, ok := event.(*github.PushEvent)
 	if !ok {
 		return fmt.Errorf("unexpected event type: %s", github.WebHookType(r))
 	}
 
-	b.discord("👀 I see new changes in %s", *e.Repo.Name)
+	b.webHookGitHubSelf.Lock()
+	defer b.webHookGitHubSelf.Unlock()
+
+	b.idLogf("restart-self", "👀 I see new changes")
+	b.runScript("restart-self", `
+#!/usr/bin/env bash
+set -exuo pipefail
+	
+git clone https://github.com/hexops/wrench
+cd wrench/
+go build -o wrench .
+sudo mv wrench /usr/local/bin/wrench
+`)
+
+	b.idLogf("restart-self", "build success! restarting..")
+
+	return b.runScript("restart-self", `
+	#!/usr/bin/env bash
+	set -exuo pipefail
+		
+	sudo systemctl restart wrench
+	`)
+}
+
+func (b *Bot) runScript(id string, script string) error {
+	file, err := os.CreateTemp("wrench", "script-"+id)
+	if err != nil {
+		return errors.Wrap(err, "CreateTemp")
+	}
+	defer os.Remove(file.Name())
+
+	err = os.WriteFile(file.Name(), []byte(script), 0744)
+	if err != nil {
+		return errors.Wrap(err, "WriteFile")
+	}
+
+	w := b.idWriter(id)
+	cmd := exec.Command("usr/bin/env", "bash", file.Name())
+	cmd.Stderr = w
+	cmd.Stdout = w
+	if err := cmd.Run(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			b.idLogf(id, "process finished: error: exit code: %v", exitError.ExitCode())
+			return nil
+		}
+	}
+	b.idLogf(id, "process finished")
 	return nil
 }
 
