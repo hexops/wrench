@@ -116,11 +116,11 @@ sudo mv wrench /usr/local/bin/wrench
 	b.idLogf("restart-self", "build success! restarting..")
 
 	return b.runScript("restart-self", `
-	#!/usr/bin/env bash
-	set -exuo pipefail
-		
-	sudo systemctl restart wrench
-	`)
+#!/usr/bin/env bash
+set -exuo pipefail
+	
+sudo systemctl restart wrench
+`)
 }
 
 func (b *Bot) runScript(id string, script string) error {
@@ -136,7 +136,7 @@ func (b *Bot) runScript(id string, script string) error {
 	}
 
 	w := b.idWriter(id)
-	cmd := exec.Command("usr/bin/env", "bash", file.Name())
+	cmd := exec.Command("/usr/bin/env", "bash", file.Name())
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
