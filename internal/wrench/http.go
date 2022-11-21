@@ -3,10 +3,13 @@ package wrench
 import (
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/google/go-github/github"
+	"github.com/hexops/wrench/internal/errors"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -16,10 +19,22 @@ func (b *Bot) httpStart() error {
 		return nil
 	}
 
+	handler := func(prefix string, handle func(w http.ResponseWriter, r *http.Request) error) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			err := handle(w, r)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, "error: %s", err.Error())
+				b.logf("http: %s: %v", prefix, err)
+			}
+		})
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Let's fix this!"))
 	})
+	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
 	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
@@ -56,4 +71,30 @@ func (b *Bot) httpStop() error {
 		return nil
 	}
 	return b.discordSession.Close()
+}
+
+func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request) error {
+	if b.Config.GitHubWebHookSecret == "" {
+		b.logf("http: webhook: ignored: /webhook/github/self (config.GitHubWebHookSecret not set)")
+		return nil
+	}
+
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return errors.Wrap(err, "reading body")
+	}
+	defer r.Body.Close()
+
+	event, err := github.ParseWebHook(github.WebHookType(r), payload)
+	if err != nil {
+		return errors.Wrap(err, "parsing webhook")
+	}
+
+	e, ok := event.(*github.PushEvent)
+	if !ok {
+		return fmt.Errorf("unexpected event type: %s", github.WebHookType(r))
+	}
+
+	b.discord("👀 I see new changes in %s", *e.Repo.Name)
+	return nil
 }
