@@ -1,6 +1,8 @@
 package wrench
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,6 +17,7 @@ type Bot struct {
 	ConfigFile string
 	Config     *Config
 
+	store          *Store
 	discordSession *discordgo.Session
 }
 
@@ -44,6 +47,7 @@ func (b *Bot) loadConfig() error {
 
 func (b *Bot) logf(format string, v ...any) {
 	log.Printf(format, v...)
+	b.store.Log(context.Background(), "general", fmt.Sprintf(format, v...))
 }
 
 func (b *Bot) Start() error {
@@ -55,6 +59,12 @@ func (b *Bot) Start() error {
 	}
 	if err := b.httpStart(); err != nil {
 		return errors.Wrap(err, "http")
+	}
+
+	var err error
+	b.store, err = OpenStore("store.db")
+	if err != nil {
+		return errors.Wrap(err, "OpenStore")
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
@@ -72,6 +82,9 @@ func (b *Bot) Stop() error {
 	}
 	if err := b.httpStop(); err != nil {
 		return errors.Wrap(err, "http")
+	}
+	if err := b.store.Close(); err != nil {
+		return errors.Wrap(err, "Store.Close")
 	}
 	return nil
 }
