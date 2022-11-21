@@ -92,6 +92,7 @@ func (b *Bot) discordSendMessageToChannel(dstChannel string, message string) err
 		if err != nil {
 			return errors.Wrap(err, "ChannelMessageSend")
 		}
+		return nil
 	}
 	b.logf("discord: unable to find destination channel: %v", dstChannel)
 	return nil
