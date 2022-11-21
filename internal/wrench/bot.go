@@ -19,21 +19,24 @@ type Bot struct {
 }
 
 func (b *Bot) loadConfig() error {
-	if b.Config != nil {
-		return nil
-	}
-	if b.ConfigFile != "" {
-		_, err := toml.DecodeFile(b.ConfigFile, &b.Config)
-		if errors.Is(err, os.ErrNotExist) {
-			_, err := toml.DecodeFile("../wrench-private/config.toml", &b.Config)
-			return err
+	if b.Config == nil {
+		if b.ConfigFile != "" {
+			_, err := toml.DecodeFile(b.ConfigFile, &b.Config)
+			if errors.Is(err, os.ErrNotExist) {
+				_, err := toml.DecodeFile("../wrench-private/config.toml", &b.Config)
+				return err
+			}
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("expected Config or ConfigFile to be specified")
 		}
-		return err
 	}
 	if b.Config.LetsEncryptCacheDir == "" {
 		b.Config.LetsEncryptCacheDir = "cache"
 	}
-	return errors.New("expected Config or ConfigFile to be specified")
+	return nil
 }
 
 func (b *Bot) logf(format string, v ...any) {

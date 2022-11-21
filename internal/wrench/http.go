@@ -30,8 +30,9 @@ func (b *Bot) httpStart() error {
 		}
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(u.Hostname()),
 			Cache:      autocert.DirCache(b.Config.LetsEncryptCacheDir),
+			Email:      b.Config.LetsEncryptEmail,
+			HostPolicy: autocert.HostWhitelist(u.Hostname()),
 		}
 
 		server := &http.Server{

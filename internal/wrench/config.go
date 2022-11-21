@@ -16,4 +16,7 @@ type Config struct {
 
 	// Directory for caching LetsEncrypt certificates
 	LetsEncryptCacheDir string `toml:"omitempty"`
+
+	// Email to use for LetsEncrypt notifications (optional)
+	LetsEncryptEmail string `toml:"omitempty"`
 }
