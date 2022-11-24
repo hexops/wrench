@@ -76,6 +76,25 @@ func (s *Store) Logs(ctx context.Context, id string) ([]Log, error) {
 	return logs, rows.Err()
 }
 
+func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
+	q := sqlf.Sprintf(`SELECT DISTINCT id FROM logs ORDER BY id`)
+
+	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueryContext")
+	}
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err = rows.Scan(&id); err != nil {
+			return nil, errors.Wrap(err, "Scan")
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func (s *Store) Close() error {
 	return s.db.Close()
 }

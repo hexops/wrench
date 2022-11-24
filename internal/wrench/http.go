@@ -184,7 +184,17 @@ func (b *Bot) runScript(id string, script string) error {
 func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 	_, id := path.Split(r.URL.Path)
 	if id == "" {
-		id = "general"
+		logIDs, err := b.store.LogIDs(r.Context())
+		if err != nil {
+			return errors.Wrap(err, "LogIDs")
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprintf(w, `<ul>`)
+		for _, id := range logIDs {
+			fmt.Fprintf(w, `<li><a href="%s/logs/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
+		}
+		fmt.Fprintf(w, `</ul>`)
+		return nil
 	}
 
 	logs, err := b.store.Logs(r.Context(), id)
