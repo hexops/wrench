@@ -74,6 +74,7 @@ func (w writerFunc) Write(p []byte) (n int, err error) {
 
 func (b *Bot) Start() error {
 	b.discordCommands = make(map[string]func(...string) string)
+	b.discordCommandsEmbed = make(map[string]func(...string) *discordgo.MessageEmbed)
 	var err error
 	b.store, err = OpenStore("wrench.db")
 	if err != nil {
