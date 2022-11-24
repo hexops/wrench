@@ -13,4 +13,11 @@ ssh $remote << EOF
   sudo rm -rf /usr/local/go
   sudo tar -C /usr/local -xzf go1.19.3.linux-amd64.tar.gz
   sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
+
+  sudo swapoff /swapfile || true
+  sudo rm /swapfile || true
+  sudo dd if=/dev/zero of=/swapfile bs=1M count=16384
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
 EOF
