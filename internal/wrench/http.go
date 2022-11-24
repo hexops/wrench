@@ -113,6 +113,10 @@ git clone https://github.com/hexops/wrench || true
 cd wrench/
 git fetch
 git reset --hard origin/main
+echo "go env"
+go env
+echo "env"
+env
 go build -o wrench .
 sudo mv wrench /usr/local/bin/wrench
 `)
