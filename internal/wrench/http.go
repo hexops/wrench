@@ -1,6 +1,7 @@
 package wrench
 
 import (
+	"crypto/subtle"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -16,13 +17,15 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+type handlerFunc func(w http.ResponseWriter, r *http.Request) error
+
 func (b *Bot) httpStart() error {
 	if b.Config.Address == "" {
 		b.logf("http: disabled (Config.Address not configured)")
 		return nil
 	}
 
-	handler := func(prefix string, handle func(w http.ResponseWriter, r *http.Request) error) http.Handler {
+	handler := func(prefix string, handle handlerFunc) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			err := handle(w, r)
 			if err != nil {
@@ -38,6 +41,7 @@ func (b *Bot) httpStart() error {
 		w.Write([]byte("Let's fix this!"))
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
+	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
@@ -101,11 +105,19 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 		return fmt.Errorf("unexpected event type: %s", github.WebHookType(r))
 	}
 
+	return b.runRebuild()
+}
+
+func (b *Bot) httpServeRebuild(w http.ResponseWriter, r *http.Request) error {
+	return b.runRebuild()
+}
+
+func (b *Bot) runRebuild() error {
 	b.webHookGitHubSelf.Lock()
 	defer b.webHookGitHubSelf.Unlock()
 
 	b.idLogf("restart-self", "👀 I see new changes")
-	err = b.runScript("restart-self", `
+	err := b.runScript("restart-self", `
 #!/usr/bin/env bash
 set -exuo pipefail
 
@@ -113,10 +125,6 @@ git clone https://github.com/hexops/wrench || true
 cd wrench/
 git fetch
 git reset --hard origin/main
-echo "go env"
-go env
-echo "env"
-env
 go build -o wrench .
 sudo mv wrench /usr/local/bin/wrench
 `)
@@ -176,4 +184,22 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
 	}
 	return nil
+}
+
+func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		if b.Config.Secret == "" {
+			return errors.New("API not enabled; Config.Secret not configured.")
+		}
+
+		_, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(pass), []byte(b.Config.Secret)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="wrench"`)
+			w.WriteHeader(401)
+			w.Write([]byte("Unauthorised.\n"))
+			return nil
+		}
+
+		return handler(w, r)
+	}
 }

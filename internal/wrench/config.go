@@ -36,4 +36,7 @@ type Config struct {
 	// The webhook URL should be: /webhook/github/self
 	//
 	GitHubWebHookSecret string `toml:"GitHubWebHookSecret,omitempty"`
+
+	// (optional) Generic secret used to authenticate with this server. Any arbitrary string.
+	Secret string `toml:"Secret,omitempty"`
 }
