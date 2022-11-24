@@ -93,7 +93,7 @@ func (b *Bot) Start() error {
 		return fmt.Sprintf("-> %s/logs", b.Config.ExternalURL)
 	}
 	b.discordCommands["version"] = func(args ...string) string {
-		return fmt.Sprintf("version %s built %s with Go %s - https://github.com/hexops/wrench/commit/%s", Version, Date, GoVersion, Version)
+		return fmt.Sprintf("Wrench [version `%s`](https://github.com/hexops/wrench/commit/%s) (built `%s`, `%s`)", Version, Version, Date, GoVersion)
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
