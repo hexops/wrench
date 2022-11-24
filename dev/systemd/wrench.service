@@ -5,6 +5,7 @@ After=network.target
 ExecStart=/usr/bin/env bash /usr/local/bin/wrench-start.sh
 Restart=always
 RestartSec=0
+User=root
 
 [Install]
 WantedBy=default.target
