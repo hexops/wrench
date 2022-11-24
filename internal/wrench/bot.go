@@ -96,6 +96,7 @@ func (b *Bot) Start() error {
 	}
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
+			Title:       "Wrench version",
 			URL:         "https://github.com/hexops/wrench/commit/" + Version,
 			Description: fmt.Sprintf("Wrench version `%s` (built `%s`, `%s`)", Version, Date, GoVersion),
 		}
