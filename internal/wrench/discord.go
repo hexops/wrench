@@ -2,6 +2,7 @@ package wrench
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/errors"
@@ -67,9 +68,16 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 	if m.Author.ID == s.State.User.ID {
 		return nil
 	}
-
-	if m.Content == "wrench?" {
-		s.ChannelMessageSend(m.ChannelID, "yes?")
+	fields := strings.Fields(m.Content)
+	if len(fields) >= 2 && fields[0] == "!wrench" {
+		cmd := fields[1]
+		args := fields[1:]
+		if handler, ok := b.discordCommands[cmd]; ok {
+			response := handler(args...)
+			if response != "" {
+				s.ChannelMessageSend(m.ChannelID, response)
+			}
+		}
 	}
 	return nil
 }

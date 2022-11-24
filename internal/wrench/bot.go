@@ -21,6 +21,7 @@ type Bot struct {
 
 	store             *Store
 	discordSession    *discordgo.Session
+	discordCommands   map[string]func(...string) string
 	webHookGitHubSelf sync.Mutex
 }
 
@@ -71,6 +72,7 @@ func (w writerFunc) Write(p []byte) (n int, err error) {
 }
 
 func (b *Bot) Start() error {
+	b.discordCommands = make(map[string]func(...string) string)
 	var err error
 	b.store, err = OpenStore("wrench.db")
 	if err != nil {
@@ -85,6 +87,13 @@ func (b *Bot) Start() error {
 	}
 	if err := b.httpStart(); err != nil {
 		return errors.Wrap(err, "http")
+	}
+
+	b.discordCommands["logs"] = func(args ...string) string {
+		return fmt.Sprintf("-> %s/logs", b.Config.ExternalURL)
+	}
+	b.discordCommands["version"] = func(args ...string) string {
+		return fmt.Sprintf("version %s built %s with Go %s - https://github.com/hexops/wrench/commit/%s", Version, Date, GoVersion, Version)
 	}
 
 	// Wait here until CTRL-C or other term signal is received.

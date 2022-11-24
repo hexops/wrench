@@ -4,7 +4,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
 
 source ./dev/remote.sh
 
-GOARCH="amd64" GOOS="linux" go build -o bin/wrench .
+DATE=$(date)
+GOVERSION=$(go version)
+VERSION=$(git describe --tags --abbrev=8 --dirty --always --long)
+PREFIX="github.com/hexops/wrench/internal/wrench"
+LDFLAGS="-X '$PREFIX.Version=$VERSION'"
+LDFLAGS="$LDFLAGS -X '$PREFIX.Date=$DATE'"
+LDFLAGS="$LDFLAGS -X '$PREFIX.GoVersion=$GOVERSION'"
+GOARCH="amd64" GOOS="linux" go build -ldflags "$LDFLAGS" -o bin/wrench .
 
 ssh $remote -f 'sudo systemctl stop wrench'
 
