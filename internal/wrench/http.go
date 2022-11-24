@@ -135,7 +135,7 @@ LDFLAGS="$LDFLAGS -X '$PREFIX.Date=$DATE'"
 LDFLAGS="$LDFLAGS -X '$PREFIX.GoVersion=$GOVERSION'"
 GOARCH="amd64" GOOS="linux" go build -ldflags "$LDFLAGS" -o bin/wrench .
 
-sudo mv wrench /usr/local/bin/wrench
+sudo mv bin/wrench /usr/local/bin/wrench
 `)
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
