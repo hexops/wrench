@@ -1,7 +1,7 @@
 package wrench
 
 // Set via -ldflags at `go build` time.
-const (
+var (
 	Version   string = "none"
 	Date      string = "none"
 	GoVersion string = "none"
