@@ -78,6 +78,12 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 				s.ChannelMessageSend(m.ChannelID, response)
 			}
 		}
+		if handler, ok := b.discordCommandsEmbed[cmd]; ok {
+			response := handler(args...)
+			if response != nil {
+				s.ChannelMessageSendEmbed(m.ChannelID, response)
+			}
+		}
 	}
 	return nil
 }

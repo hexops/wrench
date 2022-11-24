@@ -19,10 +19,11 @@ type Bot struct {
 	ConfigFile string
 	Config     *Config
 
-	store             *Store
-	discordSession    *discordgo.Session
-	discordCommands   map[string]func(...string) string
-	webHookGitHubSelf sync.Mutex
+	store                *Store
+	discordSession       *discordgo.Session
+	discordCommands      map[string]func(...string) string
+	discordCommandsEmbed map[string]func(...string) *discordgo.MessageEmbed
+	webHookGitHubSelf    sync.Mutex
 }
 
 func (b *Bot) loadConfig() error {
@@ -92,8 +93,11 @@ func (b *Bot) Start() error {
 	b.discordCommands["logs"] = func(args ...string) string {
 		return fmt.Sprintf("-> %s/logs", b.Config.ExternalURL)
 	}
-	b.discordCommands["version"] = func(args ...string) string {
-		return fmt.Sprintf("Wrench [version `%s`](https://github.com/hexops/wrench/commit/%s) (built `%s`, `%s`)", Version, Version, Date, GoVersion)
+	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
+		return &discordgo.MessageEmbed{
+			URL:         "https://github.com/hexops/wrench/commit/" + Version,
+			Description: fmt.Sprintf("Wrench version `%s` (built `%s`, `%s`)", Version, Date, GoVersion),
+		}
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
