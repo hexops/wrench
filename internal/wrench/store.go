@@ -38,6 +38,14 @@ func (s *Store) ensureSchema() error {
 			message TEXT NOT NULL
 		);
 	`)
+	_, err = s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS runners (
+			id TEXT PRIMARY KEY NOT NULL,
+			arch TEXT NOT NULL,
+			registered_at TIMESTAMP NOT NULL,
+			last_seen_at TIMESTAMP NOT NULL
+		);
+	`)
 	return err
 }
 
@@ -93,6 +101,42 @@ func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+func (s *Store) RunnerSeen(ctx context.Context, id, arch string) error {
+	now := time.Now()
+	q := sqlf.Sprintf(
+		`INSERT OR IGNORE INTO runners(id, arch, registered_at, last_seen_at) VALUES (%v, %v, %v, %v)
+		UPDATE runners SET registered_at = %v, last_seen_at = %v WHERE id=%v`,
+		id, arch, now, now,
+		now, now, id,
+	)
+	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	return err
+}
+
+type Runner struct {
+	ID, Arch                 string
+	RegisteredAt, LastSeenAt time.Time
+}
+
+func (s *Store) Runners(ctx context.Context, id string) ([]Runner, error) {
+	q := sqlf.Sprintf(`SELECT id, arch, registered_at, last_seen_at FROM runners ORDER BY id`)
+
+	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueryContext")
+	}
+
+	var runners []Runner
+	for rows.Next() {
+		var runner Runner
+		if err = rows.Scan(&runner.ID, &runner.Arch, &runner.RegisteredAt, &runner.LastSeenAt); err != nil {
+			return nil, errors.Wrap(err, "Scan")
+		}
+		runners = append(runners, runner)
+	}
+	return runners, rows.Err()
 }
 
 func (s *Store) Close() error {
