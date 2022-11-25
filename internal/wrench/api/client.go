@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -26,7 +27,11 @@ func clientDo[Request comparable, Response comparable](c *Client, ctx context.Co
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.URL+endpoint, nil)
+	jsonBytes, err := json.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", c.URL+endpoint, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		return nil, err
 	}
