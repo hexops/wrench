@@ -1,8 +1,10 @@
 package wrench
 
 import (
+	"context"
 	"crypto/subtle"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/api"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -43,6 +46,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
+	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
 	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
@@ -223,4 +227,31 @@ func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {
 
 		return handler(w, r)
 	}
+}
+
+func botHttpAPI[Request comparable, Response comparable](b *Bot, handler func(context.Context, *Request) (*Response, error)) handlerFunc {
+	return b.httpBasicAuthMiddleware(func(w http.ResponseWriter, r *http.Request) error {
+		if r.Method != "POST" {
+			return errors.New("POST is required for this endpoint")
+		}
+
+		defer r.Body.Close()
+		var req Request
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			return err
+		}
+		resp, err := handler(r.Context(), &req)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(resp)
+	})
+}
+
+func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest) (*api.RunnerPollResponse, error) {
+	err := b.store.RunnerSeen(ctx, r.ID, r.Arch)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerSeen")
+	}
+	return &api.RunnerPollResponse{}, nil
 }
