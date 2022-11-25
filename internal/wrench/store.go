@@ -106,8 +106,8 @@ func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
 func (s *Store) RunnerSeen(ctx context.Context, id, arch string) error {
 	now := time.Now()
 	q := sqlf.Sprintf(
-		`INSERT OR IGNORE INTO runners(id, arch, registered_at, last_seen_at) VALUES (%v, %v, %v, %v)
-		UPDATE runners SET registered_at = %v, last_seen_at = %v WHERE id=%v`,
+		`INSERT INTO runners(id, arch, registered_at, last_seen_at) VALUES (%v, %v, %v, %v)
+		ON CONFLICT(id) DO UPDATE SET registered_at = %v, last_seen_at = %v WHERE id=%v`,
 		id, arch, now, now,
 		now, now, id,
 	)
