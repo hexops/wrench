@@ -39,4 +39,7 @@ type Config struct {
 
 	// (optional) Generic secret used to authenticate with this server. Any arbitrary string.
 	Secret string `toml:"Secret,omitempty"`
+
+	// (optional) Act as a runner, connecting to the root Wrench server specified in ExternalURL.
+	Runner string `toml:"Runner,omitempty"`
 }

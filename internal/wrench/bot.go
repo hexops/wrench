@@ -13,6 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/api"
 )
 
 type Bot struct {
@@ -23,6 +24,7 @@ type Bot struct {
 	discordSession       *discordgo.Session
 	discordCommands      map[string]func(...string) string
 	discordCommandsEmbed map[string]func(...string) *discordgo.MessageEmbed
+	runner               *api.Client
 	webHookGitHubSelf    sync.Mutex
 }
 
@@ -84,13 +86,17 @@ func (b *Bot) Start() error {
 	if err := b.loadConfig(); err != nil {
 		return errors.Wrap(err, "loading config")
 	}
-	if err := b.discordStart(); err != nil {
-		return errors.Wrap(err, "discord")
+	if b.Config.Runner == "" {
+		if err := b.discordStart(); err != nil {
+			return errors.Wrap(err, "discord")
+		}
+		if err := b.httpStart(); err != nil {
+			return errors.Wrap(err, "http")
+		}
+		b.registerCommands()
+	} else {
+		b.runnerStart()
 	}
-	if err := b.httpStart(); err != nil {
-		return errors.Wrap(err, "http")
-	}
-	b.registerCommands()
 
 	// Wait here until CTRL-C or other term signal is received.
 	b.logf("Running (press CTRL-C to exit.)")
