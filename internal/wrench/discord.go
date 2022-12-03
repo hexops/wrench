@@ -16,7 +16,10 @@ func (b *Bot) discordStart() error {
 	if b.Config.DiscordGuildID == "" {
 		return errors.New("discord: config.DiscordGuildID not configured but is required if DiscordBotToken present")
 	}
+	return b.discordConnect()
+}
 
+func (b *Bot) discordConnect() error {
 	var err error
 	b.discordSession, err = discordgo.New("Bot " + b.Config.DiscordBotToken)
 	if err != nil {
@@ -55,9 +58,9 @@ func (b *Bot) discordStop() error {
 
 func (b *Bot) discordOnDisconnect(s *discordgo.Session, d *discordgo.Disconnect) error {
 	b.logf("discord: disconnected, trying to reconnect")
-	err := b.discordSession.Open()
-	if err != nil {
-		return errors.Wrap(err, "Open")
+	_ = b.discordStop()
+	if err := b.discordConnect(); err != nil {
+		return errors.Wrap(err, "connect")
 	}
 	b.logf("discord: reconnected!")
 	return nil
