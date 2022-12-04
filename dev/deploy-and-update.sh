@@ -16,7 +16,7 @@ ssh $remote << EOF
 
   sudo swapoff /swapfile || true
   sudo rm /swapfile || true
-  sudo dd if=/dev/zero of=/swapfile bs=1M count=16384
+  sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
   sudo chmod 600 /swapfile
   sudo mkswap /swapfile
   sudo swapon /swapfile
