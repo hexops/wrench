@@ -46,6 +46,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
+	mux.Handle("/runners", handler("runners", b.httpServeRunners))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
@@ -208,6 +209,50 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 	for _, log := range logs {
 		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
 	}
+	return nil
+}
+
+func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
+	runners, err := b.store.Runners(r.Context())
+	if err != nil {
+		return errors.Wrap(err, "Runners")
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `
+<style>
+table {
+    border: solid 1px #DDEEEE;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+table thead th {
+    border: solid 1px #DDEEEE;
+    background-color: #DDEFEF;
+    padding: 0.75rem;
+    text-align: left;
+}
+table tbody td {
+    border: solid 1px #DDEEEE;
+    padding: 0.75rem;
+}
+</style>`)
+	fmt.Fprintf(w, `<table>`)
+	fmt.Fprintf(w, `<thead><tr>`)
+	fmt.Fprintf(w, `<th>id</th><th>arch</th><th>registered</th><th>last seen</th>`)
+	fmt.Fprintf(w, `</tr></thead>`)
+	fmt.Fprintf(w, `<tbody>`)
+	for _, runner := range runners {
+		fmt.Fprintf(w, `<tr>`)
+		fmt.Fprintf(w, `<td>%s</td><td>%s</td><td>%s</td><td>%s</td>`,
+			runner.ID,
+			runner.Arch,
+			runner.RegisteredAt.UTC().Format(time.RFC3339),
+			runner.LastSeenAt.UTC().Format(time.RFC3339),
+		)
+		fmt.Fprintf(w, `</tr>`)
+	}
+	fmt.Fprintf(w, `</tbody></table>`)
 	return nil
 }
 

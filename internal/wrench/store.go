@@ -120,7 +120,7 @@ type Runner struct {
 	RegisteredAt, LastSeenAt time.Time
 }
 
-func (s *Store) Runners(ctx context.Context, id string) ([]Runner, error) {
+func (s *Store) Runners(ctx context.Context) ([]Runner, error) {
 	q := sqlf.Sprintf(`SELECT id, arch, registered_at, last_seen_at FROM runners ORDER BY id`)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
