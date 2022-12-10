@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -284,13 +285,15 @@ func botHttpAPI[Request any, Response any](b *Bot, handler func(context.Context,
 		defer r.Body.Close()
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			return err
+			if err != io.EOF {
+				return errors.Wrap(err, "Decode")
+			}
 		}
 		resp, err := handler(r.Context(), &req)
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(w).Encode(resp)
+		return errors.Wrap(json.NewEncoder(w).Encode(resp), "Encode")
 	})
 }
 
