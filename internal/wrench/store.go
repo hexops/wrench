@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/keegancsmith/sqlf"
 
 	_ "modernc.org/sqlite" // from https://gitlab.com/cznic/sqlite
@@ -109,18 +110,13 @@ func (s *Store) RunnerSeen(ctx context.Context, id, arch string) error {
 		`INSERT INTO runners(id, arch, registered_at, last_seen_at) VALUES (%v, %v, %v, %v)
 		ON CONFLICT(id) DO UPDATE SET last_seen_at = %v WHERE id=%v`,
 		id, arch, now, now,
-		now, now, id,
+		now, id,
 	)
 	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	return err
 }
 
-type Runner struct {
-	ID, Arch                 string
-	RegisteredAt, LastSeenAt time.Time
-}
-
-func (s *Store) Runners(ctx context.Context) ([]Runner, error) {
+func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 	q := sqlf.Sprintf(`SELECT id, arch, registered_at, last_seen_at FROM runners ORDER BY id`)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
@@ -128,9 +124,9 @@ func (s *Store) Runners(ctx context.Context) ([]Runner, error) {
 		return nil, errors.Wrap(err, "QueryContext")
 	}
 
-	var runners []Runner
+	var runners []api.Runner
 	for rows.Next() {
-		var runner Runner
+		var runner api.Runner
 		if err = rows.Scan(&runner.ID, &runner.Arch, &runner.RegisteredAt, &runner.LastSeenAt); err != nil {
 			return nil, errors.Wrap(err, "Scan")
 		}
