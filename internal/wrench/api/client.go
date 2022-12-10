@@ -17,7 +17,7 @@ type Client struct {
 	client *http.Client
 }
 
-func clientDo[Request comparable, Response comparable](c *Client, ctx context.Context, r *Request, endpoint string) (*Response, error) {
+func clientDo[Request any, Response any](c *Client, ctx context.Context, r *Request, endpoint string) (*Response, error) {
 	if c.client == nil {
 		c.client = &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -55,4 +55,8 @@ func clientDo[Request comparable, Response comparable](c *Client, ctx context.Co
 
 func (c *Client) RunnerPoll(ctx context.Context, r *RunnerPollRequest) (*RunnerPollResponse, error) {
 	return clientDo[RunnerPollRequest, RunnerPollResponse](c, ctx, r, "/api/runner/poll")
+}
+
+func (c *Client) RunnerList(ctx context.Context, r *RunnerListRequest) (*RunnerListResponse, error) {
+	return clientDo[RunnerListRequest, RunnerListResponse](c, ctx, r, "/api/runner/list")
 }

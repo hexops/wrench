@@ -48,6 +48,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 	mux.Handle("/runners", handler("runners", b.httpServeRunners))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
+	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
 	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
@@ -274,7 +275,7 @@ func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {
 	}
 }
 
-func botHttpAPI[Request comparable, Response comparable](b *Bot, handler func(context.Context, *Request) (*Response, error)) handlerFunc {
+func botHttpAPI[Request any, Response any](b *Bot, handler func(context.Context, *Request) (*Response, error)) handlerFunc {
 	return b.httpBasicAuthMiddleware(func(w http.ResponseWriter, r *http.Request) error {
 		if r.Method != "POST" {
 			return errors.New("POST is required for this endpoint")
@@ -299,4 +300,12 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		return nil, errors.Wrap(err, "RunnerSeen")
 	}
 	return &api.RunnerPollResponse{}, nil
+}
+
+func (b *Bot) httpServeRunnerList(ctx context.Context, r *api.RunnerListRequest) (*api.RunnerListResponse, error) {
+	runners, err := b.store.Runners(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerSeen")
+	}
+	return &api.RunnerListResponse{Runners: runners}, nil
 }
