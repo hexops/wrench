@@ -19,14 +19,14 @@ Usage:
 
 The commands are:
 
-	start      begin working
+	service    manage the wrench service (also 'wrench svc')
 	runners    list registered runners
 
 Use "wrench <command> -h" for more information about a command.
 `
 
 func main() {
-	// Configure logging if desired.
+	// Configure logging.
 	log.SetFlags(0)
 	log.SetPrefix("")
 
