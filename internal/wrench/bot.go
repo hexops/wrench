@@ -10,7 +10,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
@@ -30,24 +29,11 @@ type Bot struct {
 
 func (b *Bot) loadConfig() error {
 	if b.Config == nil {
-		if b.ConfigFile != "" {
-			_, err := toml.DecodeFile(b.ConfigFile, &b.Config)
-			if errors.Is(err, os.ErrNotExist) {
-				_, err := toml.DecodeFile("../wrench-private/config.toml", &b.Config)
-				return err
-			}
-			if err != nil {
-				return err
-			}
-		} else {
+		if b.ConfigFile == "" {
 			return errors.New("expected Config or ConfigFile to be specified")
 		}
-	}
-	if b.Config.LetsEncryptCacheDir == "" {
-		b.Config.LetsEncryptCacheDir = "cache"
-	}
-	if b.Config.DiscordChannel == "" {
-		b.Config.DiscordChannel = "wrench"
+		b.Config = &Config{}
+		return LoadConfig(b.ConfigFile, b.Config)
 	}
 	return nil
 }

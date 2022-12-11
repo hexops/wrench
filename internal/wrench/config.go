@@ -1,5 +1,13 @@
 package wrench
 
+import (
+	"os"
+
+	"github.com/BurntSushi/toml"
+	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/api"
+)
+
 type Config struct {
 	// ExternalURL where Wrench is hosted, if any.
 	ExternalURL string
@@ -42,4 +50,34 @@ type Config struct {
 
 	// (optional) Act as a runner, connecting to the root Wrench server specified in ExternalURL.
 	Runner string `toml:"Runner,omitempty"`
+}
+
+func LoadConfig(file string, out *Config) error {
+	_, err := toml.DecodeFile(file, out)
+	if errors.Is(err, os.ErrNotExist) {
+		_, err := toml.DecodeFile("../wrench-private/config.toml", out)
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	// Default config values.
+	if out.LetsEncryptCacheDir == "" {
+		out.LetsEncryptCacheDir = "cache"
+	}
+	if out.DiscordChannel == "" {
+		out.DiscordChannel = "wrench"
+	}
+	return nil
+}
+
+func Client(configFile string) (*api.Client, error) {
+	var cfg Config
+	if err := LoadConfig(configFile, &cfg); err != nil {
+		return nil, err
+	}
+	return &api.Client{
+		URL:    cfg.ExternalURL,
+		Secret: cfg.Secret,
+	}, nil
 }
