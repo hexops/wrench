@@ -19,7 +19,8 @@ Usage:
 
 The commands are:
 
-	start    begin working
+	start      begin working
+	runners    list registered runners
 
 Use "wrench <command> -h" for more information about a command.
 `
