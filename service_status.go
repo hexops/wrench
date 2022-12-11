@@ -31,6 +31,7 @@ Examples:
 		if err != nil {
 			return errors.Wrap(err, "ServiceStatus")
 		}
+		fmt.Printf("%s registered in %s\n", svc.String(), svc.Platform())
 		fmt.Println(status)
 		return nil
 	}
