@@ -11,14 +11,14 @@ func init() {
 	const usage = `
 Examples:
 
-  Start running wrench:
+  Run wrench:
 
-    $ wrench start
+    $ wrench svc run
 
 `
 
 	// Parse flags for our subcommand.
-	flagSet := flag.NewFlagSet("start", flag.ExitOnError)
+	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 
 	// Handles calls to our subcommand.
 	handler := func(args []string) error {
