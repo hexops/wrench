@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -25,6 +26,31 @@ func (b *Bot) registerCommands() {
 		return &discordgo.MessageEmbed{
 			Title:       "Logs",
 			URL:         b.Config.ExternalURL + "/logs",
+			Description: buf.String(),
+		}
+	}
+
+	b.discordCommandsEmbed["runners"] = func(args ...string) *discordgo.MessageEmbed {
+		runners, err := b.store.Runners(context.TODO())
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "Runners - error",
+				Description: err.Error(),
+			}
+		}
+
+		var buf bytes.Buffer
+
+		if len(runners) == 0 {
+			fmt.Fprintf(&buf, "no runners found\n")
+		}
+		for _, runner := range runners {
+			fmt.Fprintf(&buf, "* **'%v' (%v)** (last seen %v ago)\n", runner.ID, runner.Arch, time.Since(runner.LastSeenAt).Round(time.Second))
+		}
+		return &discordgo.MessageEmbed{
+			Title: "Runners",
+			// TODO: link to better runner overview pagw when there is one
+			URL:         b.Config.ExternalURL,
 			Description: buf.String(),
 		}
 	}
