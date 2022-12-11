@@ -13,6 +13,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
+	"github.com/kardianos/service"
 )
 
 type Bot struct {
@@ -60,7 +61,20 @@ func (w writerFunc) Write(p []byte) (n int, err error) {
 	return w(p)
 }
 
-func (b *Bot) Start() error {
+func (b *Bot) Start(s service.Service) error {
+	logger, err := s.Logger(nil)
+	if err != nil {
+		return errors.Wrap(err, "Logger")
+	}
+	go func() {
+		if err := b.run(s); err != nil {
+			logger.Error(err)
+		}
+	}()
+	return nil
+}
+
+func (b *Bot) run(s service.Service) error {
 	b.discordCommands = make(map[string]func(...string) string)
 	b.discordCommandsEmbed = make(map[string]func(...string) *discordgo.MessageEmbed)
 	var err error
@@ -90,10 +104,10 @@ func (b *Bot) Start() error {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
-	return errors.Wrap(b.Stop(), "Stop")
+	return errors.Wrap(s.Stop(), "Stop")
 }
 
-func (b *Bot) Stop() error {
+func (b *Bot) Stop(s service.Service) error {
 	if err := b.discordStop(); err != nil {
 		return errors.Wrap(err, "discord")
 	}

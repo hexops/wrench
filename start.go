@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/wrench"
+	"github.com/kardianos/service"
 )
 
 func init() {
@@ -25,10 +27,9 @@ Examples:
 	// Handles calls to our subcommand.
 	handler := func(args []string) error {
 		_ = flagSet.Parse(args)
-		bot := wrench.Bot{
-			ConfigFile: *configFile,
-		}
-		return bot.Start()
+
+		service, _ := newServiceBot(*configFile)
+		return service.Run()
 	}
 
 	// Register the command.
@@ -42,4 +43,23 @@ Examples:
 			fmt.Printf("%s", usage)
 		},
 	})
+}
+
+func newServiceBot(configFile string) (service.Service, *wrench.Bot) {
+	bot := &wrench.Bot{
+		ConfigFile: configFile,
+	}
+
+	// TODO: should perhaps allow setting Arguments, Executable, and EnvVars via config.toml
+	svcConfig := &service.Config{
+		Name:        "wrench",
+		DisplayName: "Wrench",
+		Description: "Let's fix this!",
+		Arguments:   []string{"start"},
+	}
+	s, err := service.New(bot, svcConfig)
+	if err != nil {
+		log.Fatal("creating service", err)
+	}
+	return s, bot
 }

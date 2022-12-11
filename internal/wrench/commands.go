@@ -40,7 +40,6 @@ func (b *Bot) registerCommands() {
 		}
 
 		var buf bytes.Buffer
-
 		if len(runners) == 0 {
 			fmt.Fprintf(&buf, "no runners found\n")
 		}
