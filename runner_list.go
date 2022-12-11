@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/errors"
@@ -41,7 +42,9 @@ Examples:
 			fmt.Println("no runners found")
 		}
 		for _, runner := range resp.Runners {
-			fmt.Printf("'%v' (%v)\n    registered: %v\n    last seen: %v\n", runner.ID, runner.Arch, runner.RegisteredAt, runner.LastSeenAt)
+			fmt.Printf("'%v' (%v)\n", runner.ID, runner.Arch)
+			fmt.Printf("    registered: %v ago\n", time.Since(runner.RegisteredAt).Round(time.Hour*24))
+			fmt.Printf("    last seen: %v ago\n\n", time.Since(runner.LastSeenAt).Round(time.Second))
 		}
 		return nil
 	}
