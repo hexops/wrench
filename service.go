@@ -27,7 +27,12 @@ Usage:
 
 The commands are:
 
-	start    run the server now
+	run          run the server now
+	status       get the status of the wrench system service
+	start        start wrench as a system service
+	stop         stop wrench as a system service
+	install      install wrench as a system service
+	uninstall    uninstall wrench as a system service
 
 Use "wrench service <command> -h" for more information about a command.
 `
@@ -63,7 +68,7 @@ func newServiceBot() (service.Service, *wrench.Bot) {
 		Name:        "wrench",
 		DisplayName: "Wrench",
 		Description: "Let's fix this!",
-		Arguments:   []string{"start"},
+		Arguments:   []string{"run"},
 	}
 	s, err := service.New(bot, svcConfig)
 	if err != nil {
