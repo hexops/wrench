@@ -119,3 +119,18 @@ func (b *Bot) Stop(s service.Service) error {
 	}
 	return nil
 }
+
+func ServiceStatus(svc service.Service) (string, error) {
+	status, err := svc.Status()
+	if err != nil {
+		return "", err
+	}
+	if status == service.StatusUnknown {
+		return "unknown", nil
+	} else if status == service.StatusRunning {
+		return "running", nil
+	} else if status == service.StatusStopped {
+		return "stopped", nil
+	}
+	panic(fmt.Sprintf("unexpected status: %v", status))
+}
