@@ -117,10 +117,15 @@ func (b *Bot) run(s service.Service) error {
 	<-sc
 
 	fmt.Println("Interrupted, shutting down..")
-	return errors.Wrap(s.Stop(), "Stop")
+
+	return errors.Wrap(b.stop(), "stop")
 }
 
 func (b *Bot) Stop(s service.Service) error {
+	return b.stop()
+}
+
+func (b *Bot) stop() error {
 	if !b.started {
 		return nil
 	}
