@@ -80,7 +80,11 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 	}
 
 	var env map[string]string
+	var options service.KeyValue
 	if runtime.GOOS == "linux" {
+		options = make(service.KeyValue)
+		options["RestartSec"] = 1 // default is 120
+
 		env = make(map[string]string)
 		for _, kv := range os.Environ() {
 			split := strings.SplitN(kv, "=", 1)
@@ -100,6 +104,7 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		Arguments:   []string{"service", "-config=" + config.ConfigFile, "run"},
 		Executable:  config.Executable,
 		EnvVars:     env,
+		Option:      options,
 	}
 	s, err := service.New(bot, svcConfig)
 	if err != nil {
