@@ -59,8 +59,20 @@ Use "wrench service <command> -h" for more information about a command.
 }
 
 func newServiceBot() (service.Service, *wrench.Bot) {
-	bot := &wrench.Bot{
+	return newServiceBotWithConfig(&ServiceConfig{
 		ConfigFile: *serviceConfigFile,
+		Executable: "",
+	})
+}
+
+type ServiceConfig struct {
+	ConfigFile string
+	Executable string
+}
+
+func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bot) {
+	bot := &wrench.Bot{
+		ConfigFile: config.ConfigFile,
 	}
 
 	// TODO: should perhaps allow setting Arguments, Executable, and EnvVars via config.toml
@@ -68,7 +80,8 @@ func newServiceBot() (service.Service, *wrench.Bot) {
 		Name:        "wrench",
 		DisplayName: "Wrench",
 		Description: "Let's fix this!",
-		Arguments:   []string{"run"},
+		Arguments:   []string{"service", "-config=" + config.ConfigFile, "run"},
+		Executable:  config.Executable,
 	}
 	s, err := service.New(bot, svcConfig)
 	if err != nil {
