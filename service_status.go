@@ -49,7 +49,7 @@ Examples:
 		}
 		if runtime.GOOS == "linux" && svc.Platform() == "linux-systemd" {
 			fmt.Println("systemd: /etc/systemd/system/wrench.service")
-			fmt.Println("logs: sudo journalctl -u wrench -e")
+			fmt.Println("logs: sudo journalctl -u wrench -e -f")
 		}
 		fmt.Println("")
 		fmt.Println(status)
