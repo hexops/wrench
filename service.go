@@ -29,6 +29,7 @@ The commands are:
 
 	run          run the server now
 	status       get the status of the wrench system service
+	logs         view service logs (stderr, stdout, and system service runner logs)
 	start        start wrench as a system service
 	stop         stop wrench as a system service
 	install      install wrench as a system service
