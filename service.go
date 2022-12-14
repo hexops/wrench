@@ -84,7 +84,11 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		env = make(map[string]string)
 		for _, kv := range os.Environ() {
 			split := strings.SplitN(kv, "=", 1)
-			env[split[0]] = split[1]
+			if len(split) == 2 {
+				env[split[0]] = split[1]
+			} else {
+				env[split[0]] = ""
+			}
 		}
 	}
 
