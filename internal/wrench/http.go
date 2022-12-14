@@ -158,7 +158,7 @@ sudo mv bin/wrench /usr/local/bin/wrench
 #!/usr/bin/env bash
 set -exuo pipefail
 
-sudo systemctl restart wrench
+sudo wrench svc restart
 `)
 }
 
