@@ -20,6 +20,7 @@ type Bot struct {
 	ConfigFile string
 	Config     *Config
 
+	started              bool
 	store                *Store
 	discordSession       *discordgo.Session
 	discordCommands      map[string]func(...string) string
@@ -98,16 +99,22 @@ func (b *Bot) run(s service.Service) error {
 		b.runnerStart()
 	}
 
+	b.started = true
+
 	// Wait here until CTRL-C or other term signal is received.
 	b.logf("Running (press CTRL-C to exit.)")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
+	fmt.Println("Interrupted, shutting down..")
 	return errors.Wrap(s.Stop(), "Stop")
 }
 
 func (b *Bot) Stop(s service.Service) error {
+	if !b.started {
+		return nil
+	}
 	if err := b.discordStop(); err != nil {
 		return errors.Wrap(err, "discord")
 	}
