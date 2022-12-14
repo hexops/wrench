@@ -2,6 +2,7 @@ package wrench
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/hexops/wrench/internal/errors"
@@ -50,6 +51,19 @@ type Config struct {
 
 	// (optional) Act as a runner, connecting to the root Wrench server specified in ExternalURL.
 	Runner string `toml:"Runner,omitempty"`
+}
+
+func (c *Config) WriteTo(file string) error {
+	if err := os.MkdirAll(filepath.Dir(file), os.ModePerm); err != nil {
+		return errors.Wrap(err, "MkdirAll")
+	}
+	f, err := os.Create(file)
+	if err != nil {
+		return errors.Wrap(err, "Create")
+	}
+	defer f.Close()
+	enc := toml.NewEncoder(f)
+	return errors.Wrap(enc.Encode(c), "Encode")
 }
 
 func LoadConfig(file string, out *Config) error {
