@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"runtime"
+	"strings"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/wrench"
@@ -76,6 +79,15 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		ConfigFile: config.ConfigFile,
 	}
 
+	var env map[string]string
+	if runtime.GOOS == "linux" {
+		env = make(map[string]string)
+		for _, kv := range os.Environ() {
+			split := strings.SplitN(kv, "=", 1)
+			env[split[0]] = split[1]
+		}
+	}
+
 	// TODO: should perhaps allow setting Arguments, Executable, and EnvVars via config.toml
 	svcConfig := &service.Config{
 		Name:        "wrench",
@@ -83,6 +95,7 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		Description: "Let's fix this!",
 		Arguments:   []string{"service", "-config=" + config.ConfigFile, "run"},
 		Executable:  config.Executable,
+		EnvVars:     env,
 	}
 	s, err := service.New(bot, svcConfig)
 	if err != nil {

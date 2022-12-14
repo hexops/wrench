@@ -47,6 +47,10 @@ Examples:
 			fmt.Println("stdout: /var/log/wrench.out.log")
 			fmt.Println("stderr: /var/log/wrench.err.log")
 		}
+		if runtime.GOOS == "linux" && svc.Platform() == "linux-systemd" {
+			fmt.Println("systemd: /etc/systemd/system/wrench.service")
+			fmt.Println("logs: sudo journalctl -u wrench -e")
+		}
 		fmt.Println("")
 		fmt.Println(status)
 		return nil
