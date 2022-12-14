@@ -1,6 +1,7 @@
 package wrench
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -73,15 +74,32 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			if response != "" {
 				s.ChannelMessageSend(m.ChannelID, response)
 			}
+			return nil
 		}
 		if handler, ok := b.discordCommandsEmbed[cmd]; ok {
 			response := handler(args...)
 			if response != nil {
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
+			return nil
 		}
+		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
+	} else if fields[0] == "!wrench" {
+		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
 	}
 	return nil
+}
+
+func (b *Bot) discordHelp() *discordgo.MessageEmbed {
+	var buf bytes.Buffer
+	for _, pair := range b.discordCommandHelp {
+		cmd, help := pair[0], pair[1]
+		fmt.Fprintf(&buf, "* !wrench %s - %s\n", cmd, help)
+	}
+	return &discordgo.MessageEmbed{
+		Title:       "Available commands",
+		Description: buf.String(),
+	}
 }
 
 func (b *Bot) discordSendMessageToChannel(dstChannel string, message string) error {

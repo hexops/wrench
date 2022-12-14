@@ -24,6 +24,7 @@ type Bot struct {
 	started              bool
 	store                *Store
 	discordSession       *discordgo.Session
+	discordCommandHelp   [][2]string
 	discordCommands      map[string]func(...string) string
 	discordCommandsEmbed map[string]func(...string) *discordgo.MessageEmbed
 	runner               *api.Client

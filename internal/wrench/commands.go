@@ -10,6 +10,7 @@ import (
 )
 
 func (b *Bot) registerCommands() {
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"logs", "show log locations"})
 	b.discordCommandsEmbed["logs"] = func(args ...string) *discordgo.MessageEmbed {
 		logIDs, err := b.store.LogIDs(context.TODO())
 		if err != nil {
@@ -30,6 +31,7 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"runners", "show known runners"})
 	b.discordCommandsEmbed["runners"] = func(args ...string) *discordgo.MessageEmbed {
 		runners, err := b.store.Runners(context.TODO())
 		if err != nil {
@@ -54,6 +56,7 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
 			Title:       "wrench @ " + Version,
