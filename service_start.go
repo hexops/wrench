@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/hexops/cmder"
 )
@@ -25,7 +26,11 @@ Examples:
 		_ = flagSet.Parse(args)
 
 		service, _ := newServiceBot()
-		return service.Start()
+		err := service.Start()
+		if err != nil && !strings.Contains(err.Error(), "Warning: Expecting a LaunchAgents path") {
+			return err
+		}
+		return nil
 	}
 
 	// Register the command.
