@@ -101,7 +101,6 @@ Examples:
 				time.Sleep(100 * time.Millisecond)
 			}
 		}
-		return nil
 	}
 
 	// Register the command.
