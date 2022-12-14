@@ -198,12 +198,9 @@ Examples:
 			})
 
 			// Always attempt to uninstall the service. If it is already installed, the old version
-			// would be out of date.
-			err = svc.Uninstall()
-			if err != nil {
-				fmt.Println(" error")
-				return errors.Wrap(err, "Uninstall")
-			}
+			// would be out of date. If it's not installed, this will produce an error (Install will
+			// fail with the same error below if it's permissions related.)
+			_ = svc.Uninstall()
 			if err := svc.Install(); err != nil {
 				fmt.Println(" error")
 				return errors.Wrap(err, "Install")
