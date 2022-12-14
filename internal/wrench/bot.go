@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 
@@ -70,6 +71,7 @@ func (b *Bot) Start(s service.Service) error {
 	go func() {
 		if err := b.run(s); err != nil {
 			logger.Error(err)
+			log.Fatal(err)
 		}
 	}()
 	return nil
@@ -78,8 +80,14 @@ func (b *Bot) Start(s service.Service) error {
 func (b *Bot) run(s service.Service) error {
 	b.discordCommands = make(map[string]func(...string) string)
 	b.discordCommandsEmbed = make(map[string]func(...string) *discordgo.MessageEmbed)
-	var err error
-	b.store, err = OpenStore("wrench.db" + "?_pragma=busy_timeout%3d10000")
+
+	exe, err := os.Executable()
+	if err != nil {
+		return errors.Wrap(err, "Executable")
+	}
+	dir := filepath.Dir(exe)
+
+	b.store, err = OpenStore(filepath.Join(dir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
 	if err != nil {
 		return errors.Wrap(err, "OpenStore")
 	}
