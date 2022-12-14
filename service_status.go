@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"runtime"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/errors"
@@ -26,12 +27,27 @@ Examples:
 	handler := func(args []string) error {
 		_ = flagSet.Parse(args)
 
+		ok, err := isRoot()
+		if err != nil {
+			return errors.Wrap(err, "isRoot")
+		}
+		if !ok {
+			fmt.Println("error: please run as root")
+			return nil
+		}
+
 		svc, _ := newServiceBot()
 		status, err := wrench.ServiceStatus(svc)
 		if err != nil {
 			return errors.Wrap(err, "ServiceStatus")
 		}
 		fmt.Printf("%s registered in %s\n", svc.String(), svc.Platform())
+		if runtime.GOOS == "darwin" {
+			fmt.Println("LaunchDaemon: /Library/LaunchDaemons/wrench.plist")
+			fmt.Println("stdout: /var/log/wrench.out.log")
+			fmt.Println("stderr: /var/log/wrench.err.log")
+		}
+		fmt.Println("")
 		fmt.Println(status)
 		return nil
 	}
