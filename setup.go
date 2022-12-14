@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -116,6 +117,10 @@ Examples:
 		configFile, ok := promptPath("config", "$HOME/wrench.toml")
 		if !ok {
 			return nil
+		}
+		configFile, err = filepath.Abs(configFile)
+		if err != nil {
+			return errors.Wrap(err, "Abs")
 		}
 
 		var config wrench.Config
