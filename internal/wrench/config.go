@@ -73,7 +73,10 @@ func (c *Config) WriteTo(file string) error {
 func LoadConfig(file string, out *Config) error {
 	_, err := toml.DecodeFile(file, out)
 	if errors.Is(err, os.ErrNotExist) {
-		_, err := toml.DecodeFile("../wrench-private/config.toml", out)
+		_, err2 := toml.DecodeFile("../wrench-private/config.toml", out)
+		if err2 == nil {
+			return nil
+		}
 		return err
 	}
 	if err != nil {
