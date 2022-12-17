@@ -213,7 +213,7 @@ Examples:
 			fmt.Println(" ok")
 
 			fmt.Printf("wrench: launching system service..")
-			time.Sleep(1 * time.Second) // systemd can hang if we try to start an installed service too quickly.
+			_ = svc.Stop() // systemd will hand if trying to start an already-started service
 			if err := svc.Start(); err != nil && !strings.Contains(err.Error(), "Warning: Expecting a LaunchAgents path") {
 				fmt.Println(" error")
 				return errors.Wrap(err, "Start")
