@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -124,58 +123,20 @@ func (b *Bot) runRebuild() error {
 	defer b.webHookGitHubSelf.Unlock()
 
 	b.idLogf("restart-self", "👀 I see new changes")
-	err := b.runScript("restart-self", `
-#!/usr/bin/env bash
-set -exuo pipefail
-
-git clone https://github.com/hexops/wrench || true
-cd wrench/
-git fetch
-git reset --hard origin/main
-
-DATE=$(date)
-GOVERSION=$(go version)
-VERSION=$(git describe --tags --abbrev=8 --dirty --always --long)
-COMMIT_TITLE=$(git log --pretty=format:%s HEAD^1..HEAD)
-PREFIX="github.com/hexops/wrench/internal/wrench"
-LDFLAGS="-X '$PREFIX.Version=$VERSION'"
-LDFLAGS="$LDFLAGS -X '$PREFIX.CommitTitle=$COMMIT_TITLE'"
-LDFLAGS="$LDFLAGS -X '$PREFIX.Date=$DATE'"
-LDFLAGS="$LDFLAGS -X '$PREFIX.GoVersion=$GOVERSION'"
-GOARCH="amd64" GOOS="linux" go build -ldflags "$LDFLAGS" -o bin/wrench .
-
-sudo mv bin/wrench /usr/local/bin/wrench
-`)
+	err := b.runWrench("script", "rebuild")
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
 		b.idLogf("restart-self", "build failure!")
 		return nil
 	}
-
 	b.idLogf("restart-self", "build success! restarting..")
 
-	return b.runScript("restart-self", `
-#!/usr/bin/env bash
-set -exuo pipefail
-
-sudo wrench svc restart
-`)
+	return b.runWrench("svc", "restart")
 }
 
-func (b *Bot) runScript(id string, script string) error {
-	file, err := os.CreateTemp("", "script-"+id)
-	if err != nil {
-		return errors.Wrap(err, "CreateTemp")
-	}
-	defer os.Remove(file.Name())
-
-	err = os.WriteFile(file.Name(), []byte(script), 0744)
-	if err != nil {
-		return errors.Wrap(err, "WriteFile")
-	}
-
+func (b *Bot) runWrench(id string, args ...string) error {
 	w := b.idWriter(id)
-	cmd := exec.Command("bash", file.Name())
+	cmd := exec.Command("wrench", args...)
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
