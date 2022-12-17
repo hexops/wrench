@@ -47,6 +47,17 @@ func (s *Store) ensureSchema() error {
 			last_seen_at TIMESTAMP NOT NULL
 		);
 	`)
+	_, err = s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS cache (
+			cache_name TEXT NOT NULL,
+			key TEXT NOT NULL,
+			value TEXT NOT NULL,
+			updated_at TIMESTAMP NOT NULL,
+			created_at TIMESTAMP NOT NULL
+			expires_at TIMESTAMP,
+			PRIMARY KEY (cache_name, key)
+		);
+	`)
 	return err
 }
 
@@ -133,6 +144,42 @@ func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 		runners = append(runners, runner)
 	}
 	return runners, rows.Err()
+}
+
+func (s *Store) CacheSet(ctx context.Context, cacheName, key, value string, expires *time.Time) error {
+	now := time.Now()
+	q := sqlf.Sprintf(
+		`INSERT INTO cache(cache_name, key, value, updated_at, created_at, expires_at) VALUES (%v, %v, %v, %v, %v, %v)
+		ON CONFLICT(cache_name, key) DO UPDATE SET
+			value = %v,
+			updated_at = %v,
+			expires_at = %v
+		WHERE cache_name = %v AND key = %v`,
+		cacheName, key, value, now, now, expires,
+		value, now, expires,
+		cacheName, key,
+	)
+	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	return err
+}
+
+type CacheEntry struct {
+	Value   string
+	Updated time.Time
+	Created time.Time
+	Expires *time.Time
+}
+
+func (s *Store) CacheKey(ctx context.Context, cacheName, key string) (*CacheEntry, error) {
+	q := sqlf.Sprintf(`SELECT value, updated_at, created_at, expires_at
+		FROM cache WHERE cache_name = %v AND key = %v`, cacheName, key)
+
+	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	var e CacheEntry
+	if err := row.Scan(&e.Value, &e.Updated, &e.Created, &e.Expires); err != nil {
+		return nil, errors.Wrap(err, "Scan")
+	}
+	return &e, nil
 }
 
 func (s *Store) Close() error {
