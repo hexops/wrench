@@ -3,10 +3,11 @@ package wrench
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v48/github"
+	"github.com/hexops/wrench/internal/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -29,38 +30,37 @@ func (b *Bot) githubStart() error {
 	return nil
 }
 
-func (b *Bot) sync(ctx context.Context) {
-	// TODO: move to config?
-	repos := []string{
-		"wrench",
-		"mach",
-		"mach-examples",
-		"sdk-linux-aarch64",
-		"sdk-linux-x86_64",
-		"sdk-windows-x86_64",
-		"sdk-macos-12.0",
-		"sdk-macos-11.3",
-		"mach-glfw-opengl-example",
-		"mach-glfw-vulkan-example",
-		"basisu",
-		// "soundio",
-		"freetype",
-		"glfw",
-		"dawn",
-		"hexops.com",
-		"zigmonthly.org",
-		"devlog",
-		"machengine.org",
-		"media",
-	}
-	org := "hexops"
+// TODO: move to config?
+var githubRepoNames = []string{
+	"hexops/wrench",
+	"hexops/mach",
+	"hexops/mach-examples",
+	"hexops/sdk-linux-aarch64",
+	"hexops/sdk-linux-x86_64",
+	"hexops/sdk-windows-x86_64",
+	"hexops/sdk-macos-12.0",
+	"hexops/sdk-macos-11.3",
+	"hexops/mach-glfw-opengl-example",
+	"hexops/mach-glfw-vulkan-example",
+	"hexops/basisu",
+	// "soundio",
+	"hexops/freetype",
+	"hexops/glfw",
+	"hexops/dawn",
+	"hexops/hexops.com",
+	"hexops/zigmonthly.org",
+	"hexops/devlog",
+	"hexops/machengine.org",
+	"hexops/media",
+}
 
+func (b *Bot) sync(ctx context.Context) {
 	logID := "github-sync"
-	cacheName := "github-api"
 
 	b.idLogf(logID, "github sync: starting")
 	defer b.idLogf(logID, "github sync: finished")
-	for _, repo := range repos {
+	for _, repoPair := range githubRepoNames {
+		org, repo := splitRepoPair(repoPair)
 		page := 0
 		retry := 0
 		var pullRequests []*github.PullRequest
@@ -84,21 +84,42 @@ func (b *Bot) sync(ctx context.Context) {
 			}
 			pullRequests = append(pullRequests, pagePRs...)
 			b.idLogf(logID, "progress: queried %v pull requests total", len(pullRequests))
+			b.idLogf(logID, "progress: rate limit: %v", resp.Rate)
 
 			page = resp.NextPage
 			if resp.NextPage == 0 {
 				break
 			}
 		}
-		cacheKey := fmt.Sprintf("%s/%s-PullRequests", org, repo)
+		cacheKey := repoPair + "-PullRequests"
 		cacheValue, err := json.Marshal(pullRequests)
 		if err != nil {
 			b.idLogf(logID, "error: Marshal: %v", err)
+			continue
 		}
-		b.store.CacheSet(ctx, cacheName, cacheKey, string(cacheValue), nil)
+		b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
 	}
+}
+
+func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*github.PullRequest, err error) {
+	cacheKey := repoPair + "-PullRequests"
+	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(entry.Value), &v); err != nil {
+		return nil, errors.Wrap(err, "Unmarshal")
+	}
+	return v, nil
 }
 
 func (b *Bot) githubStop() error {
 	return nil
 }
+
+func splitRepoPair(repoPair string) (owner, name string) {
+	split := strings.Split(repoPair, "/")
+	return split[0], split[1]
+}
+
+const githubAPICacheName = "github-api"
