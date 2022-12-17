@@ -84,7 +84,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			return nil
 		}
 		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
-	} else if fields[0] == "!wrench" {
+	} else if len(fields) >= 1 && fields[0] == "!wrench" {
 		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
 	}
 	return nil
