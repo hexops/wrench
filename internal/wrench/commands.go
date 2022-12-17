@@ -50,8 +50,54 @@ func (b *Bot) registerCommands() {
 		}
 		return &discordgo.MessageEmbed{
 			Title: "Runners",
-			// TODO: link to better runner overview pagw when there is one
-			URL:         b.Config.ExternalURL,
+			// TODO: link to better runner overview page when there is one
+			URL:         b.Config.ExternalURL + "/runners",
+			Description: buf.String(),
+		}
+	}
+
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"prs", "show open pull requests"})
+	b.discordCommandsEmbed["prs"] = func(args ...string) *discordgo.MessageEmbed {
+		ctx := context.Background()
+		var buf bytes.Buffer
+
+		count := 0
+		for _, repoPair := range githubRepoNames {
+			pullRequests, err := b.githubPullRequests(ctx, repoPair)
+			if err != nil {
+				return &discordgo.MessageEmbed{
+					Title:       "Runners - error",
+					Description: err.Error(),
+				}
+			}
+
+			open := 0
+			for _, pr := range pullRequests {
+				if *pr.State != "open" {
+					continue
+				}
+				open++
+			}
+			if open == 0 {
+				continue
+			}
+
+			fmt.Fprintf(&buf, "**%v**:\n", repoPair)
+			for _, pr := range pullRequests {
+				if *pr.State != "open" {
+					continue
+				}
+				count++
+				fmt.Fprintf(&buf, "* ['%v'](%s) (by _%v_)\n", *pr.Title, *pr.URL, *pr.User.Login)
+			}
+			fmt.Fprintf(&buf, "\n")
+		}
+		if count == 0 {
+			fmt.Fprintf(&buf, "no pull requests found\n")
+		}
+
+		return &discordgo.MessageEmbed{
+			Title:       "Open pull requests",
 			Description: buf.String(),
 		}
 	}
