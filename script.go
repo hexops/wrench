@@ -7,7 +7,7 @@ import (
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/errors"
-	"github.com/hexops/wrench/internal/wrench"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 )
 
 func init() {
@@ -22,7 +22,7 @@ The scripts are:
 `
 
 	var maxCmdStrLen = 0
-	for _, script := range wrench.Scripts {
+	for _, script := range scripts.Scripts {
 		cmdStr := script.Command
 		if len(script.Args) > 0 {
 			cmdStr = fmt.Sprintf("%s [%s]", cmdStr, strings.Join(script.Args, "] ["))
@@ -31,7 +31,7 @@ The scripts are:
 			maxCmdStrLen = len(cmdStr)
 		}
 	}
-	for _, script := range wrench.Scripts {
+	for _, script := range scripts.Scripts {
 		cmdStr := script.Command
 		if len(script.Args) > 0 {
 			cmdStr = fmt.Sprintf("%s [%s]", cmdStr, strings.Join(script.Args, "] ["))
@@ -49,7 +49,7 @@ The scripts are:
 		if len(args) != 1 {
 			return &cmder.UsageError{Err: errors.New("expected command")}
 		}
-		for _, script := range wrench.Scripts {
+		for _, script := range scripts.Scripts {
 			if args[0] != script.Command {
 				continue
 			}
