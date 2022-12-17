@@ -114,7 +114,7 @@ Examples:
 			return nil
 		}
 
-		configFile, ok := promptPath("config", "$HOME/wrench.toml")
+		configFile, ok := promptPath("config", "$HOME/wrench/config.toml")
 		if !ok {
 			return nil
 		}

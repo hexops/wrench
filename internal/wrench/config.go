@@ -2,6 +2,7 @@ package wrench
 
 import (
 	"os"
+	"os/user"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
@@ -51,6 +52,9 @@ type Config struct {
 
 	// (optional) Act as a runner, connecting to the root Wrench server specified in ExternalURL.
 	Runner string `toml:"Runner,omitempty"`
+
+	// Where Wrench should store its data, cofiguration, etc. Defaults to $HOME/wrench.
+	WrenchDir string `toml:"WrenchDir,omitempty"`
 }
 
 func (c *Config) WriteTo(file string) error {
@@ -81,6 +85,13 @@ func LoadConfig(file string, out *Config) error {
 	}
 	if out.DiscordChannel == "" {
 		out.DiscordChannel = "wrench"
+	}
+	if out.WrenchDir == "" {
+		u, err := user.Current()
+		if err != nil {
+			return errors.Wrap(err, "user.Current")
+		}
+		out.WrenchDir = filepath.Join(u.HomeDir, "wrench")
 	}
 	return nil
 }

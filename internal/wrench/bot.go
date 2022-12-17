@@ -82,20 +82,16 @@ func (b *Bot) run(s service.Service) error {
 	b.discordCommands = make(map[string]func(...string) string)
 	b.discordCommandsEmbed = make(map[string]func(...string) *discordgo.MessageEmbed)
 
-	exe, err := os.Executable()
-	if err != nil {
-		return errors.Wrap(err, "Executable")
+	if err := b.loadConfig(); err != nil {
+		return errors.Wrap(err, "loading config")
 	}
-	dir := filepath.Dir(exe)
 
-	b.store, err = OpenStore(filepath.Join(dir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
+	var err error
+	b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
 	if err != nil {
 		return errors.Wrap(err, "OpenStore")
 	}
 
-	if err := b.loadConfig(); err != nil {
-		return errors.Wrap(err, "loading config")
-	}
 	if b.Config.Runner == "" {
 		if err := b.discordStart(); err != nil {
 			return errors.Wrap(err, "discord")
