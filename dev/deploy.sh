@@ -28,9 +28,8 @@ scp -r ../wrench-private/config.toml $remote:/root/config.toml
 
 ssh $remote << EOF
   set -exuo pipefail
-  mkdir -p $HOME/wrench
   sudo chmod 744 /usr/local/bin/wrench
-  sudo systemctl start wrench
+  sudo wrench svc restart
 EOF
 
 echo "Wrench has been deployed!"
