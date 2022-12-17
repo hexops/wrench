@@ -49,8 +49,7 @@ func (b *Bot) registerCommands() {
 			fmt.Fprintf(&buf, "* **'%v' (%v)** (last seen %v ago)\n", runner.ID, runner.Arch, time.Since(runner.LastSeenAt).Round(time.Second))
 		}
 		return &discordgo.MessageEmbed{
-			Title: "Runners",
-			// TODO: link to better runner overview page when there is one
+			Title:       "Runners",
 			URL:         b.Config.ExternalURL + "/runners",
 			Description: buf.String(),
 		}
