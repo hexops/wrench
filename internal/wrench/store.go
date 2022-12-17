@@ -38,16 +38,12 @@ func (s *Store) ensureSchema() error {
 			id TEXT NOT NULL,
 			message TEXT NOT NULL
 		);
-	`)
-	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS runners (
 			id TEXT PRIMARY KEY NOT NULL,
 			arch TEXT NOT NULL,
 			registered_at TIMESTAMP NOT NULL,
 			last_seen_at TIMESTAMP NOT NULL
 		);
-	`)
-	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS cache (
 			cache_name TEXT NOT NULL,
 			key TEXT NOT NULL,
