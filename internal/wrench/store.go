@@ -53,7 +53,7 @@ func (s *Store) ensureSchema() error {
 			key TEXT NOT NULL,
 			value TEXT NOT NULL,
 			updated_at TIMESTAMP NOT NULL,
-			created_at TIMESTAMP NOT NULL
+			created_at TIMESTAMP NOT NULL,
 			expires_at TIMESTAMP,
 			PRIMARY KEY (cache_name, key)
 		);
