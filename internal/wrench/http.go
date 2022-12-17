@@ -122,21 +122,24 @@ func (b *Bot) runRebuild() error {
 	b.webHookGitHubSelf.Lock()
 	defer b.webHookGitHubSelf.Unlock()
 
-	b.idLogf("restart-self", "👀 I see new changes")
-	err := b.runWrench("script", "rebuild")
+	logID := "restart-self"
+
+	b.idLogf(logID, "👀 I see new changes")
+	err := b.runWrench(logID, "script", "rebuild")
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
-		b.idLogf("restart-self", "build failure!")
+		b.idLogf(logID, "build failure!")
 		return nil
 	}
-	b.idLogf("restart-self", "build success! restarting..")
+	b.idLogf(logID, "build success! restarting..")
 
-	return b.runWrench("svc", "restart")
+	return b.runWrench(logID, "svc", "restart")
 }
 
 func (b *Bot) runWrench(id string, args ...string) error {
 	w := b.idWriter(id)
 	cmd := exec.Command("wrench", args...)
+	cmd.Dir = b.Config.WrenchDir
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
