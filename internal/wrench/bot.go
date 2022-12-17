@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/go-github/v48/github"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/kardianos/service"
@@ -23,6 +24,7 @@ type Bot struct {
 
 	started              bool
 	store                *Store
+	github               *github.Client
 	discordSession       *discordgo.Session
 	discordCommandHelp   [][2]string
 	discordCommands      map[string]func(...string) string
@@ -91,6 +93,9 @@ func (b *Bot) run(s service.Service) error {
 	if err != nil {
 		return errors.Wrap(err, "OpenStore")
 	}
+	if err := b.githubStart(); err != nil {
+		return errors.Wrap(err, "github")
+	}
 
 	if b.Config.Runner == "" {
 		if err := b.discordStart(); err != nil {
@@ -124,6 +129,9 @@ func (b *Bot) Stop(s service.Service) error {
 func (b *Bot) stop() error {
 	if !b.started {
 		return nil
+	}
+	if err := b.githubStop(); err != nil {
+		return errors.Wrap(err, "github")
 	}
 	if err := b.discordStop(); err != nil {
 		return errors.Wrap(err, "discord")

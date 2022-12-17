@@ -47,6 +47,11 @@ type Config struct {
 	//
 	GitHubWebHookSecret string `toml:"GitHubWebHookSecret,omitempty"`
 
+	// (optional) When specified Wrench can send PRs and assist with GitHub.
+	//
+	// Only applicable if running as the Wrench server.
+	GitHubAccessToken string `toml:"GitHubAccessToken,omitempty"`
+
 	// (optional) Generic secret used to authenticate with this server. Any arbitrary string.
 	Secret string `toml:"Secret,omitempty"`
 
