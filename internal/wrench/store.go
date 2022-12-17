@@ -60,9 +60,9 @@ func (s *Store) ensureSchema() error {
 			title TEXT NOT NULL,
 			target_runner_id TEXT NOT NULL,
 			target_runner_arch TEXT NOT NULL,
-			payload TEXT NOT NULL
+			payload TEXT NOT NULL,
 			updated_at TIMESTAMP NOT NULL,
-			created_at TIMESTAMP NOT NULL,
+			created_at TIMESTAMP NOT NULL
 		);
 	`)
 	return err
