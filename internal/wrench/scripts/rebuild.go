@@ -27,11 +27,11 @@ func init() {
 			if err != nil {
 				return err
 			}
-			version, err := Output("git describe --tags --abbrev=8 --dirty --always --long")
+			version, err := Output("git describe --tags --abbrev=8 --dirty --always --long", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}
-			commitTitle, err := Output("git log --pretty=format:%s HEAD^1..HEAD")
+			commitTitle, err := Output("git log --pretty=format:%s HEAD^1..HEAD", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}
