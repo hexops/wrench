@@ -183,8 +183,74 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "Runners")
 	}
+	jobs, err := b.store.Jobs(r.Context(),
+		JobsFilter{NotState: JobStateFinished},
+	)
+	if err != nil {
+		return errors.Wrap(err, "Jobs(0)")
+	}
+	finishedJobs, err := b.store.Jobs(r.Context(),
+		JobsFilter{State: JobStateFinished},
+	)
+	if err != nil {
+		return errors.Wrap(err, "Jobs(1)")
+	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	fmt.Fprintf(w, "<h2>Runners</h2>")
+	{
+		var values [][]string
+		for _, runner := range runners {
+			values = append(values, []string{
+				runner.ID,
+				runner.Arch,
+				runner.RegisteredAt.UTC().Format(time.RFC3339),
+				runner.LastSeenAt.UTC().Format(time.RFC3339),
+			})
+		}
+		tableStyle(w)
+		table(w, []string{"id", "arch", "registered", "last seen"}, values)
+	}
+
+	fmt.Fprintf(w, "<h2>Jobs</h2>")
+	{
+		var values [][]string
+		for _, job := range jobs {
+			values = append(values, []string{
+				job.ID,
+				string(job.State),
+				job.Title,
+				job.TargetRunnerID,
+				job.TargetRunnerArch,
+				job.Updated.UTC().Format(time.RFC3339),
+				job.Created.UTC().Format(time.RFC3339),
+			})
+		}
+		tableStyle(w)
+		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "last updated", "created"}, values)
+	}
+	fmt.Fprintf(w, "<h2>Finished jobs</h2>")
+	{
+		var values [][]string
+		for _, job := range finishedJobs {
+			values = append(values, []string{
+				job.ID,
+				string(job.State),
+				job.Title,
+				job.TargetRunnerID,
+				job.TargetRunnerArch,
+				job.Updated.UTC().Format(time.RFC3339),
+				job.Created.UTC().Format(time.RFC3339),
+			})
+		}
+		tableStyle(w)
+		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "last updated", "created"}, values)
+	}
+	return nil
+}
+
+func tableStyle(w io.Writer) {
 	fmt.Fprintf(w, `
 <style>
 table {
@@ -203,23 +269,24 @@ table tbody td {
     padding: 0.75rem;
 }
 </style>`)
+}
+
+func table(w io.Writer, rows []string, values [][]string) {
 	fmt.Fprintf(w, `<table>`)
 	fmt.Fprintf(w, `<thead><tr>`)
-	fmt.Fprintf(w, `<th>id</th><th>arch</th><th>registered</th><th>last seen</th>`)
+	for _, label := range rows {
+		fmt.Fprintf(w, "<th>%s</th>", label)
+	}
 	fmt.Fprintf(w, `</tr></thead>`)
 	fmt.Fprintf(w, `<tbody>`)
-	for _, runner := range runners {
+	for _, row := range values {
 		fmt.Fprintf(w, `<tr>`)
-		fmt.Fprintf(w, `<td>%s</td><td>%s</td><td>%s</td><td>%s</td>`,
-			runner.ID,
-			runner.Arch,
-			runner.RegisteredAt.UTC().Format(time.RFC3339),
-			runner.LastSeenAt.UTC().Format(time.RFC3339),
-		)
+		for _, value := range row {
+			fmt.Fprintf(w, `<td>%s</td>`, value)
+		}
 		fmt.Fprintf(w, `</tr>`)
 	}
 	fmt.Fprintf(w, `</tbody></table>`)
-	return nil
 }
 
 func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {
