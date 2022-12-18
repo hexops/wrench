@@ -243,8 +243,26 @@ func (s *Store) JobByID(ctx context.Context, id string) (*Job, error) {
 	return job, nil
 }
 
-func (s *Store) JobsByState(ctx context.Context) ([]Job, error) {
-	q := sqlf.Sprintf(`SELECT ` + jobFields + ` FROM runner_jobs ORDER BY jobid`)
+type JobsFilter struct {
+	State, NotState JobState
+}
+
+func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) {
+	var conds []*sqlf.Query
+	for _, where := range filters {
+		if where.State != "" {
+			conds = append(conds, sqlf.Sprintf("state = %v", where.State))
+		}
+		if where.NotState != "" {
+			conds = append(conds, sqlf.Sprintf("state != %v", where.NotState))
+		}
+	}
+
+	whereClause := sqlf.Sprintf("")
+	if len(conds) > 0 {
+		whereClause = sqlf.Sprintf("WHERE %v", sqlf.Join(conds, "AND"))
+	}
+	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs %s ORDER BY id`, whereClause)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
