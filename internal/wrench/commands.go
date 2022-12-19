@@ -112,6 +112,27 @@ func (b *Bot) registerCommands() {
 		}
 
 		ctx := context.Background()
+
+		runners, err := b.store.Runners(ctx)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "ping - error",
+				Description: err.Error(),
+			}
+		}
+		found := false
+		for _, runner := range runners {
+			if runner.ID == args[0] {
+				found = true
+			}
+		}
+		if !found {
+			return &discordgo.MessageEmbed{
+				Title:       "ping - error",
+				Description: "invalid runner ID (see !wrench runners)",
+			}
+		}
+
 		id, err := b.store.NewRunnerJob(ctx, api.Job{
 			Title:          "ping test",
 			TargetRunnerID: args[0],
