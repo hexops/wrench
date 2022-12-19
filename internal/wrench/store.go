@@ -159,6 +159,9 @@ func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error
 	job.State = api.JobStateReady
 	job.Updated = now
 	job.Created = now
+	if job.Title == "" {
+		return "", errors.New("Job.Title missing")
+	}
 	payload, err := json.Marshal(job.Payload)
 	if err != nil {
 		return "", errors.Wrap(err, "Marshal")
@@ -210,6 +213,12 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 	now := time.Now()
 	job.Updated = now
 	job.Created = now
+	if job.State == "" {
+		return errors.New("Job.State missing")
+	}
+	if job.Title == "" {
+		return errors.New("Job.Title missing")
+	}
 	payload, err := json.Marshal(job.Payload)
 	if err != nil {
 		return errors.Wrap(err, "Marshal")
