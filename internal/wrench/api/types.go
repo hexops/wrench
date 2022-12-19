@@ -57,7 +57,7 @@ type JobPayload struct {
 type JobID string
 
 func (job JobID) LogID() string {
-	return "job/" + string(job)
+	return "job-" + string(job)
 }
 
 type Job struct {
