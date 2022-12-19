@@ -133,13 +133,15 @@ func (b *Bot) registerCommands() {
 			}
 		}
 
+		jobTitle := "ping test"
 		id, err := b.store.NewRunnerJob(ctx, api.Job{
-			Title:          "ping test",
+			Title:          jobTitle,
 			TargetRunnerID: args[0],
 			Payload: api.JobPayload{
 				Ping: true,
 			},
 		})
+		b.idLogf(id.LogID(), "job created: %v", jobTitle)
 		if err != nil {
 			return &discordgo.MessageEmbed{
 				Title:       "ping - error",
@@ -150,7 +152,7 @@ func (b *Bot) registerCommands() {
 		return &discordgo.MessageEmbed{
 			Title:       "Ping",
 			URL:         b.Config.ExternalURL + "/runners",
-			Description: fmt.Sprintf("Job created: %v", id),
+			Description: fmt.Sprintf("Job created: %v/logs/job-%v", b.Config.ExternalURL, id),
 		}
 	}
 
