@@ -247,6 +247,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 		job.TargetRunnerArch,
 		string(payload),
 		job.Updated,
+		mustDecodeJobID(job.ID),
 	)
 	_, err = s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	return err
