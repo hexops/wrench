@@ -344,7 +344,7 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 			return nil, errors.Wrap(err, "JobsByID")
 		}
 		job.State = r.Job.State
-		err = b.store.UpsertRunnerJob(ctx, *job)
+		err = b.store.UpsertRunnerJob(ctx, job)
 		if err != nil {
 			return nil, errors.Wrap(err, "UpsertRunnerJob(0)")
 		}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
+	"github.com/jxskiss/base62"
 	"github.com/keegancsmith/sqlf"
 
 	_ "modernc.org/sqlite" // from https://gitlab.com/cznic/sqlite
@@ -55,7 +56,7 @@ func (s *Store) ensureSchema() error {
 			PRIMARY KEY (cache_name, key)
 		);
 		CREATE TABLE IF NOT EXISTS runner_jobs (
-			id TEXT PRIMARY KEY NOT NULL,
+			id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 			state TEXT NOT NULL,
 			title TEXT NOT NULL,
 			target_runner_id TEXT NOT NULL,
@@ -153,6 +154,57 @@ func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 	return runners, rows.Err()
 }
 
+func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error) {
+	now := time.Now()
+	job.Updated = now
+	job.Created = now
+	payload, err := json.Marshal(job.Payload)
+	if err != nil {
+		return "", errors.Wrap(err, "Marshal")
+	}
+	q := sqlf.Sprintf(
+		`INSERT INTO runner_jobs(
+			state,
+			title,
+			target_runner_id,
+			target_runner_arch,
+			payload,
+			updated_at,
+			created_at
+		) VALUES (%v, %v, %v, %v, %v, %v, %v)
+		RETURNING id`,
+		job.State,
+		job.Title,
+		job.TargetRunnerID,
+		job.TargetRunnerArch,
+		string(payload),
+		job.Updated,
+		job.Created,
+	)
+	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	id, err := s.scanUint64(row.Scan)
+	if err != nil {
+		return "", errors.Wrap(err, "scanJob")
+	}
+	return encodeJobID(id), nil
+}
+
+func encodeJobID(id uint64) api.JobID {
+	return api.JobID(base62.EncodeToString(base62.FormatUint(id)))
+}
+
+func mustDecodeJobID(id api.JobID) uint64 {
+	bytes, err := base62.DecodeString(string(id))
+	if err != nil {
+		panic("DecodeString: encountered illegal base62 string")
+	}
+	v, err := base62.ParseUint(bytes)
+	if err != nil {
+		panic("ParseUint: encountered illegal base62 string")
+	}
+	return v
+}
+
 func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 	now := time.Now()
 	job.Updated = now
@@ -180,7 +232,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 			payload = %v,
 			updated_at = %v
 		WHERE id = %v`,
-		job.ID,
+		mustDecodeJobID(job.ID),
 		job.State,
 		job.Title,
 		job.TargetRunnerID,
@@ -210,20 +262,21 @@ const jobFields = `
 	created_at
 `
 
-func (s *Store) JobByID(ctx context.Context, id api.JobID) (*api.Job, error) {
-	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs WHERE id = %v`, id)
-
-	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
-	job, err := s.scanJob(row.Scan)
+func (s *Store) JobByID(ctx context.Context, id api.JobID) (api.Job, error) {
+	jobs, err := s.Jobs(ctx, JobsFilter{ID: id})
 	if err != nil {
-		return nil, errors.Wrap(err, "scanJob")
+		return api.Job{}, err
 	}
-	return job, nil
+	if len(jobs) != 1 {
+		return api.Job{}, errors.New("unexpected jobs length")
+	}
+	return jobs[0], nil
 }
 
 type JobsFilter struct {
 	State, NotState api.JobState
 	Title, NotTitle string
+	ID              api.JobID
 }
 
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
@@ -240,6 +293,9 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 		}
 		if where.NotTitle != "" {
 			conds = append(conds, sqlf.Sprintf("title != %v", where.NotTitle))
+		}
+		if where.ID != "" {
+			conds = append(conds, sqlf.Sprintf("id = %v", mustDecodeJobID(where.ID)))
 		}
 	}
 
@@ -268,8 +324,9 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
 	var j api.Job
 	var payload string
+	var id uint64
 	if err := scan(
-		&j.ID,
+		&id,
 		&j.State,
 		&j.Title,
 		&j.TargetRunnerID,
@@ -280,10 +337,19 @@ func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
 	); err != nil {
 		return nil, errors.Wrap(err, "Scan")
 	}
+	j.ID = encodeJobID(id)
 	if err := json.Unmarshal([]byte(payload), &j.Payload); err != nil {
 		return nil, errors.Wrap(err, "Unmarshal")
 	}
 	return &j, nil
+}
+
+func (s *Store) scanUint64(scan func(...any) error) (uint64, error) {
+	var v uint64
+	if err := scan(&v); err != nil {
+		return 0, errors.Wrap(err, "Scan")
+	}
+	return v, nil
 }
 
 func (s *Store) CacheSet(ctx context.Context, cacheName, key, value string, expires *time.Time) error {

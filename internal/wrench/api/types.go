@@ -2,8 +2,6 @@ package api
 
 import (
 	"time"
-
-	"github.com/gofrs/uuid"
 )
 
 type Runner struct {
@@ -68,12 +66,4 @@ type Job struct {
 	TargetRunnerID, TargetRunnerArch string
 	Payload                          JobPayload
 	Updated, Created                 time.Time
-}
-
-func NewJobID() (JobID, error) {
-	uuid, err := uuid.NewV6()
-	if err != nil {
-		return "", err
-	}
-	return JobID(uuid.String()), nil
 }
