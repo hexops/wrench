@@ -184,13 +184,16 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "Runners")
 	}
 	jobs, err := b.store.Jobs(r.Context(),
-		JobsFilter{NotState: api.JobStateFinished},
+		JobsFilter{NotState: api.JobStateSuccess},
+		JobsFilter{NotState: api.JobStateError},
 	)
 	if err != nil {
 		return errors.Wrap(err, "Jobs(0)")
 	}
 	finishedJobs, err := b.store.Jobs(r.Context(),
-		JobsFilter{State: api.JobStateFinished},
+		JobsFilter{NotState: api.JobStateReady},
+		JobsFilter{NotState: api.JobStateStarting},
+		JobsFilter{NotState: api.JobStateRunning},
 	)
 	if err != nil {
 		return errors.Wrap(err, "Jobs(1)")
@@ -332,6 +335,57 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 	err := b.store.RunnerSeen(ctx, r.ID, r.Arch)
 	if err != nil {
 		return nil, errors.Wrap(err, "RunnerSeen")
+	}
+
+	if r.Job != nil {
+		// Update job state.
+		job, err := b.store.JobByID(ctx, r.Job.ID)
+		if err != nil {
+			return nil, errors.Wrap(err, "JobsByID")
+		}
+		job.State = r.Job.State
+		err = b.store.UpsertRunnerJob(ctx, *job)
+		if err != nil {
+			return nil, errors.Wrap(err, "UpsertRunnerJob(0)")
+		}
+
+		// Log job messages.
+		if r.Job.Log != "" {
+			b.idLogf(r.Job.ID.LogID(), "%s", r.Job.Log)
+		}
+	}
+
+	startNewJob := r.Job == nil ||
+		r.Job.State == api.JobStateSuccess ||
+		r.Job.State == api.JobStateError
+	if startNewJob {
+		b.jobAcquire.Lock()
+		defer b.jobAcquire.Unlock()
+
+		readyJobs, err := b.store.Jobs(ctx, JobsFilter{State: api.JobStateReady})
+		if err != nil {
+			return nil, errors.Wrap(err, "Jobs")
+		}
+		for _, job := range readyJobs {
+			archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
+			idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
+			if archMatch && idMatch {
+				job.State = api.JobStateStarting
+				err = b.store.UpsertRunnerJob(ctx, job)
+				if err != nil {
+					return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
+				}
+				return &api.RunnerPollResponse{Start: &api.RunnerJobStart{
+					ID:                 job.ID,
+					Title:              job.Title,
+					Payload:            job.Payload,
+					GitPushUsername:    b.Config.GitPushUsername,
+					GitPushPassword:    b.Config.GitPushPassword,
+					GitConfigUserName:  b.Config.GitConfigUserName,
+					GitConfigUserEmail: b.Config.GitConfigUserEmail,
+				}}, nil
+			}
+		}
 	}
 	return &api.RunnerPollResponse{}, nil
 }

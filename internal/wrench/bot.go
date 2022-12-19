@@ -31,6 +31,7 @@ type Bot struct {
 	discordCommandsEmbed map[string]func(...string) *discordgo.MessageEmbed
 	runner               *api.Client
 	webHookGitHubSelf    sync.Mutex
+	jobAcquire           sync.Mutex
 }
 
 func (b *Bot) loadConfig() error {

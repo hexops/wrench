@@ -15,17 +15,44 @@ func (r Runner) Equal(other Runner) bool {
 	return r.ID == other.ID && r.Arch == other.Arch
 }
 
+type RunnerJobUpdate struct {
+	// If this runner is owning a job, it must be specified here.
+	ID JobID
+
+	// State, if non-empty, is the new state of the job.
+	State JobState
+
+	// Log, if non-empty, are messages to log about the job.
+	Log string
+
+	// Pushed, if true, indicates changes were pushed to Git.
+	Pushed bool
+}
+
+type RunnerJobStart struct {
+	ID      JobID
+	Title   string
+	Payload JobPayload
+
+	GitPushUsername    string
+	GitPushPassword    string
+	GitConfigUserName  string
+	GitConfigUserEmail string
+}
+
 type JobState string
 
 const (
+	JobStateReady    JobState = "ready"
 	JobStateStarting JobState = "starting"
 	JobStateRunning  JobState = "running"
-	JobStateFinished JobState = "finished"
-	JobStateErrored  JobState = "errored"
+	JobStateSuccess  JobState = "success"
+	JobStateError    JobState = "error"
 )
 
 type JobPayload struct {
-	Cmd []string
+	GitPushBranchName string
+	Cmd               []string
 }
 
 type JobID string

@@ -52,6 +52,16 @@ type Config struct {
 	// Only applicable if running as the Wrench server.
 	GitHubAccessToken string `toml:"GitHubAccessToken,omitempty"`
 
+	// (optional) When specified wrench runners can push to Git using this configuration.
+	// It is suggested to use a limited push access token for the password since it will
+	// be distributed to all runners.
+	//
+	// Only applicable if running as the Wrench server.
+	GitPushUsername    string `toml:"GitPushUsername,omitempty"`
+	GitPushPassword    string `toml:"GitPushPassword,omitempty"`
+	GitConfigUserName  string `toml:"GitConfigUserName,omitempty"`
+	GitConfigUserEmail string `toml:"GitConfigUserEmail,omitempty"`
+
 	// (optional) Generic secret used to authenticate with this server. Any arbitrary string.
 	Secret string `toml:"Secret,omitempty"`
 
