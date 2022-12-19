@@ -29,7 +29,7 @@ func (b *Bot) runnerStart() error {
 	go func() {
 		var (
 			activeMu  sync.RWMutex
-			active    = api.Job{}
+			active    *api.Job
 			activeLog bytes.Buffer
 		)
 
@@ -42,17 +42,26 @@ func (b *Bot) runnerStart() error {
 			started = true
 			ctx := context.Background()
 			activeMu.Lock()
-			resp, err := b.runner.RunnerPoll(ctx, &api.RunnerPollRequest{
-				ID:   b.Config.Runner,
-				Arch: arch,
-				Job: &api.RunnerJobUpdate{
+			var update *api.RunnerJobUpdate
+			if active != nil {
+				update = &api.RunnerJobUpdate{
 					ID:     active.ID,
 					State:  active.State,
 					Log:    activeLog.String(),
 					Pushed: false, // TODO: pushing
-				},
+				}
+			}
+			resp, err := b.runner.RunnerPoll(ctx, &api.RunnerPollRequest{
+				ID:   b.Config.Runner,
+				Arch: arch,
+				Job:  update,
 			})
-			activeLog.Reset()
+			if err == nil {
+				if active != nil && (active.State == api.JobStateSuccess || active.State == api.JobStateError) {
+					active = nil // job finished
+				}
+				activeLog.Reset()
+			}
 			activeMu.Unlock()
 			if !connected {
 				connected = true
@@ -64,16 +73,18 @@ func (b *Bot) runnerStart() error {
 			}
 			if resp.NotFound {
 				b.idLogf(logID, "error: job not found, dropping job")
-				active = api.Job{}
+				active = nil
 				continue
 			}
 
 			if resp.Start != nil {
 				activeMu.Lock()
-				active.ID = resp.Start.ID
-				active.Payload = resp.Start.Payload
-				active.Title = resp.Start.Title
-				active.State = api.JobStateRunning
+				active = &api.Job{
+					ID:      resp.Start.ID,
+					Title:   resp.Start.Title,
+					Payload: resp.Start.Payload,
+					State:   api.JobStateRunning,
+				}
 				b.idLogf(logID, "running job: id=%v title=%v", active.ID, active.Title)
 				fmt.Fprintf(&activeLog, "running job: id=%v title=%v\n", active.ID, active.Title)
 				activeMu.Unlock()
