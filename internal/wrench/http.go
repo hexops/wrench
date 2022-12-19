@@ -184,13 +184,13 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "Runners")
 	}
 	jobs, err := b.store.Jobs(r.Context(),
-		JobsFilter{NotState: JobStateFinished},
+		JobsFilter{NotState: api.JobStateFinished},
 	)
 	if err != nil {
 		return errors.Wrap(err, "Jobs(0)")
 	}
 	finishedJobs, err := b.store.Jobs(r.Context(),
-		JobsFilter{State: JobStateFinished},
+		JobsFilter{State: api.JobStateFinished},
 	)
 	if err != nil {
 		return errors.Wrap(err, "Jobs(1)")
@@ -218,7 +218,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		var values [][]string
 		for _, job := range jobs {
 			values = append(values, []string{
-				job.ID,
+				string(job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
@@ -235,7 +235,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		var values [][]string
 		for _, job := range finishedJobs {
 			values = append(values, []string{
-				job.ID,
+				string(job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,

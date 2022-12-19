@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/keegancsmith/sqlf"
@@ -154,41 +153,7 @@ func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 	return runners, rows.Err()
 }
 
-type JobState string
-
-const (
-	JobStateStarting JobState = "starting"
-	JobStateRunning  JobState = "running"
-	JobStateFinished JobState = "finished"
-	JobStateErrored  JobState = "errored"
-)
-
-type JobPayload struct {
-	Script []string
-}
-
-type Job struct {
-	ID                               string
-	State                            JobState
-	Title                            string
-	TargetRunnerID, TargetRunnerArch string
-	Payload                          JobPayload
-	Updated, Created                 time.Time
-}
-
-func NewJobID() (string, error) {
-	uuid, err := uuid.NewV6()
-	if err != nil {
-		return "", err
-	}
-	return uuid.String(), nil
-}
-
-func JobLogID(jobID string) string {
-	return "job/" + jobID
-}
-
-func (s *Store) UpsertRunnerJob(ctx context.Context, job Job) error {
+func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 	now := time.Now()
 	job.Updated = now
 	job.Created = now
@@ -245,7 +210,7 @@ const jobFields = `
 	created_at
 `
 
-func (s *Store) JobByID(ctx context.Context, id string) (*Job, error) {
+func (s *Store) JobByID(ctx context.Context, id string) (*api.Job, error) {
 	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs WHERE id = %v`, id)
 
 	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
@@ -257,11 +222,11 @@ func (s *Store) JobByID(ctx context.Context, id string) (*Job, error) {
 }
 
 type JobsFilter struct {
-	State, NotState JobState
+	State, NotState api.JobState
 	Title, NotTitle string
 }
 
-func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) {
+func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
 	var conds []*sqlf.Query
 	for _, where := range filters {
 		if where.State != "" {
@@ -289,7 +254,7 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) 
 		return nil, errors.Wrap(err, "QueryContext")
 	}
 
-	var jobs []Job
+	var jobs []api.Job
 	for rows.Next() {
 		job, err := s.scanJob(rows.Scan)
 		if err != nil {
@@ -300,8 +265,8 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) 
 	return jobs, rows.Err()
 }
 
-func (s *Store) scanJob(scan func(...any) error) (*Job, error) {
-	var j Job
+func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
+	var j api.Job
 	var payload string
 	if err := scan(
 		&j.ID,
