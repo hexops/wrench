@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/keegancsmith/sqlf"
@@ -175,6 +176,18 @@ type Job struct {
 	Updated, Created                 time.Time
 }
 
+func NewJobID() (string, error) {
+	uuid, err := uuid.NewV6()
+	if err != nil {
+		return "", err
+	}
+	return uuid.String(), nil
+}
+
+func JobLogID(jobID string) string {
+	return "job/" + jobID
+}
+
 func (s *Store) UpsertRunnerJob(ctx context.Context, job Job) error {
 	now := time.Now()
 	job.Updated = now
@@ -245,6 +258,7 @@ func (s *Store) JobByID(ctx context.Context, id string) (*Job, error) {
 
 type JobsFilter struct {
 	State, NotState JobState
+	Title, NotTitle string
 }
 
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) {
@@ -255,6 +269,12 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]Job, error) 
 		}
 		if where.NotState != "" {
 			conds = append(conds, sqlf.Sprintf("state != %v", where.NotState))
+		}
+		if where.Title != "" {
+			conds = append(conds, sqlf.Sprintf("title = %v", where.Title))
+		}
+		if where.NotTitle != "" {
+			conds = append(conds, sqlf.Sprintf("title != %v", where.NotTitle))
 		}
 	}
 
