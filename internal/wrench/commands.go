@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/hexops/wrench/internal/wrench/api"
 )
 
 func (b *Bot) registerCommands() {
@@ -98,6 +99,37 @@ func (b *Bot) registerCommands() {
 		return &discordgo.MessageEmbed{
 			Title:       "Open pull requests",
 			Description: buf.String(),
+		}
+	}
+
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"ping [id]", "ping a runner to test it is online"})
+	b.discordCommandsEmbed["ping"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) == 0 {
+			return &discordgo.MessageEmbed{
+				Title:       "ping - error",
+				Description: "expected runner ID (see !wrench runners)",
+			}
+		}
+
+		ctx := context.Background()
+		id, err := b.store.NewRunnerJob(ctx, api.Job{
+			Title:          "ping test",
+			TargetRunnerID: args[0],
+			Payload: api.JobPayload{
+				Ping: true,
+			},
+		})
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "ping - error",
+				Description: err.Error(),
+			}
+		}
+
+		return &discordgo.MessageEmbed{
+			Title:       "Ping",
+			URL:         b.Config.ExternalURL + "/runners",
+			Description: fmt.Sprintf("Job created: %v", id),
 		}
 	}
 

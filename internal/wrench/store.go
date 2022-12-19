@@ -156,6 +156,7 @@ func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 
 func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error) {
 	now := time.Now()
+	job.State = api.JobStateReady
 	job.Updated = now
 	job.Created = now
 	payload, err := json.Marshal(job.Payload)
