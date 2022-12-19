@@ -29,7 +29,7 @@ func (b *Bot) runnerStart() error {
 	go func() {
 		var (
 			activeMu  sync.RWMutex
-			active    *api.Job
+			active    = api.Job{}
 			activeLog bytes.Buffer
 		)
 
