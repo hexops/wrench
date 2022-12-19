@@ -54,13 +54,18 @@ func (b *Bot) runnerStart() error {
 			})
 			activeLog.Reset()
 			activeMu.Unlock()
+			if !connected {
+				connected = true
+				b.idLogf(logID, "working for %s ('%s', %s)", b.Config.ExternalURL, b.Config.Runner, arch)
+			}
 			if err != nil {
 				b.idLogf(logID, "error: %v", err)
 				continue
 			}
-			if !connected {
-				connected = true
-				b.idLogf(logID, "working for %s ('%s', %s)", b.Config.ExternalURL, b.Config.Runner, arch)
+			if resp.NotFound {
+				b.idLogf(logID, "error: job not found, dropping job")
+				active = api.Job{}
+				continue
 			}
 
 			if resp.Start != nil {

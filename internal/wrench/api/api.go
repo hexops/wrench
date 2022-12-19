@@ -14,6 +14,8 @@ type RunnerPollRequest struct {
 type RunnerPollResponse struct {
 	// Start, if non-nil, indicates the runner should start working on this job.
 	Start *RunnerJobStart
+
+	NotFound bool
 }
 
 type RunnerListRequest struct{}

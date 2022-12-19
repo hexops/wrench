@@ -341,6 +341,9 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		// Update job state.
 		job, err := b.store.JobByID(ctx, r.Job.ID)
 		if err != nil {
+			if err == ErrNotFound {
+				return &api.RunnerPollResponse{NotFound: true}, nil
+			}
 			return nil, errors.Wrap(err, "JobsByID")
 		}
 		job.State = r.Job.State

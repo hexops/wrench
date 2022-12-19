@@ -264,13 +264,15 @@ const jobFields = `
 	created_at
 `
 
+var ErrNotFound = errors.New("not found")
+
 func (s *Store) JobByID(ctx context.Context, id api.JobID) (api.Job, error) {
 	jobs, err := s.Jobs(ctx, JobsFilter{ID: id})
 	if err != nil {
 		return api.Job{}, err
 	}
 	if len(jobs) != 1 {
-		return api.Job{}, errors.New("unexpected jobs length")
+		return api.Job{}, ErrNotFound
 	}
 	return jobs[0], nil
 }
