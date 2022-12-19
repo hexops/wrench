@@ -354,8 +354,12 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 
 		// Log job messages.
 		if r.Job.Log != "" {
-			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushUsername, "<redacted>")
-			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
+			if b.Config.GitPushUsername != "" {
+				r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushUsername, "<redacted>")
+			}
+			if b.Config.GitPushPassword != "" {
+				r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
+			}
 			b.idLogf(r.Job.ID.LogID(), "%s", r.Job.Log)
 		}
 	}
