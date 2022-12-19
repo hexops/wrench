@@ -210,7 +210,7 @@ const jobFields = `
 	created_at
 `
 
-func (s *Store) JobByID(ctx context.Context, id string) (*api.Job, error) {
+func (s *Store) JobByID(ctx context.Context, id api.JobID) (*api.Job, error) {
 	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs WHERE id = %v`, id)
 
 	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
