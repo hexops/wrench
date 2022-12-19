@@ -70,14 +70,14 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		cmd := fields[1]
 		args := fields[1:]
 		if handler, ok := b.discordCommands[cmd]; ok {
-			response := handler(args...)
+			response := handler(args[1:]...)
 			if response != "" {
 				s.ChannelMessageSend(m.ChannelID, response)
 			}
 			return nil
 		}
 		if handler, ok := b.discordCommandsEmbed[cmd]; ok {
-			response := handler(args...)
+			response := handler(args[1:]...)
 			if response != nil {
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
