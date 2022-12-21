@@ -31,7 +31,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			commitTitle, err := Output("git log --pretty=format:%s HEAD^1..HEAD", WorkDir("wrench"))
+			commitTitle, err := Output("git log -1 --pretty=format:%s", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}

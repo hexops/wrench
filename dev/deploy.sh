@@ -7,7 +7,7 @@ source ./dev/remote.sh
 DATE=$(date)
 GOVERSION=$(go version)
 VERSION=$(git describe --tags --abbrev=8 --dirty --always --long)
-COMMIT_TITLE=$(git log --pretty=format:%s HEAD^1..HEAD)
+COMMIT_TITLE=$(git log -1 --pretty=format:%s)
 PREFIX="github.com/hexops/wrench/internal/wrench"
 LDFLAGS="-X '$PREFIX.Version=$VERSION'"
 LDFLAGS="$LDFLAGS -X '$PREFIX.CommitTitle=$COMMIT_TITLE'"
