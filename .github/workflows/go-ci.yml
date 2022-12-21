@@ -13,6 +13,8 @@ jobs:
           go-version: ^1
       - run: go test ./...
   release:
+    runs-on: ubuntu-latest
+    steps:
       - name: Release
         run: |
           DATE=$(date)
