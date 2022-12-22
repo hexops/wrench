@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/hexops/wrench/internal/errors"
 )
@@ -40,6 +41,9 @@ func init() {
 				return errors.Wrap(err, "Chmod")
 			}
 
+			if runtime.GOOS == "windows" {
+				return ExecArgs("powershell.exe", []string{tmpFile.Name()})()
+			}
 			return ExecArgs("sh", []string{tmpFile.Name()})()
 		},
 	})
