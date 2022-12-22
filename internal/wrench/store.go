@@ -235,12 +235,12 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 			created_at
 		) VALUES (%v, %v, %v, %v, %v, %v, %v, %v)
 		ON CONFLICT(id) DO UPDATE SET
-			state = %v
-			AND title = %v
-			AND target_runner_id = %v
-			AND target_runner_arch = %v
-			AND payload = %v
-			AND updated_at = %v
+			state = %v,
+			title = %v,
+			target_runner_id = %v,
+			target_runner_arch = %v,
+			payload = %v,
+			updated_at = %v
 		WHERE id = %v`,
 		mustDecodeJobID(job.ID),
 		job.State,
