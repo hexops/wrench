@@ -55,6 +55,11 @@ Examples:
 			fmt.Println("services: services.msc")
 			fmt.Println("logs: eventvwr")
 		}
+		var cfg wrench.Config
+		err = wrench.LoadConfig(*serviceConfigFile, &cfg)
+		if err == nil {
+			fmt.Println("wrench logs:", cfg.LogFilePath())
+		}
 		fmt.Println("")
 		fmt.Println(status)
 		return nil

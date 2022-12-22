@@ -72,6 +72,10 @@ type Config struct {
 	WrenchDir string `toml:"WrenchDir,omitempty"`
 }
 
+func (c *Config) LogFilePath() string {
+	return filepath.Join(c.WrenchDir, "logs")
+}
+
 func (c *Config) WriteTo(file string) error {
 	if err := os.MkdirAll(filepath.Dir(file), os.ModePerm); err != nil {
 		return errors.Wrap(err, "MkdirAll")
@@ -87,13 +91,6 @@ func (c *Config) WriteTo(file string) error {
 
 func LoadConfig(file string, out *Config) error {
 	_, err := toml.DecodeFile(file, out)
-	if errors.Is(err, os.ErrNotExist) {
-		_, err2 := toml.DecodeFile("../wrench-private/config.toml", out)
-		if err2 == nil {
-			return nil
-		}
-		return err
-	}
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -18,7 +20,7 @@ var serviceCommands cmder.Commander
 
 var (
 	serviceFlagSet    = flag.NewFlagSet("service", flag.ExitOnError)
-	serviceConfigFile = serviceFlagSet.String("config", "config.toml", "Path to TOML configuration file (see config.go)")
+	serviceConfigFile = serviceFlagSet.String("config", defaultConfigFilePath(), "Path to TOML configuration file (see config.go)")
 )
 
 func init() {
@@ -60,6 +62,14 @@ Use "wrench service <command> -h" for more information about a command.
 		Handler:   handler,
 		UsageFunc: usageFunc,
 	})
+}
+
+func defaultConfigFilePath() string {
+	u, err := user.Current()
+	if err == nil {
+		return filepath.Join(u.HomeDir, "wrench/config.toml")
+	}
+	return "config.toml"
 }
 
 func newServiceBot() (service.Service, *wrench.Bot) {

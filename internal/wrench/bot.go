@@ -8,8 +8,10 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/go-github/v48/github"
@@ -23,6 +25,7 @@ type Bot struct {
 	Config     *Config
 
 	started              bool
+	logFile              *os.File
 	store                *Store
 	github               *github.Client
 	discordSession       *discordgo.Session
@@ -50,8 +53,12 @@ func (b *Bot) logf(format string, v ...any) {
 }
 
 func (b *Bot) idLogf(id, format string, v ...any) {
-	log.Printf(format, v...)
-	b.store.Log(context.Background(), id, fmt.Sprintf(format, v...))
+	msg := fmt.Sprintf(format, v...)
+	if !strings.HasSuffix(msg, "\n") {
+		msg = msg + "\n"
+	}
+	fmt.Fprintf(b.logFile, "%s %s", time.Now().Format(time.RFC3339), msg)
+	b.store.Log(context.Background(), id, msg)
 }
 
 func (b *Bot) idWriter(id string) io.Writer {
@@ -68,13 +75,19 @@ func (w writerFunc) Write(p []byte) (n int, err error) {
 }
 
 func (b *Bot) Start(s service.Service) error {
-	logger, err := s.Logger(nil)
-	if err != nil {
-		return errors.Wrap(err, "Logger")
+	serviceLogger, _ := s.Logger(nil)
+	if serviceLogger != nil && !service.Interactive() {
+		serviceLogger.Info("wrench service started")
 	}
+
 	go func() {
 		if err := b.run(s); err != nil {
-			logger.Error(err)
+			if !service.Interactive() {
+				b.logf("wrench service: FATAL: %s", err)
+				if serviceLogger != nil {
+					serviceLogger.Error("wrench service: FATAL:", err)
+				}
+			}
 			log.Fatal(err)
 		}
 	}()
@@ -89,7 +102,16 @@ func (b *Bot) run(s service.Service) error {
 		return errors.Wrap(err, "loading config")
 	}
 
+	logFilePath := b.Config.LogFilePath()
 	var err error
+	b.logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("creating log file %s", logFilePath))
+	}
+	if !service.Interactive() {
+		b.logf("wrench service: STARTED")
+	}
+
 	b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
 	if err != nil {
 		return errors.Wrap(err, "OpenStore")
@@ -118,12 +140,16 @@ func (b *Bot) run(s service.Service) error {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
-	fmt.Println("Interrupted, shutting down..")
+	b.logf("Interrupted, shutting down..")
 
 	return errors.Wrap(b.stop(), "stop")
 }
 
 func (b *Bot) Stop(s service.Service) error {
+	serviceLogger, _ := s.Logger(nil)
+	if serviceLogger != nil && !service.Interactive() {
+		serviceLogger.Info("wrench service stopped")
+	}
 	return b.stop()
 }
 
@@ -131,6 +157,7 @@ func (b *Bot) stop() error {
 	if !b.started {
 		return nil
 	}
+	b.logFile.Close()
 	if err := b.githubStop(); err != nil {
 		return errors.Wrap(err, "github")
 	}

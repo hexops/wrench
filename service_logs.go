@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"runtime"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench"
 	"github.com/nxadm/tail"
 	"golang.org/x/exp/slices"
 )
@@ -41,22 +42,20 @@ Examples:
 			return nil
 		}
 
-		grep := map[string]struct{}{}
-		var files []string
-		if runtime.GOOS == "darwin" {
-			files = []string{
-				"/var/log/com.apple.xpc.launchd/launchd.log",
-				"/var/log/wrench.out.log",
-				"/var/log/wrench.err.log",
-			}
-			grep["/var/log/com.apple.xpc.launchd/launchd.log"] = struct{}{}
-		} else {
-			fmt.Println("'wrench svc logs' not supported on this OS.")
-			return nil
+		var cfg wrench.Config
+		err = wrench.LoadConfig(*serviceConfigFile, &cfg)
+		if err != nil {
+			return errors.Wrap(err, "LoadConfig")
 		}
+
+		files := []string{cfg.LogFilePath()}
 
 		tails := []*tail.Tail{}
 		for _, path := range files {
+			_, err := os.Stat(path)
+			if err != nil {
+				fmt.Println("warning:", err)
+			}
 			tf, err := tail.TailFile(path, tail.Config{
 				Follow: *followFlag,
 				ReOpen: *followFlag,
@@ -71,8 +70,8 @@ Examples:
 			return nil
 		}
 
+		start := time.Now()
 		lastLine := time.Now()
-		delayed := false
 		for {
 			for i, tail := range tails {
 				select {
@@ -82,22 +81,18 @@ Examples:
 						tails = slices.Delete(tails, i, i)
 						break
 					}
-					if _, ok := grep[tail.Filename]; ok {
-						if !strings.Contains(line.Text, "wrench") {
-							continue
-						}
-					}
 					if !*showAllFlag {
-						if !delayed {
+						split := strings.Split(line.Text, " ")
+						t, err := time.Parse(time.RFC3339, split[0])
+						if err == nil && !t.After(start) {
 							continue
 						}
 					}
-					fmt.Println(tail.Filename + ": " + line.Text)
+					fmt.Println(line.Text)
 				default:
 				}
 			}
 			if time.Since(lastLine) > 1*time.Second {
-				delayed = true
 				time.Sleep(100 * time.Millisecond)
 			}
 		}
