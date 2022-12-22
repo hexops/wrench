@@ -54,11 +54,10 @@ func (b *Bot) logf(format string, v ...any) {
 
 func (b *Bot) idLogf(id, format string, v ...any) {
 	msg := fmt.Sprintf(format, v...)
-	if !strings.HasSuffix(msg, "\n") {
-		msg = msg + "\n"
+	timeNow := time.Now().Format(time.RFC3339)
+	for _, line := range strings.Split(msg, "\n") {
+		fmt.Fprintf(b.logFile, "%s %s: %s\n", timeNow, id, line)
 	}
-	fmt.Fprintf(b.logFile, "%s %s", time.Now().Format(time.RFC3339), msg)
-
 	// May be called before DB is initialized.
 	if b.store != nil {
 		b.store.Log(context.Background(), id, msg)
