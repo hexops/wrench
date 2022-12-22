@@ -209,7 +209,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				runner.ID,
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
-				runner.LastSeenAt.UTC().Format(time.RFC3339),
+				fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second)),
 			})
 		}
 		tableStyle(w)
@@ -226,7 +226,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				job.Updated.UTC().Format(time.RFC3339),
+				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
@@ -243,7 +243,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				job.Updated.UTC().Format(time.RFC3339),
+				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
