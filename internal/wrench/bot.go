@@ -58,7 +58,11 @@ func (b *Bot) idLogf(id, format string, v ...any) {
 		msg = msg + "\n"
 	}
 	fmt.Fprintf(b.logFile, "%s %s", time.Now().Format(time.RFC3339), msg)
-	b.store.Log(context.Background(), id, msg)
+
+	// May be called before DB is initialized.
+	if b.store != nil {
+		b.store.Log(context.Background(), id, msg)
+	}
 }
 
 func (b *Bot) idWriter(id string) io.Writer {
