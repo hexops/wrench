@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/wrench"
@@ -89,21 +88,33 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		ConfigFile: config.ConfigFile,
 	}
 
-	var env map[string]string
 	var options service.KeyValue
 	if runtime.GOOS == "linux" {
 		options = make(service.KeyValue)
 		options["RestartSec"] = 1 // default is 120
+	}
 
-		env = make(map[string]string)
-		for _, kv := range os.Environ() {
-			split := strings.SplitN(kv, "=", 1)
-			if len(split) == 2 {
-				env[split[0]] = split[1]
-			} else {
-				env[split[0]] = ""
-			}
+	var executable string
+	var arguments []string
+	wrenchCmd := fmt.Sprintf(`%s service -config=%s run`, config.Executable, config.ConfigFile)
+	switch runtime.GOOS {
+	case "linux":
+		var err error
+		executable, err = exec.LookPath("bash")
+		if err != nil {
+			log.Fatal("LookPath", err)
 		}
+		arguments = []string{"-c", wrenchCmd}
+	case "darwin":
+		var err error
+		executable, err = exec.LookPath("zsh")
+		if err != nil {
+			log.Fatal("LookPath", err)
+		}
+		arguments = []string{"-c", wrenchCmd}
+	case "windows":
+		executable = config.Executable
+		arguments = []string{"service", "-config=" + config.ConfigFile, "run"}
 	}
 
 	// TODO: should perhaps allow setting Arguments, Executable, and EnvVars via config.toml
@@ -111,9 +122,9 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		Name:        "wrench",
 		DisplayName: "Wrench",
 		Description: "Let's fix this!",
-		Arguments:   []string{"service", "-config=" + config.ConfigFile, "run"},
-		Executable:  config.Executable,
-		EnvVars:     env,
+		Arguments:   arguments,
+		Executable:  executable,
+		EnvVars:     nil,
 		Option:      options,
 	}
 	s, err := service.New(bot, svcConfig)
