@@ -16,21 +16,21 @@ type Config struct {
 	// Address serve on, e.g. ":443" or ":80".
 	//
 	// Disabled if an empty string.
-	Address string
+	Address string `toml:"Address,omitempty"`
 
 	// (optional) Discord bot token. See README.md for details on how to create this.
 	//
 	// Disabled if an empty string.
-	DiscordBotToken string
+	DiscordBotToken string `toml:"DiscordBotToken,omitempty"`
 
 	// (required if DiscordBotToken is set) Discord guild/server ID to operate in.
 	//
 	// Find this via User Settings -> Advanced -> Enabled developer mode, then right-click on any
 	// server and Copy ID)
-	DiscordGuildID string
+	DiscordGuildID string `toml:"DiscordGuildID,omitempty"`
 
 	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
-	DiscordChannel string
+	DiscordChannel string `toml:"DiscordChannel,omitempty"`
 
 	// (optional) Directory for caching LetsEncrypt certificates
 	LetsEncryptCacheDir string `toml:"LetsEncryptCacheDir,omitempty"`
