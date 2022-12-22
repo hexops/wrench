@@ -226,13 +226,20 @@ func (b *Bot) registerCommands() {
 				Description: "that doesn't look like a gist host: " + u.Host,
 			}
 		}
+		// transform URL:
+		// https://gist.github.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d
+		// ->
+		// https://gist.githubusercontent.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d/raw
+		u.Host = "gist.githubusercontent.com"
+		u.Path += "/raw"
+		gist = u.String()
 
 		jobTitle := fmt.Sprintf("test %s", gist)
 		job, err := b.store.NewRunnerJob(ctx, api.Job{
 			Title:          jobTitle,
 			TargetRunnerID: runnerID,
 			Payload: api.JobPayload{
-				Cmd: []string{"test", gist},
+				Cmd: []string{"script", "test", gist},
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)

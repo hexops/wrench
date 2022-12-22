@@ -46,7 +46,7 @@ The scripts are:
 	// Handles calls to our subcommand.
 	handler := func(args []string) error {
 		_ = flagSet.Parse(args)
-		if len(args) != 1 {
+		if len(args) < 1 {
 			return &cmder.UsageError{Err: errors.New("expected command")}
 		}
 		for _, script := range scripts.Scripts {
