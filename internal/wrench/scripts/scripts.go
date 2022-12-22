@@ -3,9 +3,13 @@ package scripts
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/hexops/wrench/internal/errors"
 )
 
 type Script struct {
@@ -108,6 +112,33 @@ func Sequence(cmds ...Cmd) Cmd {
 			if err := cmd(); err != nil {
 				return err
 			}
+		}
+		return nil
+	}
+}
+
+func DownloadFile(url string, filepath string) Cmd {
+	return func() error {
+		fmt.Fprintf(os.Stderr, "DownloadFile: %s > %s\n", url, filepath)
+		out, err := os.Create(filepath)
+		if err != nil {
+			return errors.Wrap(err, "Create")
+		}
+		defer out.Close()
+
+		resp, err := http.Get(url)
+		if err != nil {
+			return errors.Wrap(err, "Get")
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("bad response status: %s", resp.Status)
+		}
+
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return errors.Wrap(err, "Copy")
 		}
 		return nil
 	}
