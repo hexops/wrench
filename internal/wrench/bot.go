@@ -24,17 +24,18 @@ type Bot struct {
 	ConfigFile string
 	Config     *Config
 
-	started              bool
-	logFile              *os.File
-	store                *Store
-	github               *github.Client
-	discordSession       *discordgo.Session
-	discordCommandHelp   [][2]string
-	discordCommands      map[string]func(...string) string
-	discordCommandsEmbed map[string]func(...string) *discordgo.MessageEmbed
-	runner               *api.Client
-	webHookGitHubSelf    sync.Mutex
-	jobAcquire           sync.Mutex
+	started                    bool
+	logFile                    *os.File
+	store                      *Store
+	github                     *github.Client
+	discordSession             *discordgo.Session
+	discordCommandHelp         [][2]string
+	discordCommands            map[string]func(...string) string
+	discordCommandsEmbed       map[string]func(...string) *discordgo.MessageEmbed
+	discordCommandsEmbedSecure map[string]func(...string) *discordgo.MessageEmbed
+	runner                     *api.Client
+	webHookGitHubSelf          sync.Mutex
+	jobAcquire                 sync.Mutex
 }
 
 func (b *Bot) loadConfig() error {
@@ -100,6 +101,7 @@ func (b *Bot) Start(s service.Service) error {
 func (b *Bot) run(s service.Service) error {
 	b.discordCommands = make(map[string]func(...string) string)
 	b.discordCommandsEmbed = make(map[string]func(...string) *discordgo.MessageEmbed)
+	b.discordCommandsEmbedSecure = make(map[string]func(...string) *discordgo.MessageEmbed)
 
 	if err := b.loadConfig(); err != nil {
 		return errors.Wrap(err, "loading config")

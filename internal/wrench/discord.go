@@ -83,6 +83,27 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			}
 			return nil
 		}
+		if handler, ok := b.discordCommandsEmbedSecure[cmd]; ok {
+			blocked := true
+			for _, allowed := range []string{"slimsag#2321"} {
+				if m.Author.Username == allowed {
+					blocked = false
+					break
+				}
+			}
+			if blocked {
+				s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+					Title:       "Forbidden",
+					Description: fmt.Sprintf("You are not allowed to run this command '%s'.", m.Author.ID),
+				})
+				return nil
+			}
+			response := handler(args[1:]...)
+			if response != nil {
+				s.ChannelMessageSendEmbed(m.ChannelID, response)
+			}
+			return nil
+		}
 		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
 	} else if len(fields) >= 1 && fields[0] == "!wrench" {
 		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
