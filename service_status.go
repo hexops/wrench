@@ -51,6 +51,10 @@ Examples:
 			fmt.Println("systemd: /etc/systemd/system/wrench.service")
 			fmt.Println("logs: sudo journalctl -u wrench -e -f")
 		}
+		if runtime.GOOS == "windows" {
+			fmt.Println("services: services.msc")
+			fmt.Println("logs: eventvwr")
+		}
 		fmt.Println("")
 		fmt.Println(status)
 		return nil
