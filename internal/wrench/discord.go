@@ -43,7 +43,10 @@ func (b *Bot) discordStart() error {
 	})
 
 	// In this example, we only care about receiving message events.
-	b.discordSession.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentMessageContent
+	b.discordSession.Identify.Intents =
+		discordgo.IntentsGuildMessages |
+			discordgo.IntentMessageContent |
+			discordgo.IntentDirectMessages
 
 	// Open a websocket connection to Discord and begin listening.
 	err = b.discordSession.Open()
