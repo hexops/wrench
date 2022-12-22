@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -177,6 +178,77 @@ func (b *Bot) registerCommands() {
 			}
 			time.Sleep(1 * time.Second)
 		}
+	}
+
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"test [runner id] gist", "test execution of a gist on a runner"})
+	b.discordCommandsEmbedSecure["test"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) != 2 {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: "expected [runner id] [gist] parameters (see !wrench runners for runner ID)",
+			}
+		}
+		runnerID := args[0]
+		gist := args[1]
+
+		ctx := context.Background()
+
+		runners, err := b.store.Runners(ctx)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: err.Error(),
+			}
+		}
+		found := false
+		for _, runner := range runners {
+			if runner.ID == runnerID {
+				found = true
+			}
+		}
+		if !found {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: "invalid runner ID (see !wrench runners)",
+			}
+		}
+
+		u, err := url.Parse(gist)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: "gist is not a valid gist URL: " + err.Error(),
+			}
+		}
+		if u.Host != "gist.github.com" {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: "that doesn't look like a gist host: " + u.Host,
+			}
+		}
+
+		jobTitle := fmt.Sprintf("test %s", gist)
+		job, err := b.store.NewRunnerJob(ctx, api.Job{
+			Title:          jobTitle,
+			TargetRunnerID: runnerID,
+			Payload: api.JobPayload{
+				Cmd: []string{"test", gist},
+			},
+		})
+		b.idLogf(job.LogID(), "job created: %v", jobTitle)
+		b.idLogf(job.LogID(), "testing gist: %v", gist)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "test - error",
+				Description: err.Error(),
+			}
+		}
+		return &discordgo.MessageEmbed{
+			Title:       "Test gist",
+			URL:         b.Config.ExternalURL + "/runners",
+			Description: fmt.Sprintf("Job created: %v/logs/job-%v", b.Config.ExternalURL, job),
+		}
+
 	}
 
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
