@@ -97,7 +97,7 @@ func (b *Bot) runnerStart() error {
 						activeMu.Unlock()
 						return
 					}
-					err := b.runWrench(logID, active.Payload.Cmd...)
+					err := b.runWrench(&activeLog, active.Payload.Cmd...)
 					if err != nil {
 						activeMu.Lock()
 						active.State = api.JobStateError

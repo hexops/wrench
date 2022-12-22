@@ -123,9 +123,10 @@ func (b *Bot) runRebuild() error {
 	defer b.webHookGitHubSelf.Unlock()
 
 	logID := "restart-self"
+	w := b.idWriter(logID)
 
 	b.idLogf(logID, "👀 I see new changes")
-	err := b.runWrench(logID, "script", "rebuild")
+	err := b.runWrench(w, "script", "rebuild")
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
 		b.idLogf(logID, "build failure!")
@@ -133,22 +134,22 @@ func (b *Bot) runRebuild() error {
 	}
 	b.idLogf(logID, "build success! restarting..")
 
-	return b.runWrench(logID, "svc", "restart")
+	return b.runWrench(w, "svc", "restart")
 }
 
-func (b *Bot) runWrench(id string, args ...string) error {
-	w := b.idWriter(id)
+func (b *Bot) runWrench(logWriter io.Writer, args ...string) error {
 	cmd := exec.Command("wrench", args...)
 	cmd.Dir = b.Config.WrenchDir
-	cmd.Stderr = w
-	cmd.Stdout = w
+	cmd.Stderr = logWriter
+	cmd.Stdout = logWriter
 	if err := cmd.Run(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			b.idLogf(id, "process finished: error: exit code: %v", exitError.ExitCode())
+			fmt.Fprintf(logWriter, "process finished: error: exit code: %v", exitError.ExitCode())
 			return nil
 		}
+		return err
 	}
-	b.idLogf(id, "process finished")
+	fmt.Fprintf(logWriter, "process finished")
 	return nil
 }
 
