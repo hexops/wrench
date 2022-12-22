@@ -8,9 +8,11 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v48 v48.2.0
 	github.com/hexops/cmder v1.0.1
+	github.com/jxskiss/base62 v1.1.0
 	github.com/kardianos/service v1.2.2
 	github.com/keegancsmith/sqlf v1.1.1
 	github.com/manifoldco/promptui v0.9.0
+	github.com/mholt/archiver/v4 v4.0.0-alpha.7
 	github.com/nxadm/tail v1.4.8
 	golang.org/x/crypto v0.4.0
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
@@ -19,17 +21,25 @@ require (
 )
 
 require (
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
+	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/jxskiss/base62 v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/klauspost/compress v1.15.5 // indirect
+	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/nwaples/rardecode/v2 v2.0.0-beta.2 // indirect
+	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20220927061507-ef77025ab5aa // indirect
+	github.com/therootcompany/xz v1.0.1 // indirect
+	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect

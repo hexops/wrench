@@ -2,14 +2,17 @@ package scripts
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/mholt/archiver/v4"
 )
 
 type Script struct {
@@ -139,6 +142,63 @@ func DownloadFile(url string, filepath string) Cmd {
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
 			return errors.Wrap(err, "Copy")
+		}
+		return nil
+	}
+}
+
+func ExtractArchive(archiveFilePath, dst string) Cmd {
+	return func() error {
+		fmt.Fprintf(os.Stderr, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
+		ctx := context.Background()
+		handler := func(ctx context.Context, fi archiver.File) error {
+			dstPath := filepath.Join(dst, fi.NameInArchive)
+			if fi.IsDir() {
+				err := os.MkdirAll(dstPath, os.ModePerm)
+				return errors.Wrap(err, "MkdirAll")
+			}
+
+			src, err := fi.Open()
+			if err != nil {
+				return errors.Wrap(err, "Open")
+			}
+			defer src.Close()
+			dst, err := os.Create(dstPath)
+			if err != nil {
+				return errors.Wrap(err, "Create")
+			}
+			_, err = io.Copy(dst, src)
+			return errors.Wrap(err, "Copy")
+		}
+		archiveFile, err := os.Open(archiveFilePath)
+		if err != nil {
+			return errors.Wrap(err, "Open(archiveFilePath)")
+		}
+		defer archiveFile.Close()
+
+		type Format interface {
+			Extract(
+				ctx context.Context,
+				sourceArchive io.Reader,
+				pathsInArchive []string,
+				handleFile archiver.FileHandler,
+			) error
+		}
+		var format Format
+		if strings.HasSuffix(archiveFilePath, ".tar.gz") {
+			format = archiver.CompressedArchive{
+				Compression: archiver.Gz{},
+				Archival:    archiver.Tar{},
+			}
+		} else if strings.HasSuffix(archiveFilePath, ".zip") {
+			format = archiver.Zip{}
+		} else {
+			return errors.Wrap(err, "unsupported archive format")
+		}
+
+		err = format.Extract(ctx, archiveFile, nil, handler)
+		if err != nil {
+			return errors.Wrap(err, "Extract")
 		}
 		return nil
 	}
