@@ -221,7 +221,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		var values [][]string
 		for _, job := range jobs {
 			values = append(values, []string{
-				string(job.ID),
+				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
@@ -238,7 +238,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		var values [][]string
 		for _, job := range finishedJobs {
 			values = append(values, []string{
-				string(job.ID),
+				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
