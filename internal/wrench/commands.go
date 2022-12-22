@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -134,14 +135,14 @@ func (b *Bot) registerCommands() {
 		}
 
 		jobTitle := "ping test"
-		id, err := b.store.NewRunnerJob(ctx, api.Job{
+		job, err := b.store.NewRunnerJob(ctx, api.Job{
 			Title:          jobTitle,
 			TargetRunnerID: args[0],
 			Payload: api.JobPayload{
 				Ping: true,
 			},
 		})
-		b.idLogf(id.LogID(), "job created: %v", jobTitle)
+		b.idLogf(job.LogID(), "job created: %v", jobTitle)
 		if err != nil {
 			return &discordgo.MessageEmbed{
 				Title:       "ping - error",
@@ -149,10 +150,32 @@ func (b *Bot) registerCommands() {
 			}
 		}
 
-		return &discordgo.MessageEmbed{
-			Title:       "Ping",
-			URL:         b.Config.ExternalURL + "/runners",
-			Description: fmt.Sprintf("Job created: %v/logs/job-%v", b.Config.ExternalURL, id),
+		start := time.Now()
+		for {
+			logs, err := b.store.Logs(ctx, job.LogID())
+			if err != nil {
+				return &discordgo.MessageEmbed{
+					Title:       "ping - error",
+					Description: "could not read logs after job creation: " + err.Error(),
+				}
+			}
+			for _, log := range logs {
+				if strings.Contains(log.Message, "PING SUCCESS") {
+					return &discordgo.MessageEmbed{
+						Title:       "Ping",
+						URL:         b.Config.ExternalURL + "/runners",
+						Description: fmt.Sprintf("Ping success! %v/logs/job-%v", b.Config.ExternalURL, job),
+					}
+				}
+			}
+			if time.Since(start) > 10*time.Second {
+				return &discordgo.MessageEmbed{
+					Title:       "ping - timeout waiting for ping success after 10s",
+					URL:         b.Config.ExternalURL + "/runners",
+					Description: fmt.Sprintf("job created: %v/logs/job-%v", b.Config.ExternalURL, job),
+				}
+			}
+			time.Sleep(1 * time.Second)
 		}
 	}
 
