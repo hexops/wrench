@@ -8,7 +8,7 @@ func init() {
 		Execute: func(args ...string) error {
 			return Sequence(
 				Exec("wrench script install-go"),
-				Exec("wrench script rebuild"),
+				Exec("wrench script rebuild-only"),
 			)()
 		},
 	})
