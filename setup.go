@@ -14,6 +14,7 @@ import (
 	"github.com/hexops/cmder"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 	"github.com/kardianos/service"
 	"github.com/manifoldco/promptui"
 )
@@ -195,6 +196,14 @@ Examples:
 				fmt.Println("wrench: please move the binary and rerun")
 				return nil
 			}
+
+			fmt.Printf("wrench: ensuring binary on system PATH..")
+			err = scripts.EnsureOnPathPermanent(filepath.Dir(exePath))
+			if err != nil {
+				fmt.Println(" error")
+				return errors.Wrap(err, "isRoot")
+			}
+			fmt.Println(" ok")
 
 			fmt.Printf("wrench: installing system service..")
 			svc, _ := newServiceBotWithConfig(&ServiceConfig{
