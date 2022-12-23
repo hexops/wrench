@@ -100,11 +100,11 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 	switch runtime.GOOS {
 	case "linux":
 		var err error
-		executable, err = exec.LookPath("bash")
+		executable, err = exec.LookPath("sh")
 		if err != nil {
 			log.Fatal("LookPath", err)
 		}
-		arguments = []string{"-c", wrenchCmd}
+		arguments = []string{"-lc", wrenchCmd}
 	case "darwin":
 		var err error
 		executable, err = exec.LookPath("zsh")
