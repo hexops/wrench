@@ -22,6 +22,7 @@ func init() {
 			force := len(args) == 1 && args[0] == "true"
 			goVersion, err := Output("go version")
 			if err == nil && strings.Contains(goVersion, wantGoVersion) && !force {
+				fmt.Fprintf(os.Stderr, wantGoVersion+" already installed")
 				return nil
 			}
 
