@@ -17,9 +17,9 @@ func setEnvPermanent(key, value string) error {
 		}
 		return nil
 	case "linux":
-		err := AppendToFile("/etc/environment.d/wrench.sh", "%s=%s", key, value)()
+		err := AppendToFile("/etc/profile.d/wrench.sh", "%s=%s", key, value)()
 		if err != nil {
-			return errors.Wrap(err, "appending to /etc/environment.d/wrench.sh")
+			return errors.Wrap(err, "appending to /etc/profile.d/wrench.sh")
 		}
 		return nil
 	}
@@ -35,9 +35,9 @@ func appendEnvPermanent(key, value string) error {
 		}
 		return nil
 	case "linux":
-		err := AppendToFile("/etc/environment.d/wrench.sh", "%s=$%s:%s", key, key, value)()
+		err := AppendToFile("/etc/profile.d/wrench.sh", "%s=$%s:%s", key, key, value)()
 		if err != nil {
-			return errors.Wrap(err, "appending to /etc/environment.d/wrench.sh")
+			return errors.Wrap(err, "appending to /etc/profile.d/wrench.sh")
 		}
 		return nil
 	}
