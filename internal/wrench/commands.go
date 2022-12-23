@@ -255,7 +255,6 @@ func (b *Bot) registerCommands() {
 			URL:         b.Config.ExternalURL + "/runners",
 			Description: fmt.Sprintf("Job created: %v/logs/job-%v", b.Config.ExternalURL, job),
 		}
-
 	}
 
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})

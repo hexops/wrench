@@ -37,7 +37,7 @@ func init() {
 			}
 
 			// Mark tmp file as executable.
-			if err := os.Chmod(tmpFile.Name(), 0700); err != nil {
+			if err := os.Chmod(tmpFile.Name(), 0o700); err != nil {
 				return errors.Wrap(err, "Chmod")
 			}
 

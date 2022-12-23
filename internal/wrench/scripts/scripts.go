@@ -207,7 +207,7 @@ func ExtractArchive(archiveFilePath, dst string) Cmd {
 func AppendToFile(file, format string, v ...any) Cmd {
 	return func() error {
 		fmt.Fprintf(os.Stderr, "AppendToFile: %s >> %s\n", fmt.Sprintf(format, v...), file)
-		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return errors.Wrap(err, "OpenFile")
 		}

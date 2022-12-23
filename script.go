@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	var usage = `wrench script: run a script built-in to wrench
+	usage := `wrench script: run a script built-in to wrench
 
 Usage:
 
@@ -21,7 +21,7 @@ The scripts are:
 
 `
 
-	var maxCmdStrLen = 0
+	maxCmdStrLen := 0
 	for _, script := range scripts.Scripts {
 		cmdStr := script.Command
 		if len(script.Args) > 0 {

@@ -109,7 +109,7 @@ func (b *Bot) run(s service.Service) error {
 
 	logFilePath := b.Config.LogFilePath()
 	var err error
-	b.logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	b.logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("creating log file %s", logFilePath))
 	}
