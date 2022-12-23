@@ -10,7 +10,7 @@ import (
 
 func init() {
 	Scripts = append(Scripts, Script{
-		Command:     "rebuild",
+		Command:     "rebuild-only",
 		Args:        nil,
 		Description: "wrench rebuilds and reinstalls itself",
 		Execute: func(args ...string) error {
