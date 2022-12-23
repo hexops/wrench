@@ -11,13 +11,13 @@ import (
 func setEnvPermanent(key, value string) error {
 	switch runtime.GOOS {
 	case "darwin":
-		err := AppendToFile("/System/Volumes/Data/private/etc/zshrc", "export %s=%s", key, value)()
+		err := AppendToFile("/System/Volumes/Data/private/etc/zshrc", "\nexport %s=%s\n", key, value)()
 		if err != nil {
 			return errors.Wrap(err, "appending to system zshrc")
 		}
 		return nil
 	case "linux":
-		err := AppendToFile("/etc/profile.d/wrench.sh", "%s=%s", key, value)()
+		err := AppendToFile("/etc/profile.d/wrench.sh", "\n%s=%s\n", key, value)()
 		if err != nil {
 			return errors.Wrap(err, "appending to /etc/profile.d/wrench.sh")
 		}
@@ -29,13 +29,13 @@ func setEnvPermanent(key, value string) error {
 func appendEnvPermanent(key, value string) error {
 	switch runtime.GOOS {
 	case "darwin":
-		err := AppendToFile("/System/Volumes/Data/private/etc/zshrc", "export %s=$%s:%s", key, key, value)()
+		err := AppendToFile("/System/Volumes/Data/private/etc/zshrc", "\nexport %s=$%s:%s\n", key, key, value)()
 		if err != nil {
 			return errors.Wrap(err, "appending to system zshrc")
 		}
 		return nil
 	case "linux":
-		err := AppendToFile("/etc/profile.d/wrench.sh", "%s=$%s:%s", key, key, value)()
+		err := AppendToFile("/etc/profile.d/wrench.sh", "\n%s=$%s:%s\n", key, key, value)()
 		if err != nil {
 			return errors.Wrap(err, "appending to /etc/profile.d/wrench.sh")
 		}
