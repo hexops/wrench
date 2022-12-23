@@ -168,7 +168,11 @@ func ExtractArchive(archiveFilePath, dst string) Cmd {
 				return errors.Wrap(err, "Create")
 			}
 			_, err = io.Copy(dst, src)
-			return errors.Wrap(err, "Copy")
+			if err != nil {
+				return errors.Wrap(err, "Copy")
+			}
+			err = os.Chmod(dstPath, fi.Mode().Perm())
+			return errors.Wrap(err, "Chmod")
 		}
 		archiveFile, err := os.Open(archiveFilePath)
 		if err != nil {
