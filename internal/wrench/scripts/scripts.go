@@ -68,6 +68,7 @@ func ExecArgs(name string, args []string, opt ...CmdOption) Cmd {
 			if exitError, ok := err.(*exec.ExitError); ok {
 				return fmt.Errorf("'%s': error: exit code: %v", name, exitError.ExitCode())
 			}
+			return err
 		}
 		return nil
 	}
