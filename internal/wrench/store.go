@@ -316,7 +316,7 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 	if len(conds) > 0 {
 		whereClause = sqlf.Sprintf("WHERE %v", sqlf.Join(conds, "AND"))
 	}
-	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs %s ORDER BY id`, whereClause)
+	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs %s ORDER BY id DESC`, whereClause)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
