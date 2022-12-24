@@ -241,6 +241,55 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"script-all [command] [args]", "execute 'wrench script [cmd] [args]' on all runners"})
+	b.discordCommandsEmbedSecure["script-all"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) < 1 {
+			return &discordgo.MessageEmbed{
+				Title:       "script - error",
+				Description: "expected [command] [args] (see !wrench runners for runner ID)",
+			}
+		}
+		commandName := args[0]
+		commandArgs := args[1:]
+
+		ctx := context.Background()
+		runners, err := b.store.Runners(ctx)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "error",
+				Description: err.Error(),
+			}
+		}
+		var out bytes.Buffer
+		fmt.Fprintf(&out, "Jobs created:\n")
+		for _, runner := range runners {
+			jobTitle := fmt.Sprintf("script %s %s", commandName, commandArgs)
+			job, err := b.store.NewRunnerJob(ctx, api.Job{
+				Title:          jobTitle,
+				TargetRunnerID: runner.ID,
+				Payload: api.JobPayload{
+					Cmd: append([]string{"script", commandName}, commandArgs...),
+				},
+			})
+			b.idLogf(job.LogID(), "job created: %v", jobTitle)
+			b.idLogf(job.LogID(), "running: wrench script %s %s", commandName, commandArgs)
+
+			fmt.Fprintf(&out, "* %v:%v [%v](%v/logs/job-%v)\n", runner.ID, runner.Arch, job, b.Config.ExternalURL, job)
+			if err != nil {
+				return &discordgo.MessageEmbed{
+					Title:       "script - error",
+					Description: err.Error(),
+				}
+			}
+		}
+
+		return &discordgo.MessageEmbed{
+			Title:       "Script " + commandName,
+			URL:         b.Config.ExternalURL + "/runners",
+			Description: out.String(),
+		}
+	}
+
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
