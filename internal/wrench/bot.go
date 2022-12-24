@@ -162,17 +162,19 @@ func (b *Bot) stop() error {
 		return nil
 	}
 	b.logFile.Close()
-	if err := b.githubStop(); err != nil {
-		return errors.Wrap(err, "github")
-	}
-	if err := b.discordStop(); err != nil {
-		return errors.Wrap(err, "discord")
-	}
-	if err := b.httpStop(); err != nil {
-		return errors.Wrap(err, "http")
-	}
-	if err := b.store.Close(); err != nil {
-		return errors.Wrap(err, "Store.Close")
+	if b.Config.Runner == "" {
+		if err := b.githubStop(); err != nil {
+			return errors.Wrap(err, "github")
+		}
+		if err := b.discordStop(); err != nil {
+			return errors.Wrap(err, "discord")
+		}
+		if err := b.httpStop(); err != nil {
+			return errors.Wrap(err, "http")
+		}
+		if err := b.store.Close(); err != nil {
+			return errors.Wrap(err, "Store.Close")
+		}
 	}
 	return nil
 }
