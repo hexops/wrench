@@ -201,6 +201,46 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"script [runner id] [command] [args]", "execute 'wrench script [cmd] [args]' on a runner"})
+	b.discordCommandsEmbedSecure["script"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) < 2 {
+			return &discordgo.MessageEmbed{
+				Title:       "script - error",
+				Description: "expected [runner id] [command] [args] (see !wrench runners for runner ID)",
+			}
+		}
+		runnerID := args[0]
+		commandName := args[1]
+		commandArgs := args[1:]
+
+		ctx := context.Background()
+		if msg := b.validateRunnerID(ctx, runnerID); msg != nil {
+			return msg
+		}
+
+		jobTitle := fmt.Sprintf("script %s %s", commandName, commandArgs)
+		job, err := b.store.NewRunnerJob(ctx, api.Job{
+			Title:          jobTitle,
+			TargetRunnerID: runnerID,
+			Payload: api.JobPayload{
+				Cmd: append([]string{"script", commandName}, commandArgs...),
+			},
+		})
+		b.idLogf(job.LogID(), "job created: %v", jobTitle)
+		b.idLogf(job.LogID(), "running: wrench script %s %s", commandName, commandArgs)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "script - error",
+				Description: err.Error(),
+			}
+		}
+		return &discordgo.MessageEmbed{
+			Title:       "Script " + commandName,
+			URL:         b.Config.ExternalURL + "/runners",
+			Description: fmt.Sprintf("Job created: %v/logs/job-%v", b.Config.ExternalURL, job),
+		}
+	}
+
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
