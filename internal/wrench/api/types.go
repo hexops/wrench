@@ -6,6 +6,7 @@ import (
 
 type Runner struct {
 	ID, Arch                 string
+	Env                      RunnerEnv
 	RegisteredAt, LastSeenAt time.Time
 }
 
@@ -25,6 +26,13 @@ type RunnerJobUpdate struct {
 
 	// Pushed, if true, indicates changes were pushed to Git.
 	Pushed bool
+}
+
+type RunnerEnv struct {
+	WrenchVersion     string
+	WrenchCommitTitle string
+	WrenchDate        string
+	WrenchGoVersion   string
 }
 
 type RunnerJobStart struct {

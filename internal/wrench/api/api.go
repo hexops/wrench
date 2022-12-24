@@ -9,6 +9,9 @@ type RunnerPollRequest struct {
 
 	// Job, if non-nil, indicates the runner has an update about performing a job.
 	Job *RunnerJobUpdate
+
+	// General runner environment info (wrench version, etc.)
+	Env RunnerEnv
 }
 
 type RunnerPollResponse struct {

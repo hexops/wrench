@@ -33,6 +33,13 @@ func (b *Bot) runnerStart() error {
 			activeLog bytes.Buffer
 		)
 
+		env := api.RunnerEnv{
+			WrenchVersion:     Version,
+			WrenchCommitTitle: CommitTitle,
+			WrenchDate:        Date,
+			WrenchGoVersion:   GoVersion,
+		}
+
 		logID := "runner"
 		started := false
 		for {
@@ -55,6 +62,7 @@ func (b *Bot) runnerStart() error {
 				ID:   b.Config.Runner,
 				Arch: arch,
 				Job:  update,
+				Env:  env,
 			})
 			if err == nil {
 				if active != nil && (active.State == api.JobStateSuccess || active.State == api.JobStateError) {

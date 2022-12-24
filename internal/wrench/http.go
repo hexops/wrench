@@ -335,7 +335,7 @@ func botHttpAPI[Request any, Response any](b *Bot, handler func(context.Context,
 }
 
 func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest) (*api.RunnerPollResponse, error) {
-	err := b.store.RunnerSeen(ctx, r.ID, r.Arch)
+	err := b.store.RunnerSeen(ctx, r.ID, r.Arch, r.Env)
 	if err != nil {
 		return nil, errors.Wrap(err, "RunnerSeen")
 	}
