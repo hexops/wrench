@@ -27,7 +27,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			version, err := Output("git describe --tags --abbrev=8 --dirty --always --long", WorkDir("wrench"))
+			version, err := Output("git describe --abbrev=8 --dirty --always --long", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}
