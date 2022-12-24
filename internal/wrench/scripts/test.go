@@ -61,7 +61,7 @@ func transformGistURL(urlString string) (*url.URL, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "gist is not a valid gist URL")
 	}
-	if u.Host != "gist.github.com" {
+	if u.Host == "gist.github.com" {
 		// transform URL:
 		// https://gist.github.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d
 		// ->
