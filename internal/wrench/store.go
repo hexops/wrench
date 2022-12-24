@@ -298,6 +298,7 @@ func (s *Store) JobByID(ctx context.Context, id api.JobID) (api.Job, error) {
 type JobsFilter struct {
 	State, NotState api.JobState
 	Title, NotTitle string
+	TargetRunnerID  string
 	ID              api.JobID
 }
 
@@ -315,6 +316,9 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 		}
 		if where.NotTitle != "" {
 			conds = append(conds, sqlf.Sprintf("title != %v", where.NotTitle))
+		}
+		if where.TargetRunnerID != "" {
+			conds = append(conds, sqlf.Sprintf("target_runner_id = %v", where.TargetRunnerID))
 		}
 		if where.ID != "" {
 			conds = append(conds, sqlf.Sprintf("id = %v", mustDecodeJobID(where.ID)))

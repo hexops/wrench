@@ -409,15 +409,39 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		b.jobAcquire.Lock()
 		defer b.jobAcquire.Unlock()
 
+		// If the runner is looking for new jobs, but we think it's currently starting or running
+		// one, then that means that job died.
+		deadJobs, err := b.store.Jobs(ctx,
+			// Starting OR Running
+			JobsFilter{NotState: api.JobStateSuccess},
+			JobsFilter{NotState: api.JobStateError},
+			JobsFilter{NotState: api.JobStateReady},
+			// Assigned to this runner
+			JobsFilter{TargetRunnerID: r.ID},
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "Jobs(dead)")
+		}
+		for _, job := range deadJobs {
+			b.idLogf(job.ID.LogID(), "runner stopped performing job unexpectedly: %v:%v", r.ID, r.Arch)
+			job.State = api.JobStateError
+			err = b.store.UpsertRunnerJob(ctx, job)
+			if err != nil {
+				return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
+			}
+		}
+
+		// Identify if a new job is available.
 		readyJobs, err := b.store.Jobs(ctx, JobsFilter{State: api.JobStateReady})
 		if err != nil {
-			return nil, errors.Wrap(err, "Jobs")
+			return nil, errors.Wrap(err, "Jobs(ready)")
 		}
 		for _, job := range readyJobs {
 			archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
 			idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
 			if archMatch && idMatch {
 				job.State = api.JobStateStarting
+				job.TargetRunnerID = r.ID // assign job to this runner
 				err = b.store.UpsertRunnerJob(ctx, job)
 				if err != nil {
 					return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
