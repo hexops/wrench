@@ -211,7 +211,7 @@ func (b *Bot) registerCommands() {
 		}
 		runnerID := args[0]
 		commandName := args[1]
-		commandArgs := args[1:]
+		commandArgs := args[2:]
 
 		ctx := context.Background()
 		if msg := b.validateRunnerID(ctx, runnerID); msg != nil {
