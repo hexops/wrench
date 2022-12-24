@@ -59,3 +59,24 @@ To add the bot to a server:
   * Use slash commands
 
 This will give you a URL you can visit to add the bot to your server.
+
+## Installation
+
+### Linux
+
+1. Download release binary
+2. Move to `/usr/local/bin/wrench` and `chmod +x /usr/local/bin/wrench`
+3. Run `sudo wrench setup` and follow instructions
+
+### macOS
+
+1. Download release binary
+2. Move to `$HOME/.bin/wrench` and `chmod +x $HOME/.bin/wrench`
+3. Place `$HOME/.bin` on PATH if desired
+4. Run `sudo wrench setup`
+
+### Windows
+
+1. Download release binary, rename to `.exe`
+2. Place at `C:/wrench.exe` or some other location. Put on PATH if desired.
+3. In admin terminal run `wrench.exe setup`
