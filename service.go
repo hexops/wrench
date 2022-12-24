@@ -89,9 +89,15 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 	}
 
 	var options service.KeyValue
+	var envVars map[string]string
 	if runtime.GOOS == "linux" {
 		options = make(service.KeyValue)
 		options["RestartSec"] = 1 // default is 120
+		u, err := user.Current()
+		if err != nil {
+			log.Fatal("user.Current", err)
+		}
+		envVars = map[string]string{"HOME": u.HomeDir}
 	}
 
 	var executable string
@@ -124,7 +130,7 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		Description: "Let's fix this!",
 		Arguments:   arguments,
 		Executable:  executable,
-		EnvVars:     nil,
+		EnvVars:     envVars,
 		Option:      options,
 	}
 	s, err := service.New(bot, svcConfig)
