@@ -385,7 +385,7 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 				if err != nil {
 					return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
 				}
-				b.idLogf(job.ID.LogID(), "job assigned to runner: %v/%v", r.ID, r.Arch)
+				b.idLogf(job.ID.LogID(), "job assigned to runner: %v:%v", r.ID, r.Arch)
 				return &api.RunnerPollResponse{Start: &api.RunnerJobStart{
 					ID:                 job.ID,
 					Title:              job.Title,

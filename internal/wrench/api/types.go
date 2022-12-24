@@ -50,7 +50,7 @@ const (
 
 type JobPayload struct {
 	GitPushBranchName string
-	Cmds              []string
+	Cmd               []string
 	Ping              bool
 }
 
