@@ -47,7 +47,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
-	mux.Handle("/runners", handler("runners", b.httpServeRunners))
+	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
 
@@ -182,6 +182,40 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
+	_, id := path.Split(r.URL.Path)
+	if id == "" {
+		runners, err := b.store.Runners(r.Context())
+		if err != nil {
+			return errors.Wrap(err, "Runners")
+		}
+		var runner *api.Runner
+		for _, r := range runners {
+			if r.ID == id {
+				runner = &r
+				break
+			}
+		}
+		if runner == nil {
+			return errors.New("no such runner")
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprintf(w, "<h2>Runner %s:%s</h2>", runner.ID, runner.Arch)
+		fmt.Fprintf(w, `<ul>`)
+		for _, pair := range [][2]string{
+			{"Registered", runner.RegisteredAt.UTC().Format(time.RFC3339)},
+			{"Last seen", fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second))},
+			{"Wrench version", runner.Env.WrenchVersion},
+			{"Wrench commit title", runner.Env.WrenchCommitTitle},
+			{"Wrench date", runner.Env.WrenchDate},
+			{"Wrench Go version", runner.Env.WrenchGoVersion},
+		} {
+			fmt.Fprintf(w, `<li><strong>%s</strong>: %s</li>`, pair[0], pair[1])
+		}
+		fmt.Fprintf(w, `</ul>`)
+		return nil
+	}
+
 	runners, err := b.store.Runners(r.Context())
 	if err != nil {
 		return errors.Wrap(err, "Runners")
@@ -209,7 +243,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		var values [][]string
 		for _, runner := range runners {
 			values = append(values, []string{
-				runner.ID,
+				fmt.Sprintf(`<a href="/runners/%s">%s</a>`, runner.ID, runner.ID),
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
 				fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second)),
