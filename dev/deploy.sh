@@ -4,7 +4,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"/..
 
 source ./dev/remote.sh
 
-DATE=$(date)
+DATE=$(date --rfc-3339=seconds || gdate --rfc-3339=seconds)
 GOVERSION=$(go version)
 VERSION=$(git describe --abbrev=8 --dirty --always --long)
 COMMIT_TITLE=$(git log -1 --pretty=format:%s)
