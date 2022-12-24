@@ -183,7 +183,7 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 
 func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	_, id := path.Split(r.URL.Path)
-	if id == "" {
+	if id != "" {
 		runners, err := b.store.Runners(r.Context())
 		if err != nil {
 			return errors.Wrap(err, "Runners")
