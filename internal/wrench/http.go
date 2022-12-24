@@ -247,10 +247,11 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
 				fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second)),
+				runner.Env.WrenchVersion,
 			})
 		}
 		tableStyle(w)
-		table(w, []string{"id", "arch", "registered", "last seen"}, values)
+		table(w, []string{"id", "arch", "registered", "last seen", "version"}, values)
 	}
 
 	fmt.Fprintf(w, "<h2>Jobs</h2>")
