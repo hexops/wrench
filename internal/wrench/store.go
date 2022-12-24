@@ -43,6 +43,7 @@ func (s *Store) ensureSchema() error {
 		CREATE TABLE IF NOT EXISTS runners (
 			id TEXT PRIMARY KEY NOT NULL,
 			arch TEXT NOT NULL,
+			env TEXT NOT NULL,
 			registered_at TIMESTAMP NOT NULL,
 			last_seen_at TIMESTAMP NOT NULL
 		);
@@ -123,20 +124,24 @@ func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
 	return ids, rows.Err()
 }
 
-func (s *Store) RunnerSeen(ctx context.Context, id, arch string) error {
+func (s *Store) RunnerSeen(ctx context.Context, id, arch string, env api.RunnerEnv) error {
 	now := time.Now()
+	envJSON, err := json.Marshal(env)
+	if err != nil {
+		return errors.Wrap(err, "Marshal")
+	}
 	q := sqlf.Sprintf(
-		`INSERT INTO runners(id, arch, registered_at, last_seen_at) VALUES (%v, %v, %v, %v)
-		ON CONFLICT(id) DO UPDATE SET last_seen_at = %v WHERE id=%v`,
-		id, arch, now, now,
-		now, id,
+		`INSERT INTO runners(id, arch, registered_at, last_seen_at, env) VALUES (%v, %v, %v, %v, %v)
+		ON CONFLICT(id) DO UPDATE SET last_seen_at = %v, env = %v WHERE id=%v`,
+		id, arch, now, now, string(envJSON),
+		now, string(envJSON), id,
 	)
-	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	_, err = s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	return err
 }
 
 func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
-	q := sqlf.Sprintf(`SELECT id, arch, registered_at, last_seen_at FROM runners ORDER BY id`)
+	q := sqlf.Sprintf(`SELECT id, arch, env, registered_at, last_seen_at FROM runners ORDER BY id`)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
@@ -146,8 +151,12 @@ func (s *Store) Runners(ctx context.Context) ([]api.Runner, error) {
 	var runners []api.Runner
 	for rows.Next() {
 		var runner api.Runner
-		if err = rows.Scan(&runner.ID, &runner.Arch, &runner.RegisteredAt, &runner.LastSeenAt); err != nil {
+		var envJSON string
+		if err = rows.Scan(&runner.ID, &runner.Arch, &envJSON, &runner.RegisteredAt, &runner.LastSeenAt); err != nil {
 			return nil, errors.Wrap(err, "Scan")
+		}
+		if err := json.Unmarshal([]byte(envJSON), &runner.Env); err != nil {
+			return nil, errors.Wrap(err, "Unmarshal")
 		}
 		runners = append(runners, runner)
 	}
