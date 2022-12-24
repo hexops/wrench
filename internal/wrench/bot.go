@@ -117,15 +117,14 @@ func (b *Bot) run(s service.Service) error {
 		b.logf("wrench service: STARTED")
 	}
 
-	b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
-	if err != nil {
-		return errors.Wrap(err, "OpenStore")
-	}
-	if err := b.githubStart(); err != nil {
-		return errors.Wrap(err, "github")
-	}
-
 	if b.Config.Runner == "" {
+		b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
+		if err != nil {
+			return errors.Wrap(err, "OpenStore")
+		}
+		if err := b.githubStart(); err != nil {
+			return errors.Wrap(err, "github")
+		}
 		if err := b.discordStart(); err != nil {
 			return errors.Wrap(err, "discord")
 		}
