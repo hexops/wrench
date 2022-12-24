@@ -242,16 +242,22 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	{
 		var values [][]string
 		for _, runner := range runners {
+			wrenchDate := runner.Env.WrenchDate
+			wrenchDateTime, err := time.Parse(time.RFC3339, runner.Env.WrenchDate)
+			if err == nil {
+				wrenchDate = fmt.Sprintf("%s ago", time.Since(wrenchDateTime).Round(time.Second))
+			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="/runners/%s">%s</a>`, runner.ID, runner.ID),
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
 				fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second)),
 				runner.Env.WrenchVersion,
+				wrenchDate,
 			})
 		}
 		tableStyle(w)
-		table(w, []string{"id", "arch", "registered", "last seen", "version"}, values)
+		table(w, []string{"id", "arch", "registered", "last seen", "version", "built"}, values)
 	}
 
 	fmt.Fprintf(w, "<h2>Jobs</h2>")
