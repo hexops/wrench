@@ -1,7 +1,6 @@
 package scripts
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -70,5 +69,5 @@ func transformGistURL(urlString string) (*url.URL, error) {
 		u.Path += "/raw"
 		return u, nil
 	}
-	return nil, fmt.Errorf("%q is not an accepted gist host", u.Host)
+	return u, nil
 }
