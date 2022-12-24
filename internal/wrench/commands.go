@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -114,25 +113,8 @@ func (b *Bot) registerCommands() {
 		}
 
 		ctx := context.Background()
-
-		runners, err := b.store.Runners(ctx)
-		if err != nil {
-			return &discordgo.MessageEmbed{
-				Title:       "ping - error",
-				Description: err.Error(),
-			}
-		}
-		found := false
-		for _, runner := range runners {
-			if runner.ID == args[0] {
-				found = true
-			}
-		}
-		if !found {
-			return &discordgo.MessageEmbed{
-				Title:       "ping - error",
-				Description: "invalid runner ID (see !wrench runners)",
-			}
+		if msg := b.validateRunnerID(ctx, args[0]); msg != nil {
+			return msg
 		}
 
 		jobTitle := "ping test"
@@ -192,47 +174,9 @@ func (b *Bot) registerCommands() {
 		gist := args[1]
 
 		ctx := context.Background()
-
-		runners, err := b.store.Runners(ctx)
-		if err != nil {
-			return &discordgo.MessageEmbed{
-				Title:       "test - error",
-				Description: err.Error(),
-			}
+		if msg := b.validateRunnerID(ctx, runnerID); msg != nil {
+			return msg
 		}
-		found := false
-		for _, runner := range runners {
-			if runner.ID == runnerID {
-				found = true
-			}
-		}
-		if !found {
-			return &discordgo.MessageEmbed{
-				Title:       "test - error",
-				Description: "invalid runner ID (see !wrench runners)",
-			}
-		}
-
-		u, err := url.Parse(gist)
-		if err != nil {
-			return &discordgo.MessageEmbed{
-				Title:       "test - error",
-				Description: "gist is not a valid gist URL: " + err.Error(),
-			}
-		}
-		if u.Host != "gist.github.com" {
-			return &discordgo.MessageEmbed{
-				Title:       "test - error",
-				Description: "that doesn't look like a gist host: " + u.Host,
-			}
-		}
-		// transform URL:
-		// https://gist.github.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d
-		// ->
-		// https://gist.githubusercontent.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d/raw
-		u.Host = "gist.githubusercontent.com"
-		u.Path += "/raw"
-		gist = u.String()
 
 		jobTitle := fmt.Sprintf("test %s", gist)
 		job, err := b.store.NewRunnerJob(ctx, api.Job{
@@ -265,4 +209,27 @@ func (b *Bot) registerCommands() {
 			Description: fmt.Sprintf("* `%s` (%s)\n* %s\n* %s", Version, CommitTitle, Date, GoVersion),
 		}
 	}
+}
+
+func (b *Bot) validateRunnerID(ctx context.Context, runnerID string) *discordgo.MessageEmbed {
+	runners, err := b.store.Runners(ctx)
+	if err != nil {
+		return &discordgo.MessageEmbed{
+			Title:       "error",
+			Description: err.Error(),
+		}
+	}
+	found := false
+	for _, runner := range runners {
+		if runner.ID == runnerID {
+			found = true
+		}
+	}
+	if !found {
+		return &discordgo.MessageEmbed{
+			Title:       "error",
+			Description: "invalid runner ID (see !wrench runners)",
+		}
+	}
+	return nil
 }
