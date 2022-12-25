@@ -25,6 +25,16 @@ func setEnvPermanent(key, value string) error {
 func appendEnvPermanent(key, value string) error {
 	current, _ := os.LookupEnv(key)
 	currentList := strings.Split(current, string(os.PathListSeparator))
+
+	// Confirm it's not already in the list.
+	for _, existing := range currentList {
+		if existing == value {
+			// already in list
+			return nil
+		}
+	}
+
+	// Add value to list and update env var.
 	currentList = append(currentList, value)
 	newValue := strings.Join(currentList, string(os.PathListSeparator))
 	err := setEnvPermanent(key, newValue)

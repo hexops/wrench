@@ -201,7 +201,7 @@ Examples:
 			err = scripts.EnsureOnPathPermanent(filepath.Dir(exePath))
 			if err != nil {
 				fmt.Println(" error")
-				return errors.Wrap(err, "isRoot")
+				return errors.Wrap(err, "EnsureOnPathPermanent")
 			}
 			fmt.Println(" ok")
 
