@@ -132,9 +132,9 @@ func (s *Store) RunnerSeen(ctx context.Context, id, arch string, env api.RunnerE
 	}
 	q := sqlf.Sprintf(
 		`INSERT INTO runners(id, arch, registered_at, last_seen_at, env) VALUES (%v, %v, %v, %v, %v)
-		ON CONFLICT(id) DO UPDATE SET last_seen_at = %v, env = %v WHERE id=%v`,
+		ON CONFLICT(id) DO UPDATE SET arch = %v, last_seen_at = %v, env = %v WHERE id=%v`,
 		id, arch, now, now, string(envJSON),
-		now, string(envJSON), id,
+		arch, now, string(envJSON), id,
 	)
 	_, err = s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	return err
