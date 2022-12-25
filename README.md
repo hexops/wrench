@@ -64,19 +64,22 @@ This will give you a URL you can visit to add the bot to your server.
 
 ### Linux
 
-1. Download release binary
-2. Move to `/usr/local/bin/wrench` and `chmod +x /usr/local/bin/wrench`
-3. Run `sudo wrench setup` and follow instructions
+1. Install Git `sudo apt-get install git`
+2. Download release binary
+3. Move to `/usr/local/bin/wrench` and `chmod +x /usr/local/bin/wrench`
+4. Run `sudo wrench setup` and follow instructions
 
 ### macOS
 
-1. Download release binary
-2. Move to `$HOME/.bin/wrench` and `chmod +x $HOME/.bin/wrench`
-3. Place `$HOME/.bin` on PATH if desired
-4. Run `sudo wrench setup`
+1. Ensure Git is installed
+3. Download release binary
+4. Move to `$HOME/.bin/wrench` and `chmod +x $HOME/.bin/wrench`
+5. Place `$HOME/.bin` on PATH if desired
+6. Run `sudo wrench setup`
 
 ### Windows
 
-1. Download release binary, rename to `.exe`
-2. Place at `C:/wrench.exe` or some other location. Put on PATH if desired.
-3. In admin terminal run `wrench.exe setup`
+1. Install Git: `winget install --id Git.Git -e --source winget`
+2. Download release binary, rename to `.exe`
+3. Place at `C:/wrench.exe` or some other location. Put on PATH if desired.
+4. In admin terminal run `wrench.exe setup`
