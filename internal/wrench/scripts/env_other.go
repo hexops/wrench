@@ -37,7 +37,7 @@ func envFileEnsureLine(line string) error {
 	var file string
 	switch runtime.GOOS {
 	case "darwin":
-		file = "/System/Volumes/Data/private/etc/zshrc"
+		file = "/System/Volumes/Data/private/etc/zprofile"
 	case "linux":
 		file = "/etc/profile.d/wrench.sh"
 	default:

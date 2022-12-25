@@ -10,7 +10,7 @@ import (
 //
 // Windows: the registry is modified
 // Linux: /etc/environment.d/wrench.sh is appended to if an entry does not exist
-// macOS: /System/Volumes/Data/private/etc/zshrc is appended to if an entry does not exist
+// macOS: /System/Volumes/Data/private/etc/zprofile is appended to if an entry does not exist
 func SetEnvPermanent(key, value string) error {
 	return setEnvPermanent(key, value)
 }
