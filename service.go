@@ -117,7 +117,7 @@ func newServiceBotWithConfig(config *ServiceConfig) (service.Service, *wrench.Bo
 		if err != nil {
 			log.Fatal("LookPath", err)
 		}
-		arguments = []string{"-c", wrenchCmd}
+		arguments = []string{"-lc", wrenchCmd}
 	case "windows":
 		executable = config.Executable
 		arguments = []string{"service", "-config=" + config.ConfigFile, "run"}
