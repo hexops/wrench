@@ -105,18 +105,18 @@ func (b *Bot) runnerStart() error {
 						activeMu.Unlock()
 						return
 					}
-					err := b.runWrench(&activeLog, active.Payload.Cmd...)
+					var logBuffer bytes.Buffer
+					err := b.runWrench(&logBuffer, active.Payload.Cmd...)
+					activeMu.Lock()
+					defer activeMu.Unlock()
+					_, _ = logBuffer.WriteTo(&activeLog)
 					if err != nil {
-						activeMu.Lock()
 						active.State = api.JobStateError
 						fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
-						activeMu.Unlock()
 						return
 					}
-					activeMu.Lock()
 					active.State = api.JobStateSuccess
 					fmt.Fprintf(&activeLog, "SUCCESS (job id=%v)\n", active.ID)
-					activeMu.Unlock()
 				}()
 			} else {
 				b.idLogf(logID, "waiting for a job")
