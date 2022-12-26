@@ -44,7 +44,7 @@ func envFileEnsureLine(line string) error {
 		return errors.New("not implemented for this OS")
 	}
 	data, err := os.ReadFile(file)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return errors.Wrap(err, "ReadFile")
 	}
 	for _, existingLine := range strings.Split(string(data), "\n") {
