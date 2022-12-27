@@ -33,8 +33,10 @@ func init() {
 
 			// Download the Go archive
 			extension := "tar.gz"
+			exeExt := ""
 			if runtime.GOOS == "windows" {
 				extension = "zip"
+				exeExt = ".exe"
 			}
 			url := fmt.Sprintf("https://go.dev/dl/go%s.%s-%s.%s", wantGoVersion, runtime.GOOS, runtime.GOARCH, extension)
 			archiveFilePath := "golang." + extension
@@ -48,7 +50,7 @@ func init() {
 			// Remove existing install dir if it exists.
 			_ = os.RemoveAll("golang")
 
-			goBinaryLocation, err := filepath.Abs("go/bin/go")
+			goBinaryLocation, err := filepath.Abs("go/bin/go" + exeExt)
 			if err != nil {
 				return errors.Wrap(err, "Abs")
 			}
