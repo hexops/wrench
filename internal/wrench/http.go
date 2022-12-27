@@ -429,8 +429,15 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 			return nil, errors.Wrap(err, "Jobs(dead)")
 		}
 		for _, job := range deadJobs {
-			b.idLogf(job.ID.LogID(), "runner stopped performing job unexpectedly: %v:%v", r.ID, r.Arch)
-			job.State = api.JobStateError
+			if strings.Contains(job.Title, "script rebuild") {
+				// `wrench script rebuild` is expected to not finish gracefully as the service will
+				// restart itself before the job completes.
+				job.State = api.JobStateSuccess
+				b.idLogf(job.ID.LogID(), "runner restarted successfully")
+			} else {
+				b.idLogf(job.ID.LogID(), "runner stopped performing job unexpectedly: %v:%v", r.ID, r.Arch)
+				job.State = api.JobStateError
+			}
 			err = b.store.UpsertRunnerJob(ctx, job)
 			if err != nil {
 				return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
