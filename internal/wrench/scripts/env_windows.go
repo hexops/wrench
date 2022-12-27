@@ -1,9 +1,6 @@
 package scripts
 
 import (
-	"os"
-	"strings"
-
 	"github.com/hexops/wrench/internal/errors"
 	"golang.org/x/sys/windows/registry"
 )

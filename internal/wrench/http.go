@@ -147,7 +147,6 @@ func (b *Bot) runWrench(logWriter io.Writer, args ...string) error {
 	if err := cmd.Run(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			fmt.Fprintf(logWriter, "process finished: error: exit code: %v\n", exitError.ExitCode())
-			return nil
 		}
 		return err
 	}
