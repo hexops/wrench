@@ -18,6 +18,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -127,7 +128,11 @@ func (b *Bot) runRebuild() error {
 	w := b.idWriter(logID)
 
 	b.idLogf(logID, "👀 I see new changes")
-	err := b.runWrench(w, "script", "rebuild")
+
+	err := scripts.Sequence(
+		scripts.Exec("wrench script install-go"),
+		scripts.Exec("wrench script rebuild-only"),
+	)(w)
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
 		b.idLogf(logID, "build failure!")
