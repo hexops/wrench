@@ -47,6 +47,10 @@ func (s *Store) ensureSchema() error {
 			registered_at TIMESTAMP NOT NULL,
 			last_seen_at TIMESTAMP NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS secrets (
+			id TEXT PRIMARY KEY NOT NULL,
+			value TEXT NOT NULL
+		);
 		CREATE TABLE IF NOT EXISTS cache (
 			cache_name TEXT NOT NULL,
 			key TEXT NOT NULL,
@@ -412,6 +416,61 @@ func (s *Store) CacheKey(ctx context.Context, cacheName, key string) (*CacheEntr
 		return nil, errors.Wrap(err, "Scan")
 	}
 	return &e, nil
+}
+
+type Secret struct {
+	ID    string
+	Value string
+}
+
+// Redaction stringer in case it ever gets printed anywhere.
+func (s Secret) String() string { return "<redacted>" }
+
+func (s *Store) Secret(ctx context.Context, id string) (Secret, error) {
+	q := sqlf.Sprintf(`SELECT value FROM secrets WHERE id = %v`, id)
+
+	row := s.db.QueryRowContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	var value string
+	if err := row.Scan(&value); err != nil {
+		return Secret{}, errors.Wrap(err, "Scan")
+	}
+	return Secret{ID: id, Value: value}, nil
+}
+
+func (s *Store) Secrets(ctx context.Context) ([]Secret, error) {
+	q := sqlf.Sprintf(`SELECT id, value FROM secrets ORDER BY id DESC`)
+
+	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueryContext")
+	}
+
+	var secrets []Secret
+	for rows.Next() {
+		var id, value string
+		if err = rows.Scan(&id, &value); err != nil {
+			return nil, errors.Wrap(err, "Scan")
+		}
+		secrets = append(secrets, Secret{ID: id, Value: value})
+	}
+	return secrets, rows.Err()
+}
+
+func (s *Store) UpsertSecret(ctx context.Context, id, value string) error {
+	q := sqlf.Sprintf(
+		`INSERT INTO secrets(id, value) VALUES (%v, %v)
+		ON CONFLICT(id) DO UPDATE SET value = %v WHERE id=%v`,
+		id, value,
+		value, id,
+	)
+	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	return err
+}
+
+func (s *Store) DeleteSecret(ctx context.Context, id string) error {
+	q := sqlf.Sprintf(`DELETE FROM secrets WHERE id = %v`, id)
+	_, err := s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	return err
 }
 
 func (s *Store) Close() error {
