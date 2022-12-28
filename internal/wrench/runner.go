@@ -108,8 +108,8 @@ func (b *Bot) runnerStart() error {
 					}
 					var logBuffer bytes.Buffer
 					err := scripts.ExecArgs(
-						active.Payload.Cmd[0],
-						active.Payload.Cmd[1:],
+						"wrench",
+						active.Payload.Cmd,
 						scripts.WorkDir(b.Config.WrenchDir),
 					)(&logBuffer)
 					activeMu.Lock()
