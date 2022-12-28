@@ -24,6 +24,9 @@ func (b *Bot) registerCommands() {
 
 		var buf bytes.Buffer
 		for _, id := range logIDs {
+			if strings.HasPrefix(id, "job-") {
+				continue
+			}
 			fmt.Fprintf(&buf, "* %s: %s/logs/%s\n", id, b.Config.ExternalURL, id)
 		}
 		return &discordgo.MessageEmbed{
