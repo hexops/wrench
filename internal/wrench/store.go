@@ -180,6 +180,10 @@ func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error
 	if err != nil {
 		return "", errors.Wrap(err, "Marshal")
 	}
+	var scheduledStart *time.Time
+	if !job.ScheduledStart.IsZero() {
+		scheduledStart = &job.ScheduledStart
+	}
 	q := sqlf.Sprintf(
 		`INSERT INTO runner_jobs(
 			state,
@@ -197,7 +201,7 @@ func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
-		job.ScheduledStart,
+		scheduledStart,
 		job.Updated,
 		job.Created,
 	)
@@ -239,6 +243,10 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 	if err != nil {
 		return errors.Wrap(err, "Marshal")
 	}
+	var scheduledStart *time.Time
+	if !job.ScheduledStart.IsZero() {
+		scheduledStart = &job.ScheduledStart
+	}
 	q := sqlf.Sprintf(
 		`INSERT INTO runner_jobs(
 			id,
@@ -266,7 +274,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
-		job.ScheduledStart,
+		scheduledStart,
 		job.Updated,
 		job.Created,
 		job.State,
@@ -274,7 +282,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
-		job.ScheduledStart,
+		scheduledStart,
 		job.Updated,
 		mustDecodeJobID(job.ID),
 	)
@@ -367,6 +375,7 @@ func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
 	var j api.Job
 	var payload string
 	var id uint64
+	var scheduledStart *time.Time
 	if err := scan(
 		&id,
 		&j.State,
@@ -374,13 +383,16 @@ func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
 		&j.TargetRunnerID,
 		&j.TargetRunnerArch,
 		&payload,
-		&j.ScheduledStart,
+		&scheduledStart,
 		&j.Updated,
 		&j.Created,
 	); err != nil {
 		return nil, errors.Wrap(err, "Scan")
 	}
 	j.ID = encodeJobID(id)
+	if scheduledStart != nil {
+		j.ScheduledStart = *scheduledStart
+	}
 	if err := json.Unmarshal([]byte(payload), &j.Payload); err != nil {
 		return nil, errors.Wrap(err, "Unmarshal")
 	}
