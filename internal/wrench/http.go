@@ -301,10 +301,10 @@ func timeSince(t time.Time) string {
 
 func timeDisplay(d time.Duration) string {
 	if d > 1*time.Hour {
-		return fmt.Sprintf("%vh", d.Round(time.Hour)/time.Hour)
+		return fmt.Sprintf("%vh", int64(d.Round(time.Hour)/time.Hour))
 	}
 	if d > 24*time.Hour {
-		return fmt.Sprintf("%vh", d.Round(24*time.Hour)/(24*time.Hour))
+		return fmt.Sprintf("%vd", int64(d.Round(24*time.Hour)/(24*time.Hour)))
 	}
 	return d.Round(time.Second).String()
 }
