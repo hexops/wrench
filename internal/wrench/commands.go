@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -295,9 +296,10 @@ func (b *Bot) registerCommands() {
 
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
+		url, _ := url.Parse("https://github.com/hexops/wrench/commit/" + Version)
 		return &discordgo.MessageEmbed{
 			Title:       "wrench @ " + Version,
-			URL:         strings.TrimSuffix("https://github.com/hexops/wrench/commit/"+Version, "/"),
+			URL:         url.String(),
 			Description: fmt.Sprintf("* `%s` (%s)\n* %s\n* %s", Version, CommitTitle, Date, GoVersion),
 		}
 	}
