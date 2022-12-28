@@ -292,22 +292,21 @@ func timeUntil(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
-	return fmt.Sprintf("in %s", timeRound(time.Until(t)))
+	return fmt.Sprintf("in %s", timeDisplay(time.Until(t)))
 }
 
 func timeSince(t time.Time) string {
-	return fmt.Sprintf("%s ago", timeRound(time.Since(t)))
+	return fmt.Sprintf("%s ago", timeDisplay(time.Since(t)))
 }
 
-func timeRound(d time.Duration) time.Duration {
-	round := time.Second
+func timeDisplay(d time.Duration) string {
 	if d > 1*time.Hour {
-		round = time.Hour
+		return fmt.Sprintf("%vh", d.Round(time.Hour)/time.Hour)
 	}
 	if d > 24*time.Hour {
-		round = 24 * time.Hour
+		return fmt.Sprintf("%vh", d.Round(24*time.Hour)/(24*time.Hour))
 	}
-	return d.Round(round)
+	return d.Round(time.Second).String()
 }
 
 func tableStyle(w io.Writer) {
