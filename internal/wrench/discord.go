@@ -84,6 +84,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 				if response.Description == "" {
 					response.Description = "(empty)"
 				}
+				if len(response.Description) > 4096 {
+					response.Description = response.Description[:4096] // Discord limit
+				}
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
 			return nil
@@ -108,6 +111,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			if response != nil {
 				if response.Description == "" {
 					response.Description = "(empty)"
+				}
+				if len(response.Description) > 4096 {
+					response.Description = response.Description[:4096] // Discord limit
 				}
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
