@@ -253,29 +253,39 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	{
 		var values [][]string
 		for _, job := range jobs {
+			scheduledStart := ""
+			if !job.ScheduledStart.IsZero() {
+				scheduledStart = fmt.Sprintf("in %s", time.Until(job.ScheduledStart).Round(time.Second))
+			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
+				scheduledStart,
 				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
 		tableStyle(w)
-		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "last updated", "created"}, values)
+		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "scheduled start", "last updated", "created"}, values)
 	}
 	fmt.Fprintf(w, "<h2>Finished jobs</h2>")
 	{
 		var values [][]string
 		for _, job := range finishedJobs {
+			scheduledStart := ""
+			if !job.ScheduledStart.IsZero() {
+				scheduledStart = fmt.Sprintf("in %s", time.Until(job.ScheduledStart).Round(time.Second))
+			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
+				scheduledStart,
 				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
 				job.Created.UTC().Format(time.RFC3339),
 			})
