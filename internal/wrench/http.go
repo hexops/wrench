@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/google/go-github/github"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
@@ -292,21 +293,11 @@ func timeUntil(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
-	return fmt.Sprintf("in %s", timeDisplay(time.Until(t)))
+	return fmt.Sprintf("in %s", humanize.Time(t))
 }
 
 func timeSince(t time.Time) string {
-	return fmt.Sprintf("%s ago", timeDisplay(time.Since(t)))
-}
-
-func timeDisplay(d time.Duration) string {
-	if d > 1*time.Hour {
-		return fmt.Sprintf("%vh", int64(d.Round(time.Hour)/time.Hour))
-	}
-	if d > 24*time.Hour {
-		return fmt.Sprintf("%vd", int64(d.Round(24*time.Hour)/(24*time.Hour)))
-	}
-	return d.Round(time.Second).String()
+	return fmt.Sprintf("%s ago", humanize.Time(t))
 }
 
 func tableStyle(w io.Writer) {
