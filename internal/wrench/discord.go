@@ -81,6 +81,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		if handler, ok := b.discordCommandsEmbed[cmd]; ok {
 			response := handler(args[1:]...)
 			if response != nil {
+				if response.Description == "" {
+					response.Description = "(empty)"
+				}
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
 			return nil
@@ -103,6 +106,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			}
 			response := handler(args[1:]...)
 			if response != nil {
+				if response.Description == "" {
+					response.Description = "(empty)"
+				}
 				s.ChannelMessageSendEmbed(m.ChannelID, response)
 			}
 			return nil
