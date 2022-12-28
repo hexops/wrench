@@ -291,7 +291,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 			})
 		}
 		tableStyle(w)
-		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "last updated", "created"}, values)
+		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "scheduled start", "last updated", "created"}, values)
 	}
 	return nil
 }
