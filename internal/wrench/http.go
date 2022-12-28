@@ -194,7 +194,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `<ul>`)
 		for _, pair := range [][2]string{
 			{"Registered", runner.RegisteredAt.UTC().Format(time.RFC3339)},
-			{"Last seen", humanize.Time(runner.LastSeenAt)},
+			{"Last seen", humanizeTimeRecent(runner.LastSeenAt)},
 			{"Wrench version", runner.Env.WrenchVersion},
 			{"Wrench commit title", runner.Env.WrenchCommitTitle},
 			{"Wrench date", runner.Env.WrenchDate},
@@ -241,7 +241,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				fmt.Sprintf(`<a href="/runners/%s">%s</a>`, runner.ID, runner.ID),
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
-				humanize.Time(runner.LastSeenAt),
+				humanizeTimeRecent(runner.LastSeenAt),
 				runner.Env.WrenchVersion,
 				wrenchDate,
 			})
@@ -292,6 +292,13 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 func humanizeTimeMaybeZero(t time.Time) string {
 	if t.IsZero() {
 		return ""
+	}
+	return humanize.Time(t)
+}
+
+func humanizeTimeRecent(t time.Time) string {
+	if time.Since(t) < 10*time.Second {
+		return "now"
 	}
 	return humanize.Time(t)
 }
