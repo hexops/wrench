@@ -193,7 +193,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `<ul>`)
 		for _, pair := range [][2]string{
 			{"Registered", runner.RegisteredAt.UTC().Format(time.RFC3339)},
-			{"Last seen", fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second))},
+			{"Last seen", timeSince(runner.LastSeenAt)},
 			{"Wrench version", runner.Env.WrenchVersion},
 			{"Wrench commit title", runner.Env.WrenchCommitTitle},
 			{"Wrench date", runner.Env.WrenchDate},
@@ -234,13 +234,13 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 			wrenchDate := runner.Env.WrenchDate
 			wrenchDateTime, err := time.Parse(time.RFC3339, runner.Env.WrenchDate)
 			if err == nil {
-				wrenchDate = fmt.Sprintf("%s ago", time.Since(wrenchDateTime).Round(time.Second))
+				wrenchDate = timeSince(wrenchDateTime)
 			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="/runners/%s">%s</a>`, runner.ID, runner.ID),
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
-				fmt.Sprintf("%s ago", time.Since(runner.LastSeenAt).Round(time.Second)),
+				timeSince(runner.LastSeenAt),
 				runner.Env.WrenchVersion,
 				wrenchDate,
 			})
@@ -253,18 +253,14 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	{
 		var values [][]string
 		for _, job := range jobs {
-			scheduledStart := ""
-			if !job.ScheduledStart.IsZero() {
-				scheduledStart = fmt.Sprintf("in %s", time.Until(job.ScheduledStart).Round(time.Second))
-			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				scheduledStart,
-				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
+				timeUntil(job.ScheduledStart),
+				timeSince(job.Updated),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
@@ -275,18 +271,14 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	{
 		var values [][]string
 		for _, job := range finishedJobs {
-			scheduledStart := ""
-			if !job.ScheduledStart.IsZero() {
-				scheduledStart = fmt.Sprintf("in %s", time.Until(job.ScheduledStart).Round(time.Second))
-			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="%v/logs/job-%v">%v</a>`, b.Config.ExternalURL, job.ID, job.ID),
 				string(job.State),
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				scheduledStart,
-				fmt.Sprintf("%s ago", time.Since(job.Updated).Round(time.Second)),
+				timeUntil(job.ScheduledStart),
+				timeSince(job.Updated),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
@@ -294,6 +286,28 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "scheduled start", "last updated", "created"}, values)
 	}
 	return nil
+}
+
+func timeUntil(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return fmt.Sprintf("in %s", timeRound(time.Until(t)))
+}
+
+func timeSince(t time.Time) string {
+	return fmt.Sprintf("%s ago", timeRound(time.Since(t)))
+}
+
+func timeRound(d time.Duration) time.Duration {
+	round := time.Second
+	if d > 1*time.Hour {
+		round = time.Hour
+	}
+	if d > 24*time.Hour {
+		round = 24 * time.Hour
+	}
+	return d.Round(round)
 }
 
 func tableStyle(w io.Writer) {
