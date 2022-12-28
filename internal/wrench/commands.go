@@ -296,10 +296,13 @@ func (b *Bot) registerCommands() {
 
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"version", "show wrench version"})
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
-		url, _ := url.Parse("https://github.com/hexops/wrench/commit/" + Version)
 		return &discordgo.MessageEmbed{
-			Title:       "wrench @ " + Version,
-			URL:         url.String(),
+			Title: "wrench @ " + Version,
+			URL: (&url.URL{
+				Scheme: "https",
+				Host:   "github.com",
+				Path:   "/hexops/wrench/commit/" + Version,
+			}).String(),
 			Description: fmt.Sprintf("* `%s` (%s)\n* %s\n* %s", Version, CommitTitle, Date, GoVersion),
 		}
 	}
