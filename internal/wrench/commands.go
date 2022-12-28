@@ -93,7 +93,7 @@ func (b *Bot) registerCommands() {
 					continue
 				}
 				count++
-				fmt.Fprintf(&buf, "* ['%v'](%s) (by _%v_)\n", *pr.Title, *pr.URL, *pr.User.Login)
+				fmt.Fprintf(&buf, "* ['%v'](%s) (by _%v_)\n", *pr.Title, *pr.HTMLURL, *pr.User.Login)
 			}
 			fmt.Fprintf(&buf, "\n")
 		}
