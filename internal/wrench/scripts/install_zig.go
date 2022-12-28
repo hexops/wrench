@@ -70,11 +70,11 @@ func init() {
 				return errors.Wrap(err, "EnsureOnPathPermanent")
 			}
 
-			// // Extract the Go archive
-			// err = ExtractArchive(archiveFilePath, ".")(os.Stderr)
-			// if err != nil {
-			// 	return errors.Wrap(err, "ExtractArchive")
-			// }
+			// Extract the Go archive
+			err = ExtractArchive(archiveFilePath, "zig")(os.Stderr)
+			if err != nil {
+				return errors.Wrap(err, "ExtractArchive")
+			}
 			return nil
 		},
 	})

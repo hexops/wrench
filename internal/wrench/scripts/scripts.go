@@ -196,6 +196,11 @@ func ExtractArchive(archiveFilePath, dst string) Cmd {
 				Compression: archiver.Gz{},
 				Archival:    archiver.Tar{},
 			}
+		} else if strings.HasSuffix(archiveFilePath, ".tar.xz") {
+			format = archiver.CompressedArchive{
+				Compression: archiver.Xz{},
+				Archival:    archiver.Tar{},
+			}
 		} else if strings.HasSuffix(archiveFilePath, ".zip") {
 			format = archiver.Zip{}
 		} else {
