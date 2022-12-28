@@ -160,6 +160,7 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "Logs")
 	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	for _, log := range logs {
 		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
 	}
