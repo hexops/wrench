@@ -297,7 +297,7 @@ func (b *Bot) registerCommands() {
 	b.discordCommandsEmbed["version"] = func(args ...string) *discordgo.MessageEmbed {
 		return &discordgo.MessageEmbed{
 			Title:       "wrench @ " + Version,
-			URL:         "https://github.com/hexops/wrench/commit/" + Version,
+			URL:         strings.TrimSuffix("https://github.com/hexops/wrench/commit/"+Version, "/"),
 			Description: fmt.Sprintf("* `%s` (%s)\n* %s\n* %s", Version, CommitTitle, Date, GoVersion),
 		}
 	}
