@@ -60,3 +60,15 @@ func (c *Client) RunnerPoll(ctx context.Context, r *RunnerPollRequest) (*RunnerP
 func (c *Client) RunnerList(ctx context.Context, r *RunnerListRequest) (*RunnerListResponse, error) {
 	return clientDo[RunnerListRequest, RunnerListResponse](c, ctx, r, "/api/runner/list")
 }
+
+func (c *Client) SecretsList(ctx context.Context, r *SecretsListRequest) (*SecretsListResponse, error) {
+	return clientDo[SecretsListRequest, SecretsListResponse](c, ctx, r, "/api/secrets/list")
+}
+
+func (c *Client) SecretsDelete(ctx context.Context, r *SecretsDeleteRequest) (*SecretsDeleteResponse, error) {
+	return clientDo[SecretsDeleteRequest, SecretsDeleteResponse](c, ctx, r, "/api/secrets/delete")
+}
+
+func (c *Client) SecretsUpsert(ctx context.Context, r *SecretsUpsertRequest) (*SecretsUpsertResponse, error) {
+	return clientDo[SecretsUpsertRequest, SecretsUpsertResponse](c, ctx, r, "/api/secrets/upsert")
+}
