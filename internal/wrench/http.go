@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -137,10 +136,8 @@ func (b *Bot) runRebuild() error {
 		b.idLogf(logID, "build failure!")
 		return nil
 	}
-	b.idLogf(logID, "build success! exiting..")
-
-	os.Exit(1) // system service runner should restart us.
-	return nil
+	b.idLogf(logID, "build success! restarting..")
+	return scripts.Exec("wrench svc restart").IgnoreError()(w)
 }
 
 func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
