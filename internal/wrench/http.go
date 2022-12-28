@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -130,8 +129,8 @@ func (b *Bot) runRebuild() error {
 	b.idLogf(logID, "👀 I see new changes")
 
 	err := scripts.Sequence(
-		scripts.Exec("wrench script install-go"),
-		scripts.Exec("wrench script rebuild-only"),
+		scripts.Exec("wrench script install-go", scripts.WorkDir(b.Config.WrenchDir)),
+		scripts.Exec("wrench script rebuild-only", scripts.WorkDir(b.Config.WrenchDir)),
 	)(w)
 	if err != nil {
 		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
@@ -141,21 +140,6 @@ func (b *Bot) runRebuild() error {
 	b.idLogf(logID, "build success! exiting..")
 
 	os.Exit(1) // system service runner should restart us.
-	return nil
-}
-
-func (b *Bot) runWrench(logWriter io.Writer, args ...string) error {
-	cmd := exec.Command("wrench", args...)
-	cmd.Dir = b.Config.WrenchDir
-	cmd.Stderr = logWriter
-	cmd.Stdout = logWriter
-	if err := cmd.Run(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			fmt.Fprintf(logWriter, "process finished: error: exit code: %v\n", exitError.ExitCode())
-		}
-		return err
-	}
-	fmt.Fprintf(logWriter, "process finished\n")
 	return nil
 }
 

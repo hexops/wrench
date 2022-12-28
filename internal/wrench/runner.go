@@ -10,6 +10,7 @@ import (
 
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 )
 
 func (b *Bot) runnerStart() error {
@@ -106,7 +107,11 @@ func (b *Bot) runnerStart() error {
 						return
 					}
 					var logBuffer bytes.Buffer
-					err := b.runWrench(&logBuffer, active.Payload.Cmd...)
+					err := scripts.ExecArgs(
+						active.Payload.Cmd[0],
+						active.Payload.Cmd[1:],
+						scripts.WorkDir(b.Config.WrenchDir),
+					)(&logBuffer)
 					activeMu.Lock()
 					defer activeMu.Unlock()
 					_, _ = logBuffer.WriteTo(&activeLog)
