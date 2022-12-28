@@ -194,7 +194,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		fmt.Fprintf(w, `<ul>`)
 		for _, pair := range [][2]string{
 			{"Registered", runner.RegisteredAt.UTC().Format(time.RFC3339)},
-			{"Last seen", timeSince(runner.LastSeenAt)},
+			{"Last seen", humanize.Time(runner.LastSeenAt)},
 			{"Wrench version", runner.Env.WrenchVersion},
 			{"Wrench commit title", runner.Env.WrenchCommitTitle},
 			{"Wrench date", runner.Env.WrenchDate},
@@ -235,13 +235,13 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 			wrenchDate := runner.Env.WrenchDate
 			wrenchDateTime, err := time.Parse(time.RFC3339, runner.Env.WrenchDate)
 			if err == nil {
-				wrenchDate = timeSince(wrenchDateTime)
+				wrenchDate = humanize.Time(wrenchDateTime)
 			}
 			values = append(values, []string{
 				fmt.Sprintf(`<a href="/runners/%s">%s</a>`, runner.ID, runner.ID),
 				runner.Arch,
 				runner.RegisteredAt.UTC().Format(time.RFC3339),
-				timeSince(runner.LastSeenAt),
+				humanize.Time(runner.LastSeenAt),
 				runner.Env.WrenchVersion,
 				wrenchDate,
 			})
@@ -260,8 +260,8 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				timeUntil(job.ScheduledStart),
-				timeSince(job.Updated),
+				humanizeTimeMaybeZero(job.ScheduledStart),
+				humanize.Time(job.Updated),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
@@ -278,8 +278,8 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 				job.Title,
 				job.TargetRunnerID,
 				job.TargetRunnerArch,
-				timeUntil(job.ScheduledStart),
-				timeSince(job.Updated),
+				humanizeTimeMaybeZero(job.ScheduledStart),
+				humanize.Time(job.Updated),
 				job.Created.UTC().Format(time.RFC3339),
 			})
 		}
@@ -289,15 +289,11 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func timeUntil(t time.Time) string {
+func humanizeTimeMaybeZero(t time.Time) string {
 	if t.IsZero() {
 		return ""
 	}
-	return fmt.Sprintf("in %s", humanize.Time(t))
-}
-
-func timeSince(t time.Time) string {
-	return fmt.Sprintf("%s ago", humanize.Time(t))
+	return humanize.Time(t)
 }
 
 func tableStyle(w io.Writer) {
