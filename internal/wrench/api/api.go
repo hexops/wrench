@@ -26,3 +26,21 @@ type RunnerListRequest struct{}
 type RunnerListResponse struct {
 	Runners []Runner
 }
+
+type SecretsListRequest struct{}
+
+type SecretsListResponse struct {
+	IDs []string
+}
+
+type SecretsDeleteRequest struct {
+	ID string
+}
+
+type SecretsDeleteResponse struct{}
+
+type SecretsUpsertRequest struct {
+	ID, Value string
+}
+
+type SecretsUpsertResponse struct{}

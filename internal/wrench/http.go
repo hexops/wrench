@@ -49,6 +49,9 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
+	mux.Handle("/api/secrets/list", handler("api-secrets-list", botHttpAPI(b, b.httpServeSecretsList)))
+	mux.Handle("/api/secrets/delete", handler("api-secrets-delete", botHttpAPI(b, b.httpServeSecretsDelete)))
+	mux.Handle("/api/secrets/upsert", handler("api-secrets-upsert", botHttpAPI(b, b.httpServeSecretsUpsert)))
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
 	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
@@ -492,4 +495,32 @@ func (b *Bot) httpServeRunnerList(ctx context.Context, r *api.RunnerListRequest)
 		return nil, errors.Wrap(err, "RunnerSeen")
 	}
 	return &api.RunnerListResponse{Runners: runners}, nil
+}
+
+func (b *Bot) httpServeSecretsList(ctx context.Context, r *api.SecretsListRequest) (*api.SecretsListResponse, error) {
+	secrets, err := b.store.Secrets(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "Secrets")
+	}
+	var ids []string
+	for _, secret := range secrets {
+		ids = append(ids, secret.ID)
+	}
+	return &api.SecretsListResponse{IDs: ids}, nil
+}
+
+func (b *Bot) httpServeSecretsDelete(ctx context.Context, r *api.SecretsDeleteRequest) (*api.SecretsDeleteResponse, error) {
+	err := b.store.DeleteSecret(ctx, r.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "DeleteSecret")
+	}
+	return &api.SecretsDeleteResponse{}, nil
+}
+
+func (b *Bot) httpServeSecretsUpsert(ctx context.Context, r *api.SecretsUpsertRequest) (*api.SecretsUpsertResponse, error) {
+	err := b.store.UpsertSecret(ctx, r.ID, r.Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "UpsertSecret")
+	}
+	return &api.SecretsUpsertResponse{}, nil
 }
