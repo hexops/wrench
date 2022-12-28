@@ -390,6 +390,13 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 			if b.Config.GitPushPassword != "" {
 				r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
 			}
+			secrets, err := b.store.Secrets(ctx)
+			if err != nil {
+				return nil, errors.Wrap(err, "Secrets")
+			}
+			for _, secret := range secrets {
+				r.Job.Log = strings.ReplaceAll(r.Job.Log, secret.Value, "<redacted>")
+			}
 			b.idLogf(r.Job.ID.LogID(), "%s", r.Job.Log)
 		}
 	}
@@ -435,10 +442,27 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		if err != nil {
 			return nil, errors.Wrap(err, "Jobs(ready)")
 		}
+	jobSearch:
 		for _, job := range readyJobs {
 			archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
 			idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
 			if archMatch && idMatch {
+				needSecrets := job.Payload.SecretIDs
+				secrets := map[string]string{}
+				for _, secretID := range needSecrets {
+					secret, err := b.store.Secret(ctx, secretID)
+					if err != nil {
+						b.idLogf(job.ID.LogID(), `could not find secret "%v": %v`, secretID, err)
+						job.State = api.JobStateError
+						err = b.store.UpsertRunnerJob(ctx, job)
+						if err != nil {
+							return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
+						}
+						continue jobSearch
+					}
+					secrets[secretID] = secret.Value
+				}
+
 				job.State = api.JobStateStarting
 				job.TargetRunnerID = r.ID // assign job to this runner
 				err = b.store.UpsertRunnerJob(ctx, job)
@@ -454,6 +478,7 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 					GitPushPassword:    b.Config.GitPushPassword,
 					GitConfigUserName:  b.Config.GitConfigUserName,
 					GitConfigUserEmail: b.Config.GitConfigUserEmail,
+					Secrets:            secrets,
 				}}, nil
 			}
 		}

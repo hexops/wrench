@@ -44,6 +44,7 @@ type RunnerJobStart struct {
 	GitPushPassword    string
 	GitConfigUserName  string
 	GitConfigUserEmail string
+	Secrets            map[string]string
 }
 
 type JobState string
@@ -59,6 +60,7 @@ const (
 type JobPayload struct {
 	GitPushBranchName string
 	Cmd               []string
+	SecretIDs         []string
 	Ping              bool
 }
 
