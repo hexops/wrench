@@ -26,15 +26,15 @@ func init() {
 			}
 
 			date := time.Now().Format(time.RFC3339)
-			goVersion, err := Output("go version")
+			goVersion, err := Output(os.Stderr, "go version")
 			if err != nil {
 				return err
 			}
-			version, err := Output("git describe --abbrev=8 --dirty --always --long", WorkDir("wrench"))
+			version, err := Output(os.Stderr, "git describe --abbrev=8 --dirty --always --long", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}
-			commitTitle, err := Output("git log -1 --pretty=format:%s", WorkDir("wrench"))
+			commitTitle, err := Output(os.Stderr, "git log -1 --pretty=format:%s", WorkDir("wrench"))
 			if err != nil {
 				return err
 			}

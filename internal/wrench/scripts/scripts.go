@@ -80,9 +80,9 @@ func Exec(cmdLine string, opt ...CmdOption) Cmd {
 	return ExecArgs(name, args, opt...)
 }
 
-func OutputArgs(name string, args []string, opt ...CmdOption) (string, error) {
+func OutputArgs(w io.Writer, name string, args []string, opt ...CmdOption) (string, error) {
 	var buf bytes.Buffer
-	cmd := newCmd(&buf, name, args, opt...)
+	cmd := newCmd(w, name, args, opt...)
 	cmd.Stderr = &buf
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
@@ -94,10 +94,10 @@ func OutputArgs(name string, args []string, opt ...CmdOption) (string, error) {
 	return strings.TrimSpace(buf.String()), nil
 }
 
-func Output(cmdLine string, opt ...CmdOption) (string, error) {
+func Output(w io.Writer, cmdLine string, opt ...CmdOption) (string, error) {
 	split := strings.Fields(cmdLine)
 	name, args := split[0], split[1:]
-	return OutputArgs(name, args, opt...)
+	return OutputArgs(w, name, args, opt...)
 }
 
 type Cmd func(w io.Writer) error
