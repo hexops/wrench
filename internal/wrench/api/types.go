@@ -76,5 +76,5 @@ type Job struct {
 	Title                            string
 	TargetRunnerID, TargetRunnerArch string
 	Payload                          JobPayload
-	Updated, Created                 time.Time
+	ScheduledStart, Updated, Created time.Time
 }

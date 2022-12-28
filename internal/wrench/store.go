@@ -67,6 +67,7 @@ func (s *Store) ensureSchema() error {
 			target_runner_id TEXT NOT NULL,
 			target_runner_arch TEXT NOT NULL,
 			payload TEXT NOT NULL,
+			scheduled_start_at TIMESTAMP,
 			updated_at TIMESTAMP NOT NULL,
 			created_at TIMESTAMP NOT NULL
 		);
@@ -186,15 +187,17 @@ func (s *Store) NewRunnerJob(ctx context.Context, job api.Job) (api.JobID, error
 			target_runner_id,
 			target_runner_arch,
 			payload,
+			scheduled_start_at,
 			updated_at,
 			created_at
-		) VALUES (%v, %v, %v, %v, %v, %v, %v)
+		) VALUES (%v, %v, %v, %v, %v, %v, %v, %v)
 		RETURNING id`,
 		job.State,
 		job.Title,
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
+		job.ScheduledStart,
 		job.Updated,
 		job.Created,
 	)
@@ -244,15 +247,17 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 			target_runner_id,
 			target_runner_arch,
 			payload,
+			scheduled_start_at,
 			updated_at,
 			created_at
-		) VALUES (%v, %v, %v, %v, %v, %v, %v, %v)
+		) VALUES (%v, %v, %v, %v, %v, %v, %v, %v, %v)
 		ON CONFLICT(id) DO UPDATE SET
 			state = %v,
 			title = %v,
 			target_runner_id = %v,
 			target_runner_arch = %v,
 			payload = %v,
+			scheduled_start_at = %v,
 			updated_at = %v
 		WHERE id = %v`,
 		mustDecodeJobID(job.ID),
@@ -261,6 +266,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
+		job.ScheduledStart,
 		job.Updated,
 		job.Created,
 		job.State,
@@ -268,6 +274,7 @@ func (s *Store) UpsertRunnerJob(ctx context.Context, job api.Job) error {
 		job.TargetRunnerID,
 		job.TargetRunnerArch,
 		string(payload),
+		job.ScheduledStart,
 		job.Updated,
 		mustDecodeJobID(job.ID),
 	)
@@ -282,6 +289,7 @@ const jobFields = `
 	target_runner_id,
 	target_runner_arch,
 	payload,
+	scheduled_start_at,
 	updated_at,
 	created_at
 `
@@ -300,10 +308,11 @@ func (s *Store) JobByID(ctx context.Context, id api.JobID) (api.Job, error) {
 }
 
 type JobsFilter struct {
-	State, NotState api.JobState
-	Title, NotTitle string
-	TargetRunnerID  string
-	ID              api.JobID
+	State, NotState              api.JobState
+	Title, NotTitle              string
+	ScheduledStartGreaterEqualTo time.Time
+	TargetRunnerID               string
+	ID                           api.JobID
 }
 
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
@@ -320,6 +329,9 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 		}
 		if where.NotTitle != "" {
 			conds = append(conds, sqlf.Sprintf("title != %v", where.NotTitle))
+		}
+		if !where.ScheduledStartGreaterEqualTo.IsZero() {
+			conds = append(conds, sqlf.Sprintf("(scheduled_start_at >= %v OR scheduled_start_at IS NULL)", where.ScheduledStartGreaterEqualTo))
 		}
 		if where.TargetRunnerID != "" {
 			conds = append(conds, sqlf.Sprintf("target_runner_id = %v", where.TargetRunnerID))
@@ -362,6 +374,7 @@ func (s *Store) scanJob(scan func(...any) error) (*api.Job, error) {
 		&j.TargetRunnerID,
 		&j.TargetRunnerArch,
 		&payload,
+		&j.ScheduledStart,
 		&j.Updated,
 		&j.Created,
 	); err != nil {

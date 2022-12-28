@@ -441,7 +441,10 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		}
 
 		// Identify if a new job is available.
-		readyJobs, err := b.store.Jobs(ctx, JobsFilter{State: api.JobStateReady})
+		readyJobs, err := b.store.Jobs(ctx,
+			JobsFilter{State: api.JobStateReady},
+			JobsFilter{ScheduledStartGreaterEqualTo: time.Now()},
+		)
 		if err != nil {
 			return nil, errors.Wrap(err, "Jobs(ready)")
 		}
