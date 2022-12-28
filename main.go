@@ -20,8 +20,9 @@ Usage:
 The commands are:
 
 	service    manage the wrench service (also 'wrench svc')
-	runners    list registered runners
 	script     execute a script built-in to wrench
+	runners    (remote) list registered runners
+	secret     (remote) manage secrets
 
 Use "wrench <command> -h" for more information about a command.
 `
