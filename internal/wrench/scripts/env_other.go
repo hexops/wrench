@@ -54,6 +54,6 @@ func envFileEnsureLine(line string) error {
 		}
 	}
 
-	err = AppendToFile(file, "\n"+line+"\n")()
+	err = AppendToFile(file, "\n"+line+"\n")(os.Stderr)
 	return errors.Wrap(err, "appending to "+file)
 }

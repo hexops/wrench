@@ -42,7 +42,7 @@ func init() {
 			archiveFilePath := "golang." + extension
 			_ = os.RemoveAll(archiveFilePath)
 			defer os.RemoveAll(archiveFilePath)
-			err = DownloadFile(url, archiveFilePath)()
+			err = DownloadFile(url, archiveFilePath)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "DownloadFile")
 			}
@@ -66,7 +66,7 @@ func init() {
 			}
 
 			// Extract the Go archive
-			err = ExtractArchive(archiveFilePath, ".")()
+			err = ExtractArchive(archiveFilePath, ".")(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")
 			}

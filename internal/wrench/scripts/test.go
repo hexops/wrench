@@ -48,9 +48,9 @@ func init() {
 			}
 
 			if runtime.GOOS == "windows" {
-				return ExecArgs("powershell.exe", []string{tmpFile.Name()})()
+				return ExecArgs("powershell.exe", []string{tmpFile.Name()})(os.Stderr)
 			}
-			return ExecArgs("sh", []string{tmpFile.Name()})()
+			return ExecArgs("sh", []string{tmpFile.Name()})(os.Stderr)
 		},
 	})
 }

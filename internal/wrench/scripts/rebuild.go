@@ -1,5 +1,7 @@
 package scripts
 
+import "os"
+
 func init() {
 	Scripts = append(Scripts, Script{
 		Command:     "rebuild",
@@ -10,7 +12,7 @@ func init() {
 				Exec("wrench script install-go"),
 				Exec("wrench script rebuild-only"),
 				Exec("wrench svc restart").IgnoreError(),
-			)()
+			)(os.Stderr)
 		},
 	})
 }

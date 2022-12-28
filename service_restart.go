@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/hexops/cmder"
@@ -31,7 +32,7 @@ Examples:
 		if runtime.GOOS == "darwin" {
 			// kickstart -k is a better / safer approacher to restarting on macOS.
 			// https://github.com/kardianos/service/issues/358
-			if err := scripts.Exec(`launchctl kickstart -k system/wrench`)(); err != nil {
+			if err := scripts.Exec(`launchctl kickstart -k system/wrench`)(os.Stderr); err != nil {
 				return errors.Wrap(err, "restart")
 			}
 			return nil

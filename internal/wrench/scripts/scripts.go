@@ -41,7 +41,7 @@ func Env(key, value string) CmdOption {
 	}
 }
 
-func newCmd(name string, args []string, opt ...CmdOption) *exec.Cmd {
+func newCmd(w io.Writer, name string, args []string, opt ...CmdOption) *exec.Cmd {
 	cmd := exec.Command(name, args...)
 	for _, opt := range opt {
 		opt(cmd)
@@ -55,15 +55,15 @@ func newCmd(name string, args []string, opt ...CmdOption) *exec.Cmd {
 			prefix = fmt.Sprintf("%s %s ", prefix, envKeyValue)
 		}
 	}
-	fmt.Fprintf(os.Stderr, "$ %s%s\n", prefix, strings.Join(append([]string{name}, args...), " "))
+	fmt.Fprintf(w, "$ %s%s\n", prefix, strings.Join(append([]string{name}, args...), " "))
 	return cmd
 }
 
 func ExecArgs(name string, args []string, opt ...CmdOption) Cmd {
-	return func() error {
-		cmd := newCmd(name, args, opt...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+	return func(w io.Writer) error {
+		cmd := newCmd(w, name, args, opt...)
+		cmd.Stderr = w
+		cmd.Stdout = w
 		if err := cmd.Run(); err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
 				return fmt.Errorf("'%s': error: exit code: %v", name, exitError.ExitCode())
@@ -82,7 +82,7 @@ func Exec(cmdLine string, opt ...CmdOption) Cmd {
 
 func OutputArgs(name string, args []string, opt ...CmdOption) (string, error) {
 	var buf bytes.Buffer
-	cmd := newCmd(name, args, opt...)
+	cmd := newCmd(&buf, name, args, opt...)
 	cmd.Stderr = &buf
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
@@ -100,21 +100,21 @@ func Output(cmdLine string, opt ...CmdOption) (string, error) {
 	return OutputArgs(name, args, opt...)
 }
 
-type Cmd func() error
+type Cmd func(w io.Writer) error
 
 func (cmd Cmd) IgnoreError() Cmd {
-	return func() error {
-		if err := cmd(); err != nil {
-			fmt.Fprintf(os.Stderr, "ignoring error: %s\n", err)
+	return func(w io.Writer) error {
+		if err := cmd(w); err != nil {
+			fmt.Fprintf(w, "ignoring error: %s\n", err)
 		}
 		return nil
 	}
 }
 
 func Sequence(cmds ...Cmd) Cmd {
-	return func() error {
+	return func(w io.Writer) error {
 		for _, cmd := range cmds {
-			if err := cmd(); err != nil {
+			if err := cmd(w); err != nil {
 				return err
 			}
 		}
@@ -123,8 +123,8 @@ func Sequence(cmds ...Cmd) Cmd {
 }
 
 func DownloadFile(url string, filepath string) Cmd {
-	return func() error {
-		fmt.Fprintf(os.Stderr, "DownloadFile: %s > %s\n", url, filepath)
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "DownloadFile: %s > %s\n", url, filepath)
 		out, err := os.Create(filepath)
 		if err != nil {
 			return errors.Wrap(err, "Create")
@@ -150,8 +150,8 @@ func DownloadFile(url string, filepath string) Cmd {
 }
 
 func ExtractArchive(archiveFilePath, dst string) Cmd {
-	return func() error {
-		fmt.Fprintf(os.Stderr, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
 		ctx := context.Background()
 		handler := func(ctx context.Context, fi archiver.File) error {
 			dstPath := filepath.Join(dst, fi.NameInArchive)
@@ -211,8 +211,8 @@ func ExtractArchive(archiveFilePath, dst string) Cmd {
 }
 
 func AppendToFile(file, format string, v ...any) Cmd {
-	return func() error {
-		fmt.Fprintf(os.Stderr, "AppendToFile: %s >> %s\n", fmt.Sprintf(format, v...), file)
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "AppendToFile: %s >> %s\n", fmt.Sprintf(format, v...), file)
 		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return errors.Wrap(err, "OpenFile")

@@ -2,6 +2,7 @@ package scripts
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"strings"
@@ -20,7 +21,7 @@ func init() {
 				Exec("git clone https://github.com/hexops/wrench").IgnoreError(),
 				Exec("git fetch", WorkDir("wrench")),
 				Exec("git reset --hard origin/main", WorkDir("wrench")),
-			)(); err != nil {
+			)(os.Stderr); err != nil {
 				return err
 			}
 
@@ -45,7 +46,7 @@ func init() {
 
 			return Sequence(
 				ExecArgs("go", []string{"build", "-ldflags", ldFlags, "-o", "bin/wrench", "."}, WorkDir("wrench")),
-				func() error {
+				func(w io.Writer) error {
 					exePath, err := os.Executable()
 					if err != nil {
 						return errors.Wrap(err, "Executable")
@@ -60,9 +61,9 @@ func init() {
 						// Rename wrench.exe -> wrench-old.exe
 						// Rename new build -> wrench.exe
 						exe2Path := strings.TrimSuffix(exePath, ".exe") + "-old.exe"
-						fmt.Printf("$ rm -f %s\n", exe2Path)
+						fmt.Fprintf(w, "$ rm -f %s\n", exe2Path)
 						_ = os.Remove(exe2Path)
-						fmt.Printf("$ mv %s %s\n", exePath, exe2Path)
+						fmt.Fprintf(w, "$ mv %s %s\n", exePath, exe2Path)
 						err = os.Rename(exePath, exe2Path)
 						if err != nil {
 							return errors.Wrap(err, "Rename")
@@ -72,14 +73,14 @@ func init() {
 							return errors.Wrap(err, "Remove")
 						}
 					}
-					fmt.Printf("$ mv %s %s\n", newBinary, exePath)
+					fmt.Fprintf(w, "$ mv %s %s\n", newBinary, exePath)
 					err = os.Rename("wrench/bin/wrench", exePath)
 					if err != nil {
 						return errors.Wrap(err, "Rename")
 					}
 					return nil
 				},
-			)()
+			)(os.Stderr)
 		},
 	})
 }
