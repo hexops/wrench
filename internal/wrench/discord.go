@@ -74,7 +74,14 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		if handler, ok := b.discordCommands[cmd]; ok {
 			response := handler(args[1:]...)
 			if response != "" {
-				s.ChannelMessageSend(m.ChannelID, response)
+				_, err := s.ChannelMessageSend(m.ChannelID, response)
+				if err != nil {
+					_, _ = s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+						Title:       "error",
+						Description: err.Error(),
+					})
+					return err
+				}
 			}
 			return nil
 		}
@@ -87,7 +94,14 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 				if len(response.Description) > 4096 {
 					response.Description = response.Description[:4096] // Discord limit
 				}
-				s.ChannelMessageSendEmbed(m.ChannelID, response)
+				_, err := s.ChannelMessageSendEmbed(m.ChannelID, response)
+				if err != nil {
+					_, _ = s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+						Title:       "error",
+						Description: err.Error(),
+					})
+					return err
+				}
 			}
 			return nil
 		}
@@ -115,13 +129,22 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 				if len(response.Description) > 4096 {
 					response.Description = response.Description[:4096] // Discord limit
 				}
-				s.ChannelMessageSendEmbed(m.ChannelID, response)
+				_, err := s.ChannelMessageSendEmbed(m.ChannelID, response)
+				if err != nil {
+					_, _ = s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+						Title:       "error",
+						Description: err.Error(),
+					})
+					return err
+				}
 			}
 			return nil
 		}
-		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
+		return err
 	} else if len(fields) >= 1 && fields[0] == "!wrench" {
-		s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, b.discordHelp())
+		return err
 	}
 	return nil
 }
