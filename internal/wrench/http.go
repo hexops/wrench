@@ -409,8 +409,10 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 	if err != nil {
 		return nil, errors.Wrap(err, "Jobs(dead)")
 	}
+	runningJobs := 0
 	for _, job := range maybeDeadJobs {
 		if _, isRunning := runningSet[job.ID]; isRunning {
+			runningJobs++
 			continue // job is running
 		}
 		// job is dead
@@ -427,6 +429,11 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		if err != nil {
 			return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
 		}
+	}
+
+	if runningJobs > 0 {
+		// Runner is already performing a job, don't give it another one yet.
+		return &api.RunnerPollResponse{}, nil
 	}
 
 	// Identify if a new job is available.
