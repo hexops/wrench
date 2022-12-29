@@ -409,10 +409,12 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 	if err != nil {
 		return nil, errors.Wrap(err, "Jobs(dead)")
 	}
-	runningJobs := 0
+	runningForegroundJobs := 0
 	for _, job := range maybeDeadJobs {
 		if _, isRunning := runningSet[job.ID]; isRunning {
-			runningJobs++
+			if !job.Payload.Background {
+				runningForegroundJobs++
+			}
 			continue // job is running
 		}
 		// job is dead
@@ -431,11 +433,6 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		}
 	}
 
-	if runningJobs > 0 {
-		// Runner is already performing a job, don't give it another one yet.
-		return &api.RunnerPollResponse{}, nil
-	}
-
 	// Identify if a new job is available.
 	readyJobs, err := b.store.Jobs(ctx,
 		JobsFilter{State: api.JobStateReady},
@@ -448,7 +445,10 @@ jobSearch:
 	for _, job := range readyJobs {
 		archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
 		idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
-		if archMatch && idMatch {
+		wantForegroundJobs := runningForegroundJobs < 1
+		foregroundMatch := job.Payload.Background || wantForegroundJobs
+
+		if archMatch && idMatch && foregroundMatch {
 			needSecrets := job.Payload.SecretIDs
 			secrets := map[string]string{}
 			for _, secretID := range needSecrets {
