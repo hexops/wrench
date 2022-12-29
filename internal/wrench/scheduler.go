@@ -24,7 +24,7 @@ func (b *Bot) schedulerStart() error {
 				TargetRunnerID: "darwin-arm64",
 				Payload: api.JobPayload{
 					Background: true,
-					Cmd:        []string{"wrench script github-runner"},
+					Cmd:        []string{"script github-runner"},
 					SecretIDs: []string{
 						"darwin-arm64/github-runner-url",
 						"darwin-arm64/github-runner-token",
