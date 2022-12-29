@@ -12,6 +12,7 @@ const schedulerLogID = "scheduler"
 
 type ScheduledJob struct {
 	Always bool
+	Every  time.Duration
 	Job    api.Job
 }
 
@@ -29,6 +30,16 @@ func (b *Bot) schedulerStart() error {
 						"darwin-arm64/github-runner-url",
 						"darwin-arm64/github-runner-token",
 					},
+				},
+			},
+		},
+		{
+			Every: 5 * time.Minute,
+			Job: api.Job{
+				Title:          "update-runners",
+				TargetRunnerID: "*",
+				Payload: api.JobPayload{
+					Cmd: []string{"script", "rebuild"},
 				},
 			},
 		},
@@ -67,6 +78,17 @@ scheduling:
 				}
 			}
 			start = true
+		} else if schedule.Every != 0 {
+			lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title)
+			if err != nil {
+				b.idLogf(schedulerLogID, "failed to query last job: %v", err)
+				continue
+			}
+			start = lastJob == nil || (lastJob.State != api.JobStateReady &&
+				lastJob.State != api.JobStateStarting &&
+				lastJob.State != api.JobStateRunning &&
+				time.Since(lastJob.Created) > schedule.Every)
+			schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
 		}
 
 		if start {
@@ -80,6 +102,23 @@ scheduling:
 	}
 
 	return nil
+}
+
+func (b *Bot) lastJobWithTitle(ctx context.Context, title string) (*api.Job, error) {
+	lastJobs, err := b.store.Jobs(ctx, JobsFilter{Title: title})
+	if err != nil {
+		return nil, errors.Wrap(err, "Jobs")
+	}
+	if len(lastJobs) == 0 {
+		return nil, nil
+	}
+	lastJob := lastJobs[0]
+	for _, job := range lastJobs {
+		if job.Created.After(lastJob.Created) {
+			lastJob = job
+		}
+	}
+	return &lastJob, nil
 }
 
 func (b *Bot) schedulerStop() error {
