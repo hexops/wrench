@@ -39,6 +39,7 @@ func (b *Bot) runnerStart() error {
 			WrenchGoVersion:   GoVersion,
 		}
 		type runningJob struct {
+			Title        string
 			ID           api.JobID
 			Cancel, Done chan struct{}
 		}
@@ -84,7 +85,7 @@ func (b *Bot) runnerStart() error {
 
 			if resp.Start != nil {
 				for _, running := range runningJobs {
-					if resp.Start.ID == running.ID {
+					if resp.Start.Title == running.Title {
 						// We were asked to start a job that is currently running, cancel the old one.
 						close(running.Cancel)
 						<-running.Done // wait for it to finish
@@ -95,6 +96,7 @@ func (b *Bot) runnerStart() error {
 				cancel := make(chan struct{})
 				runningJobs = append(runningJobs, runningJob{
 					ID:     resp.Start.ID,
+					Title:  resp.Start.Title,
 					Cancel: cancel,
 					Done:   done,
 				})
