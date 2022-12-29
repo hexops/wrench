@@ -7,9 +7,6 @@ type RunnerPollRequest struct {
 	// Arch is the architecture of this runner, in `$GOOS/$GOARCH` format.
 	Arch string
 
-	// Job, if non-nil, indicates the runner has an update about performing a job.
-	Job *RunnerJobUpdate
-
 	// Running is the list of running jobs.
 	Running []JobID
 

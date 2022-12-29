@@ -388,123 +388,93 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		return nil, errors.Wrap(err, "RunnerSeen")
 	}
 
-	if r.Job != nil {
-		// Update job state.
-		job, err := b.store.JobByID(ctx, r.Job.ID)
-		if err != nil {
-			if err == ErrNotFound {
-				return &api.RunnerPollResponse{NotFound: true}, nil
-			}
-			return nil, errors.Wrap(err, "JobsByID")
+	b.jobAcquire.Lock()
+	defer b.jobAcquire.Unlock()
+
+	runningSet := map[api.JobID]struct{}{}
+	for _, running := range r.Running {
+		runningSet[running] = struct{}{}
+	}
+
+	// Look for starting or running jobs that are assigned to our runner. We will check that the
+	// runner reports they are running. If it does not, then they are dead jobs.
+	maybeDeadJobs, err := b.store.Jobs(ctx,
+		// Starting OR Running
+		JobsFilter{NotState: api.JobStateSuccess},
+		JobsFilter{NotState: api.JobStateError},
+		JobsFilter{NotState: api.JobStateReady},
+		// Assigned to this runner
+		JobsFilter{TargetRunnerID: r.ID},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Jobs(dead)")
+	}
+	for _, job := range maybeDeadJobs {
+		if _, isRunning := runningSet[job.ID]; isRunning {
+			continue // job is running
 		}
-		job.State = r.Job.State
+		// job is dead
+		if strings.Contains(job.Title, "script rebuild") {
+			// `wrench script rebuild` is expected to not finish gracefully as the service will
+			// restart itself before the job completes.
+			job.State = api.JobStateSuccess
+			b.idLogf(job.ID.LogID(), "runner restarted successfully")
+		} else {
+			b.idLogf(job.ID.LogID(), "runner stopped performing job unexpectedly: %v:%v", r.ID, r.Arch)
+			job.State = api.JobStateError
+		}
 		err = b.store.UpsertRunnerJob(ctx, job)
 		if err != nil {
-			return nil, errors.Wrap(err, "UpsertRunnerJob(0)")
-		}
-
-		// Log job messages.
-		if r.Job.Log != "" {
-			if b.Config.GitPushUsername != "" {
-				r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushUsername, "<redacted>")
-			}
-			if b.Config.GitPushPassword != "" {
-				r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
-			}
-			secrets, err := b.store.Secrets(ctx)
-			if err != nil {
-				return nil, errors.Wrap(err, "Secrets")
-			}
-			for _, secret := range secrets {
-				r.Job.Log = strings.ReplaceAll(r.Job.Log, secret.Value, "<redacted>")
-			}
-			b.idLogf(r.Job.ID.LogID(), "%s", r.Job.Log)
+			return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
 		}
 	}
 
-	startNewJob := r.Job == nil ||
-		r.Job.State == api.JobStateSuccess ||
-		r.Job.State == api.JobStateError
-	if startNewJob {
-		b.jobAcquire.Lock()
-		defer b.jobAcquire.Unlock()
-
-		// If the runner is looking for new jobs, but we think it's currently starting or running
-		// one, then that means that job died.
-		deadJobs, err := b.store.Jobs(ctx,
-			// Starting OR Running
-			JobsFilter{NotState: api.JobStateSuccess},
-			JobsFilter{NotState: api.JobStateError},
-			JobsFilter{NotState: api.JobStateReady},
-			// Assigned to this runner
-			JobsFilter{TargetRunnerID: r.ID},
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "Jobs(dead)")
-		}
-		for _, job := range deadJobs {
-			if strings.Contains(job.Title, "script rebuild") {
-				// `wrench script rebuild` is expected to not finish gracefully as the service will
-				// restart itself before the job completes.
-				job.State = api.JobStateSuccess
-				b.idLogf(job.ID.LogID(), "runner restarted successfully")
-			} else {
-				b.idLogf(job.ID.LogID(), "runner stopped performing job unexpectedly: %v:%v", r.ID, r.Arch)
-				job.State = api.JobStateError
+	// Identify if a new job is available.
+	readyJobs, err := b.store.Jobs(ctx,
+		JobsFilter{State: api.JobStateReady},
+		JobsFilter{ScheduledStartGreaterEqualTo: time.Now()},
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Jobs(ready)")
+	}
+jobSearch:
+	for _, job := range readyJobs {
+		archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
+		idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
+		if archMatch && idMatch {
+			needSecrets := job.Payload.SecretIDs
+			secrets := map[string]string{}
+			for _, secretID := range needSecrets {
+				secret, err := b.store.Secret(ctx, secretID)
+				if err != nil {
+					b.idLogf(job.ID.LogID(), `could not find secret "%v": %v`, secretID, err)
+					job.State = api.JobStateError
+					err = b.store.UpsertRunnerJob(ctx, job)
+					if err != nil {
+						return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
+					}
+					continue jobSearch
+				}
+				secrets[secretID] = secret.Value
 			}
+
+			job.State = api.JobStateStarting
+			job.TargetRunnerID = r.ID // assign job to this runner
 			err = b.store.UpsertRunnerJob(ctx, job)
 			if err != nil {
 				return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
 			}
-		}
-
-		// Identify if a new job is available.
-		readyJobs, err := b.store.Jobs(ctx,
-			JobsFilter{State: api.JobStateReady},
-			JobsFilter{ScheduledStartGreaterEqualTo: time.Now()},
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "Jobs(ready)")
-		}
-	jobSearch:
-		for _, job := range readyJobs {
-			archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
-			idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
-			if archMatch && idMatch {
-				needSecrets := job.Payload.SecretIDs
-				secrets := map[string]string{}
-				for _, secretID := range needSecrets {
-					secret, err := b.store.Secret(ctx, secretID)
-					if err != nil {
-						b.idLogf(job.ID.LogID(), `could not find secret "%v": %v`, secretID, err)
-						job.State = api.JobStateError
-						err = b.store.UpsertRunnerJob(ctx, job)
-						if err != nil {
-							return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
-						}
-						continue jobSearch
-					}
-					secrets[secretID] = secret.Value
-				}
-
-				job.State = api.JobStateStarting
-				job.TargetRunnerID = r.ID // assign job to this runner
-				err = b.store.UpsertRunnerJob(ctx, job)
-				if err != nil {
-					return nil, errors.Wrap(err, "UpsertRunnerJob(1)")
-				}
-				b.idLogf(job.ID.LogID(), "job assigned to runner: %v:%v", r.ID, r.Arch)
-				return &api.RunnerPollResponse{Start: &api.RunnerJobStart{
-					ID:                 job.ID,
-					Title:              job.Title,
-					Payload:            job.Payload,
-					GitPushUsername:    b.Config.GitPushUsername,
-					GitPushPassword:    b.Config.GitPushPassword,
-					GitConfigUserName:  b.Config.GitConfigUserName,
-					GitConfigUserEmail: b.Config.GitConfigUserEmail,
-					Secrets:            secrets,
-				}}, nil
-			}
+			b.idLogf(job.ID.LogID(), "job assigned to runner: %v:%v", r.ID, r.Arch)
+			return &api.RunnerPollResponse{Start: &api.RunnerJobStart{
+				ID:                 job.ID,
+				Title:              job.Title,
+				Payload:            job.Payload,
+				GitPushUsername:    b.Config.GitPushUsername,
+				GitPushPassword:    b.Config.GitPushPassword,
+				GitConfigUserName:  b.Config.GitConfigUserName,
+				GitConfigUserEmail: b.Config.GitConfigUserEmail,
+				Secrets:            secrets,
+			}}, nil
 		}
 	}
 	return &api.RunnerPollResponse{}, nil
