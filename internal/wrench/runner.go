@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os/exec"
 	"runtime"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/hexops/wrench/internal/wrench/scripts"
+	"golang.org/x/exp/slices"
 )
 
 func (b *Bot) runnerStart() error {
@@ -23,23 +25,22 @@ func (b *Bot) runnerStart() error {
 	if b.Config.Secret == "" {
 		return errors.New("runner: Config.Secret must be configured")
 	}
-	arch := runtime.GOOS + "/" + runtime.GOARCH
 	b.runner = &api.Client{URL: b.Config.ExternalURL, Secret: b.Config.Secret}
 
-	connected := false
 	go func() {
-		var (
-			activeMu  sync.RWMutex
-			active    *api.Job
-			activeLog bytes.Buffer
-		)
-
+		arch := runtime.GOOS + "/" + runtime.GOARCH
+		connected := false
 		env := api.RunnerEnv{
 			WrenchVersion:     Version,
 			WrenchCommitTitle: CommitTitle,
 			WrenchDate:        Date,
 			WrenchGoVersion:   GoVersion,
 		}
+		type runningJob struct {
+			ID   api.JobID
+			Done chan struct{}
+		}
+		runningJobs := []runningJob{}
 
 		logID := "runner"
 		started := false
@@ -49,6 +50,102 @@ func (b *Bot) runnerStart() error {
 			}
 			started = true
 			ctx := context.Background()
+
+		sliceUpdated:
+			var runningIDs []api.JobID
+			for i, running := range runningJobs {
+				_, ok := <-running.Done
+				if !ok {
+					runningJobs = slices.Delete(runningJobs, i, i)
+					goto sliceUpdated
+				}
+				runningIDs = append(runningIDs, running.ID)
+			}
+
+			resp, err := b.runner.RunnerPoll(ctx, &api.RunnerPollRequest{
+				ID:      b.Config.Runner,
+				Arch:    arch,
+				Running: runningIDs,
+				Env:     env,
+			})
+			if !connected {
+				connected = true
+				b.idLogf(logID, "working for %s ('%s', %s)", b.Config.ExternalURL, b.Config.Runner, arch)
+			}
+			if err != nil {
+				b.idLogf(logID, "error: %v", err)
+				continue
+			}
+
+			if resp.Start != nil {
+				done := make(chan struct{})
+				runningJobs = append(runningJobs, runningJob{
+					ID:   resp.Start.ID,
+					Done: done,
+				})
+				b.idLogf(logID, "starting job: id=%v title=%v", resp.Start.ID, resp.Start.Title)
+				b.runnerStartJob(ctx, resp.Start, done)
+			} else {
+				b.idLogf(logID, "waiting for jobs, running: %v", runningIDs)
+			}
+		}
+	}()
+	return nil
+}
+
+func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, done chan struct{}) {
+	var (
+		activeMu  sync.RWMutex
+		active    *api.Job
+		activeLog bytes.Buffer
+		logID     = "job-" + string(startJob.ID)
+		arch      = runtime.GOOS + "/" + runtime.GOARCH
+	)
+
+	activeMu.Lock()
+	active = &api.Job{
+		ID:      startJob.ID,
+		Title:   startJob.Title,
+		Payload: startJob.Payload,
+		State:   api.JobStateRunning,
+	}
+	fmt.Fprintf(&activeLog, "running job: id=%v title=%v\n", active.ID, active.Title)
+	activeMu.Unlock()
+
+	go func() {
+		if active.Payload.Ping {
+			activeMu.Lock()
+			active.State = api.JobStateSuccess
+			fmt.Fprintf(&activeLog, "PING SUCCESS (job id=%v)\n", active.ID)
+			activeMu.Unlock()
+			return
+		}
+
+		var logBuffer bytes.Buffer
+		cmd := scripts.NewCmd(&logBuffer, "wrench", active.Payload.Cmd, scripts.WorkDir(b.Config.WrenchDir))
+		cmd.Stderr = &logBuffer
+		cmd.Stdout = &logBuffer
+		err := cmd.Run()
+		if err != nil {
+			if exitError, ok := err.(*exec.ExitError); ok {
+				err = fmt.Errorf("'wrench': error: exit code: %v", exitError.ExitCode())
+			}
+		}
+
+		activeMu.Lock()
+		defer activeMu.Unlock()
+		_, _ = logBuffer.WriteTo(&activeLog)
+		if err != nil {
+			active.State = api.JobStateError
+			fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
+			return
+		}
+		active.State = api.JobStateSuccess
+		fmt.Fprintf(&activeLog, "SUCCESS (job id=%v)\n", active.ID)
+	}()
+
+	go func() {
+		for {
 			activeMu.Lock()
 			var update *api.RunnerJobUpdate
 			if active != nil {
@@ -59,23 +156,20 @@ func (b *Bot) runnerStart() error {
 					Pushed: false, // TODO: pushing
 				}
 			}
-			resp, err := b.runner.RunnerPoll(ctx, &api.RunnerPollRequest{
+			resp, err := b.runner.RunnerJobUpdate(ctx, &api.RunnerJobUpdateRequest{
 				ID:   b.Config.Runner,
 				Arch: arch,
 				Job:  update,
-				Env:  env,
 			})
 			if err == nil {
 				if active != nil && (active.State == api.JobStateSuccess || active.State == api.JobStateError) {
 					active = nil // job finished
+					close(done)
+					return
 				}
 				activeLog.Reset()
 			}
 			activeMu.Unlock()
-			if !connected {
-				connected = true
-				b.idLogf(logID, "working for %s ('%s', %s)", b.Config.ExternalURL, b.Config.Runner, arch)
-			}
 			if err != nil {
 				b.idLogf(logID, "error: %v", err)
 				continue
@@ -83,50 +177,9 @@ func (b *Bot) runnerStart() error {
 			if resp.NotFound {
 				b.idLogf(logID, "error: job not found, dropping job")
 				active = nil
-				continue
-			}
-
-			if resp.Start != nil {
-				activeMu.Lock()
-				active = &api.Job{
-					ID:      resp.Start.ID,
-					Title:   resp.Start.Title,
-					Payload: resp.Start.Payload,
-					State:   api.JobStateRunning,
-				}
-				b.idLogf(logID, "running job: id=%v title=%v", active.ID, active.Title)
-				fmt.Fprintf(&activeLog, "running job: id=%v title=%v\n", active.ID, active.Title)
-				activeMu.Unlock()
-
-				go func() {
-					if active.Payload.Ping {
-						activeMu.Lock()
-						active.State = api.JobStateSuccess
-						fmt.Fprintf(&activeLog, "PING SUCCESS (job id=%v)\n", active.ID)
-						activeMu.Unlock()
-						return
-					}
-					var logBuffer bytes.Buffer
-					err := scripts.ExecArgs(
-						"wrench",
-						active.Payload.Cmd,
-						scripts.WorkDir(b.Config.WrenchDir),
-					)(&logBuffer)
-					activeMu.Lock()
-					defer activeMu.Unlock()
-					_, _ = logBuffer.WriteTo(&activeLog)
-					if err != nil {
-						active.State = api.JobStateError
-						fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
-						return
-					}
-					active.State = api.JobStateSuccess
-					fmt.Fprintf(&activeLog, "SUCCESS (job id=%v)\n", active.ID)
-				}()
-			} else {
-				b.idLogf(logID, "waiting for a job")
+				close(done)
+				return
 			}
 		}
 	}()
-	return nil
 }

@@ -57,6 +57,10 @@ func (c *Client) RunnerPoll(ctx context.Context, r *RunnerPollRequest) (*RunnerP
 	return clientDo[RunnerPollRequest, RunnerPollResponse](c, ctx, r, "/api/runner/poll")
 }
 
+func (c *Client) RunnerJobUpdate(ctx context.Context, r *RunnerJobUpdateRequest) (*RunnerJobUpdateResponse, error) {
+	return clientDo[RunnerJobUpdateRequest, RunnerJobUpdateResponse](c, ctx, r, "/api/runner/job-update")
+}
+
 func (c *Client) RunnerList(ctx context.Context, r *RunnerListRequest) (*RunnerListResponse, error) {
 	return clientDo[RunnerListRequest, RunnerListResponse](c, ctx, r, "/api/runner/list")
 }

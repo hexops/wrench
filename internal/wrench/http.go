@@ -49,6 +49,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
+	mux.Handle("/api/runner/job-update", handler("api-runner-job-update", botHttpAPI(b, b.httpServeRunnerJobUpdate)))
 	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
 	mux.Handle("/api/secrets/list", handler("api-secrets-list", botHttpAPI(b, b.httpServeSecretsList)))
 	mux.Handle("/api/secrets/delete", handler("api-secrets-delete", botHttpAPI(b, b.httpServeSecretsDelete)))
@@ -507,6 +508,41 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 		}
 	}
 	return &api.RunnerPollResponse{}, nil
+}
+
+func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpdateRequest) (*api.RunnerJobUpdateResponse, error) {
+	// Update job state.
+	job, err := b.store.JobByID(ctx, r.Job.ID)
+	if err != nil {
+		if err == ErrNotFound {
+			return &api.RunnerJobUpdateResponse{NotFound: true}, nil
+		}
+		return nil, errors.Wrap(err, "JobsByID")
+	}
+	job.State = r.Job.State
+	err = b.store.UpsertRunnerJob(ctx, job)
+	if err != nil {
+		return nil, errors.Wrap(err, "UpsertRunnerJob(0)")
+	}
+
+	// Log job messages.
+	if r.Job.Log != "" {
+		if b.Config.GitPushUsername != "" {
+			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushUsername, "<redacted>")
+		}
+		if b.Config.GitPushPassword != "" {
+			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
+		}
+		secrets, err := b.store.Secrets(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "Secrets")
+		}
+		for _, secret := range secrets {
+			r.Job.Log = strings.ReplaceAll(r.Job.Log, secret.Value, "<redacted>")
+		}
+		b.idLogf(r.Job.ID.LogID(), "%s", r.Job.Log)
+	}
+	return &api.RunnerJobUpdateResponse{}, nil
 }
 
 func (b *Bot) httpServeRunnerList(ctx context.Context, r *api.RunnerListRequest) (*api.RunnerListResponse, error) {
