@@ -57,6 +57,9 @@ func init() {
 				}
 				wrenchRunnerID := os.Getenv("WRENCH_RUNNER_ID")
 
+				if err := os.Setenv("RUNNER_ALLOW_RUNASROOT", "1"); err != nil {
+					return errors.Wrap(err, "Setenv")
+				}
 				err = Exec(
 					fmt.Sprintf("./config%s --unattended --name %s --replace --url %s --token %s", scriptExt, wrenchRunnerID, secretRunnerURL, secretRunnerToken),
 					WorkDir("github-runner"),
