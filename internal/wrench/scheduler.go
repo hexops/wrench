@@ -61,7 +61,7 @@ scheduling:
 		start := false
 		if schedule.Always {
 			for _, job := range activeJobs {
-				if job.ID == schedule.Job.ID {
+				if job.Title == schedule.Job.Title {
 					// already exists
 					continue scheduling
 				}
