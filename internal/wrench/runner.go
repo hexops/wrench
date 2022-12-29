@@ -38,8 +38,8 @@ func (b *Bot) runnerStart() error {
 			WrenchGoVersion:   GoVersion,
 		}
 		type runningJob struct {
-			ID   api.JobID
-			Done chan struct{}
+			ID           api.JobID
+			Cancel, Done chan struct{}
 		}
 		runningJobs := []runningJob{}
 
@@ -82,13 +82,23 @@ func (b *Bot) runnerStart() error {
 			}
 
 			if resp.Start != nil {
+				for _, running := range runningJobs {
+					if resp.Start.ID == running.ID {
+						// We were asked to start a job that is currently running, cancel the old one.
+						close(running.Cancel)
+						<-running.Done // wait for it to finish
+					}
+				}
+
 				done := make(chan struct{})
+				cancel := make(chan struct{})
 				runningJobs = append(runningJobs, runningJob{
-					ID:   resp.Start.ID,
-					Done: done,
+					ID:     resp.Start.ID,
+					Cancel: cancel,
+					Done:   done,
 				})
 				b.idLogf(logID, "starting job: id=%v title=%v", resp.Start.ID, resp.Start.Title)
-				b.runnerStartJob(ctx, resp.Start, done)
+				b.runnerStartJob(ctx, resp.Start, cancel, done)
 			} else {
 				b.idLogf(logID, "waiting for jobs, running: %v", runningIDs)
 			}
@@ -108,7 +118,7 @@ func (m lockedWriter) Write(p []byte) (n int, err error) {
 	return m.w.Write(p)
 }
 
-func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, done chan struct{}) {
+func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, cancel, done chan struct{}) {
 	var (
 		activeMu  sync.RWMutex
 		active    *api.Job
@@ -140,6 +150,14 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, scripts.WorkDir(b.Config.WrenchDir))
 		cmd.Stderr = lw
 		cmd.Stdout = lw
+		go func() {
+			select {
+			case <-done:
+				return
+			case <-cancel:
+			}
+			cmd.Process.Kill()
+		}()
 		err := cmd.Run()
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
