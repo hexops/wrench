@@ -73,13 +73,14 @@ Examples:
 		start := time.Now()
 		lastLine := time.Now()
 		for {
+		sliceUpdated:
 			for i, tail := range tails {
 				select {
 				case line, ok := <-tail.Lines:
 					lastLine = time.Now()
 					if !ok {
 						tails = slices.Delete(tails, i, i)
-						break
+						goto sliceUpdated
 					}
 					if !*showAllFlag {
 						split := strings.Split(line.Text, " ")
