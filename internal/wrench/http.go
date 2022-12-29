@@ -462,7 +462,7 @@ jobSearch:
 					}
 					continue jobSearch
 				}
-				secrets[strings.TrimPrefix(secretID, b.Config.Runner+"/")] = secret.Value
+				secrets[strings.TrimPrefix(secretID, r.ID+"/")] = secret.Value
 			}
 
 			job.State = api.JobStateStarting
