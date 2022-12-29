@@ -57,7 +57,7 @@ func (b *Bot) runnerStart() error {
 				select {
 				case _, ok := <-running.Done:
 					if !ok {
-						runningJobs = slices.Delete(runningJobs, i, i)
+						runningJobs = slices.Delete(runningJobs, i, i+1)
 						goto sliceUpdated
 					}
 				default:

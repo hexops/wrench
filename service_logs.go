@@ -79,7 +79,7 @@ Examples:
 				case line, ok := <-tail.Lines:
 					lastLine = time.Now()
 					if !ok {
-						tails = slices.Delete(tails, i, i)
+						tails = slices.Delete(tails, i, i+1)
 						goto sliceUpdated
 					}
 					if !*showAllFlag {
