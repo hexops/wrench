@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -147,7 +148,14 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		}
 
 		lw := lockedWriter{mu: &activeMu, w: &activeLog}
-		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, scripts.WorkDir(b.Config.WrenchDir))
+		opts := []scripts.CmdOption{scripts.WorkDir(b.Config.WrenchDir)}
+		for secretName, secretValue := range startJob.Secrets {
+			secretName = strings.Replace(secretName, "/", "_", -1)
+			secretName = strings.Replace(secretName, "-", "_", -1)
+			secretName = strings.ToUpper(secretName)
+			opts = append(opts, scripts.Env("WRENCH_SECRET_"+secretName, secretValue))
+		}
+		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, opts...)
 		cmd.Stderr = lw
 		cmd.Stdout = lw
 		go func() {
