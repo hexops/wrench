@@ -54,10 +54,13 @@ func (b *Bot) runnerStart() error {
 		sliceUpdated:
 			var runningIDs []api.JobID
 			for i, running := range runningJobs {
-				_, ok := <-running.Done
-				if !ok {
-					runningJobs = slices.Delete(runningJobs, i, i)
-					goto sliceUpdated
+				select {
+				case _, ok := <-running.Done:
+					if !ok {
+						runningJobs = slices.Delete(runningJobs, i, i)
+						goto sliceUpdated
+					}
+				default:
 				}
 				runningIDs = append(runningIDs, running.ID)
 			}
