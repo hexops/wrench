@@ -41,7 +41,7 @@ func Env(key, value string) CmdOption {
 	}
 }
 
-func newCmd(w io.Writer, name string, args []string, opt ...CmdOption) *exec.Cmd {
+func NewCmd(w io.Writer, name string, args []string, opt ...CmdOption) *exec.Cmd {
 	cmd := exec.Command(name, args...)
 	for _, opt := range opt {
 		opt(cmd)
@@ -61,7 +61,7 @@ func newCmd(w io.Writer, name string, args []string, opt ...CmdOption) *exec.Cmd
 
 func ExecArgs(name string, args []string, opt ...CmdOption) Cmd {
 	return func(w io.Writer) error {
-		cmd := newCmd(w, name, args, opt...)
+		cmd := NewCmd(w, name, args, opt...)
 		cmd.Stderr = w
 		cmd.Stdout = w
 		if err := cmd.Run(); err != nil {
@@ -82,7 +82,7 @@ func Exec(cmdLine string, opt ...CmdOption) Cmd {
 
 func OutputArgs(w io.Writer, name string, args []string, opt ...CmdOption) (string, error) {
 	var buf bytes.Buffer
-	cmd := newCmd(w, name, args, opt...)
+	cmd := NewCmd(w, name, args, opt...)
 	cmd.Stderr = &buf
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
