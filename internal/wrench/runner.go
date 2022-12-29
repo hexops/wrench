@@ -148,7 +148,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		}
 
 		lw := lockedWriter{mu: &activeMu, w: &activeLog}
-		opts := []scripts.CmdOption{scripts.WorkDir(b.Config.WrenchDir)}
+		opts := []scripts.CmdOption{
+			scripts.WorkDir(b.Config.WrenchDir),
+			scripts.Env("WRENCH_RUNNER_ID", b.Config.Runner),
+		}
 		for secretName, secretValue := range startJob.Secrets {
 			secretName = strings.Replace(secretName, "/", "_", -1)
 			secretName = strings.Replace(secretName, "-", "_", -1)
