@@ -36,6 +36,7 @@ type Bot struct {
 	runner                     *api.Client
 	webHookGitHubSelf          sync.Mutex
 	jobAcquire                 sync.Mutex
+	schedule                   []ScheduledJob
 }
 
 func (b *Bot) loadConfig() error {
@@ -131,6 +132,9 @@ func (b *Bot) run(s service.Service) error {
 		if err := b.httpStart(); err != nil {
 			return errors.Wrap(err, "http")
 		}
+		if err := b.schedulerStart(); err != nil {
+			return errors.Wrap(err, "scheduler")
+		}
 		b.registerCommands()
 	} else {
 		b.runnerStart()
@@ -174,6 +178,9 @@ func (b *Bot) stop() error {
 		}
 		if err := b.store.Close(); err != nil {
 			return errors.Wrap(err, "Store.Close")
+		}
+		if err := b.schedulerStop(); err != nil {
+			return errors.Wrap(err, "scheduler")
 		}
 	}
 	return nil
