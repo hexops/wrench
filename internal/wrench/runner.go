@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"runtime"
 	"sync"
@@ -96,6 +97,17 @@ func (b *Bot) runnerStart() error {
 	return nil
 }
 
+type lockedWriter struct {
+	mu *sync.RWMutex
+	w  io.Writer
+}
+
+func (m lockedWriter) Write(p []byte) (n int, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.w.Write(p)
+}
+
 func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, done chan struct{}) {
 	var (
 		activeMu  sync.RWMutex
@@ -124,10 +136,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			return
 		}
 
-		var logBuffer bytes.Buffer
-		cmd := scripts.NewCmd(&logBuffer, "wrench", active.Payload.Cmd, scripts.WorkDir(b.Config.WrenchDir))
-		cmd.Stderr = &logBuffer
-		cmd.Stdout = &logBuffer
+		lw := lockedWriter{mu: &activeMu, w: &activeLog}
+		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, scripts.WorkDir(b.Config.WrenchDir))
+		cmd.Stderr = lw
+		cmd.Stdout = lw
 		err := cmd.Run()
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
@@ -137,7 +149,6 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 
 		activeMu.Lock()
 		defer activeMu.Unlock()
-		_, _ = logBuffer.WriteTo(&activeLog)
 		if err != nil {
 			active.State = api.JobStateError
 			fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
