@@ -71,7 +71,7 @@ func init() {
 			}
 
 			// Extract the Go archive
-			err = ExtractArchive(archiveFilePath, "zig")(os.Stderr)
+			err = ExtractArchive(archiveFilePath, "zig", 1)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")
 			}

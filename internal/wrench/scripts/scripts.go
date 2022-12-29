@@ -149,12 +149,12 @@ func DownloadFile(url string, filepath string) Cmd {
 	}
 }
 
-func ExtractArchive(archiveFilePath, dst string) Cmd {
+func ExtractArchive(archiveFilePath, dst string, stripPathComponents int) Cmd {
 	return func(w io.Writer) error {
 		fmt.Fprintf(w, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
 		ctx := context.Background()
 		handler := func(ctx context.Context, fi archiver.File) error {
-			dstPath := filepath.Join(dst, fi.NameInArchive)
+			dstPath := filepath.Join(dst, stripComponents(fi.NameInArchive, stripPathComponents))
 			if fi.IsDir() {
 				err := os.MkdirAll(dstPath, os.ModePerm)
 				return errors.Wrap(err, "MkdirAll")
@@ -213,6 +213,14 @@ func ExtractArchive(archiveFilePath, dst string) Cmd {
 		}
 		return nil
 	}
+}
+
+func stripComponents(path string, n int) string {
+	elems := strings.Split(path, string(os.PathSeparator))
+	if len(elems) >= n {
+		elems = elems[n:]
+	}
+	return strings.Join(elems, string(os.PathSeparator))
 }
 
 func AppendToFile(file, format string, v ...any) Cmd {

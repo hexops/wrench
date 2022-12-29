@@ -66,7 +66,7 @@ func init() {
 			}
 
 			// Extract the Go archive
-			err = ExtractArchive(archiveFilePath, ".")(os.Stderr)
+			err = ExtractArchive(archiveFilePath, ".", 0)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")
 			}

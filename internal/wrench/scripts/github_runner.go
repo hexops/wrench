@@ -40,7 +40,7 @@ func init() {
 				fmt.Fprintln(os.Stderr, "installing to: github-runner/")
 
 				// Extract the archive
-				err = ExtractArchive(archiveFilePath, "github-runner")(os.Stderr)
+				err = ExtractArchive(archiveFilePath, "github-runner", 0)(os.Stderr)
 				if err != nil {
 					return errors.Wrap(err, "ExtractArchive")
 				}
