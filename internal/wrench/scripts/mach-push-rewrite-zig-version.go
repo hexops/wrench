@@ -43,7 +43,7 @@ func init() {
 					continue
 				}
 
-				err = GitCheckoutNewBranch(os.Stderr, workDir, "wrench/rewrite-zig-version")
+				err = GitCheckoutNewBranch(os.Stderr, workDir, os.Getenv("WRENCH_GIT_PUSH_BRANCH_NAME"))
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
 				}

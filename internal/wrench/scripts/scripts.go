@@ -334,7 +334,7 @@ func FindAndReplace(dir string, globs []string, replacer func(name string, conte
 				if err != nil {
 					return err
 				}
-				err = os.WriteFile(match, replacement, 0655) // perms will not change as file exists already
+				err = os.WriteFile(match, replacement, 0o655) // perms will not change as file exists already
 				if err != nil {
 					return errors.Wrap(err, "WriteFile")
 				}
