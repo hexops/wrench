@@ -513,11 +513,20 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 		// Ensure pull requests exist.
 		for _, repoRemoteURL := range r.Job.Pushed {
 			repoPair := repoPairFromURL(repoRemoteURL)
-			prURL, err := b.githubUpsertPullRequest(ctx, repoPair, job.Payload.PRTemplate.ToGitHub())
+			prTemplate := job.Payload.PRTemplate.ToGitHub()
+			*prTemplate.Body = strings.ReplaceAll(
+				*prTemplate.Body,
+				"${JOB_LOGS_URL}",
+				fmt.Sprintf("%s/logs/job-%s", b.Config.ExternalURL, r.Job.ID.LogID()),
+			)
+			pr, isNew, err := b.githubUpsertPullRequest(ctx, repoPair, prTemplate)
 			if err != nil {
 				return nil, errors.Wrap(err, "githubUpsertPullRequest")
 			}
-			b.idLogf(r.Job.ID.LogID(), "pull request: %s", prURL)
+			b.idLogf(r.Job.ID.LogID(), "pull request: %s", *pr.HTMLURL)
+			if isNew {
+				b.discord("I sent a PR just now: %s", *pr.HTMLURL)
+			}
 		}
 	}
 

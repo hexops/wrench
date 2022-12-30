@@ -113,10 +113,10 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 	return v, nil
 }
 
-func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *github.NewPullRequest) (string, error) {
+func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *github.NewPullRequest) (*github.PullRequest, bool, error) {
 	pullRequests, err := b.githubPullRequests(ctx, repoPair)
 	if err != nil {
-		return "", errors.Wrap(err, "githubPullRequests")
+		return nil, false, errors.Wrap(err, "githubPullRequests")
 	}
 	var exists *github.PullRequest
 	for _, existing := range pullRequests {
@@ -139,12 +139,12 @@ func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *
 		*exists.Body = *pr.Body
 		*exists.Draft = *pr.Draft
 		_, _, err := b.github.PullRequests.Edit(ctx, org, repo, *exists.Number, exists)
-		return *exists.HTMLURL, errors.Wrap(err, "PullRequests.Edit")
+		return exists, false, errors.Wrap(err, "PullRequests.Edit")
 	}
 
 	// Create a new PR.
 	newPR, _, err := b.github.PullRequests.Create(ctx, org, repo, pr)
-	return *newPR.HTMLURL, errors.Wrap(err, "PullRequests.Create")
+	return newPR, true, errors.Wrap(err, "PullRequests.Create")
 }
 
 func (b *Bot) githubStop() error {
