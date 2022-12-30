@@ -160,6 +160,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			secretName = strings.ToUpper(secretName)
 			opts = append(opts, scripts.Env("WRENCH_SECRET_"+secretName, secretValue))
 		}
+		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_CONFIG_USER_EMAIL", startJob.GitConfigUserEmail))
+		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_CONFIG_USER_NAME", startJob.GitConfigUserName))
+		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_USERNAME", startJob.GitPushUsername))
+		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_PASSWORD", startJob.GitPushPassword))
 		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, opts...)
 		cmd.Stderr = lw
 		cmd.Stdout = lw
