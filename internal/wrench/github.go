@@ -113,6 +113,37 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 	return v, nil
 }
 
+func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *github.NewPullRequest) error {
+	pullRequests, err := b.githubPullRequests(ctx, repoPair)
+	if err != nil {
+		return errors.Wrap(err, "githubPullRequests")
+	}
+	var exists *github.PullRequest
+	for _, existing := range pullRequests {
+		// TODO: don't hard-code wrench user here
+		wrenchGitHubUsername := "wrench-bot"
+		if *existing.State == "open" && *existing.Title == *pr.Title && *existing.User.Login == wrenchGitHubUsername {
+			exists = existing
+		}
+	}
+
+	org, repo := splitRepoPair(repoPair)
+	if exists != nil {
+		// Update the existing PR.
+		*exists.Title = *pr.Title
+		*exists.Head.Ref = *pr.Head
+		*exists.Base.Ref = *pr.Base
+		*exists.Body = *pr.Body
+		*exists.Draft = *pr.Draft
+		_, _, err := b.github.PullRequests.Edit(ctx, org, repo, *exists.Number, exists)
+		return errors.Wrap(err, "PullRequests.Edit")
+	}
+
+	// Create a new PR.
+	_, _, err = b.github.PullRequests.Create(ctx, org, repo, pr)
+	return errors.Wrap(err, "PullRequests.Create")
+}
+
 func (b *Bot) githubStop() error {
 	return nil
 }
