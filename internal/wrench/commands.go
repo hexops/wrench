@@ -187,8 +187,9 @@ func (b *Bot) registerCommands() {
 			Title:          jobTitle,
 			TargetRunnerID: runnerID,
 			Payload: api.JobPayload{
-				Cmd:        []string{"script", "test", gist},
-				Background: true,
+				Cmd:               []string{"script", "test", gist},
+				Background:        true,
+				GitPushBranchName: "sg/wrench-test",
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -228,8 +229,9 @@ func (b *Bot) registerCommands() {
 			Title:          jobTitle,
 			TargetRunnerID: runnerID,
 			Payload: api.JobPayload{
-				Cmd:        append([]string{"script", commandName}, commandArgs...),
-				Background: commandName == "rebuild",
+				Cmd:               append([]string{"script", commandName}, commandArgs...),
+				Background:        commandName == "rebuild",
+				GitPushBranchName: "sg/wrench-test",
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -274,8 +276,9 @@ func (b *Bot) registerCommands() {
 				Title:          jobTitle,
 				TargetRunnerID: runner.ID,
 				Payload: api.JobPayload{
-					Cmd:        append([]string{"script", commandName}, commandArgs...),
-					Background: commandName == "rebuild",
+					Cmd:               append([]string{"script", commandName}, commandArgs...),
+					Background:        commandName == "rebuild",
+					GitPushBranchName: "sg/wrench-test",
 				},
 			})
 			b.idLogf(job.LogID(), "job created: %v", jobTitle)
