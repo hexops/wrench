@@ -2,6 +2,8 @@ package api
 
 import (
 	"time"
+
+	"github.com/google/go-github/v48/github"
 )
 
 type Runner struct {
@@ -59,10 +61,27 @@ const (
 
 type JobPayload struct {
 	GitPushBranchName string
+	PRTemplate        PRTemplate
 	Background        bool
 	Cmd               []string
 	SecretIDs         []string
 	Ping              bool
+}
+
+type PRTemplate struct {
+	Title, Body string
+	Head, Base  string
+	Draft       bool
+}
+
+func (pr *PRTemplate) ToGitHub() *github.NewPullRequest {
+	return &github.NewPullRequest{
+		Title: &pr.Title,
+		Head:  &pr.Head,
+		Base:  &pr.Base,
+		Body:  &pr.Body,
+		Draft: &pr.Draft,
+	}
 }
 
 type JobID string

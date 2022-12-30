@@ -190,6 +190,12 @@ func (b *Bot) registerCommands() {
 				Cmd:               []string{"script", "test", gist},
 				Background:        true,
 				GitPushBranchName: "sg/wrench-test",
+				PRTemplate: api.PRTemplate{
+					Title: jobTitle,
+					Head:  "sg/wrench-test",
+					Base:  "main",
+					Body:  "(Produced via !wrench)",
+				},
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -232,6 +238,12 @@ func (b *Bot) registerCommands() {
 				Cmd:               append([]string{"script", commandName}, commandArgs...),
 				Background:        commandName == "rebuild",
 				GitPushBranchName: "sg/wrench-test",
+				PRTemplate: api.PRTemplate{
+					Title: jobTitle,
+					Head:  "sg/wrench-test",
+					Base:  "main",
+					Body:  "(Produced via !wrench)",
+				},
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -279,6 +291,12 @@ func (b *Bot) registerCommands() {
 					Cmd:               append([]string{"script", commandName}, commandArgs...),
 					Background:        commandName == "rebuild",
 					GitPushBranchName: "sg/wrench-test",
+					PRTemplate: api.PRTemplate{
+						Title: jobTitle,
+						Head:  "sg/wrench-test",
+						Base:  "main",
+						Body:  "(Produced via !wrench)",
+					},
 				},
 			})
 			b.idLogf(job.LogID(), "job created: %v", jobTitle)

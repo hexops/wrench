@@ -113,10 +113,10 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 	return v, nil
 }
 
-func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *github.NewPullRequest) error {
+func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *github.NewPullRequest) (string, error) {
 	pullRequests, err := b.githubPullRequests(ctx, repoPair)
 	if err != nil {
-		return errors.Wrap(err, "githubPullRequests")
+		return "", errors.Wrap(err, "githubPullRequests")
 	}
 	var exists *github.PullRequest
 	for _, existing := range pullRequests {
@@ -139,12 +139,12 @@ func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *
 		*exists.Body = *pr.Body
 		*exists.Draft = *pr.Draft
 		_, _, err := b.github.PullRequests.Edit(ctx, org, repo, *exists.Number, exists)
-		return errors.Wrap(err, "PullRequests.Edit")
+		return *exists.HTMLURL, errors.Wrap(err, "PullRequests.Edit")
 	}
 
 	// Create a new PR.
-	_, _, err = b.github.PullRequests.Create(ctx, org, repo, pr)
-	return errors.Wrap(err, "PullRequests.Create")
+	newPR, _, err := b.github.PullRequests.Create(ctx, org, repo, pr)
+	return *newPR.HTMLURL, errors.Wrap(err, "PullRequests.Create")
 }
 
 func (b *Bot) githubStop() error {
@@ -154,6 +154,13 @@ func (b *Bot) githubStop() error {
 func splitRepoPair(repoPair string) (owner, name string) {
 	split := strings.Split(repoPair, "/")
 	return split[0], split[1]
+}
+
+func repoPairFromURL(remoteURL string) string {
+	remoteURL = strings.TrimPrefix(remoteURL, "https://")
+	remoteURL = strings.TrimPrefix(remoteURL, "http://")
+	remoteURL = strings.TrimPrefix(remoteURL, "github.com/")
+	return remoteURL
 }
 
 const githubAPICacheName = "github-api"
