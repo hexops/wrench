@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/mholt/archiver/v4"
 )
@@ -312,4 +313,32 @@ func GitPush(w io.Writer, dir, remoteURL string) error {
 		return err
 	}
 	return nil
+}
+
+func FindAndReplace(dir string, globs []string, replacer func(name string, contents []byte) ([]byte, error)) Cmd {
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "FindAndReplace: dir=%s globs=%s\n", dir, globs)
+		for _, glob := range globs {
+			fsys := os.DirFS(dir)
+			matches, err := doublestar.Glob(fsys, glob)
+			if err != nil {
+				return errors.Wrap(err, "Glob")
+			}
+			for _, match := range matches {
+				data, err := os.ReadFile(match)
+				if err != nil {
+					return errors.Wrap(err, "ReadFile")
+				}
+				replacement, err := replacer(match, data)
+				if err != nil {
+					return err
+				}
+				err = os.WriteFile(match, replacement, 0655) // perms will not change as file exists already
+				if err != nil {
+					return errors.Wrap(err, "WriteFile")
+				}
+			}
+		}
+		return nil
+	}
 }

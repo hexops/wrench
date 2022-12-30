@@ -4,7 +4,9 @@ go 1.19
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/bmatcuk/doublestar/v4 v4.4.0
 	github.com/bwmarrin/discordgo v0.26.1
+	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v48 v48.2.0
 	github.com/hexops/cmder v1.0.1
@@ -17,6 +19,7 @@ require (
 	golang.org/x/crypto v0.4.0
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.3.0
+	golang.org/x/sys v0.3.0
 	modernc.org/sqlite v1.20.0
 )
 
@@ -24,7 +27,6 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -42,7 +44,6 @@ require (
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
