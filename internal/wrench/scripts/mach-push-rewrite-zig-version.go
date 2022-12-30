@@ -47,6 +47,10 @@ func init() {
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
 				}
+				err = GitConfigureRepo(os.Stderr, workDir)
+				if err != nil {
+					return nil, errors.Wrap(err, "GitConfigureRepo")
+				}
 				err = GitCommit(os.Stderr, workDir, "all: update Zig to version "+wantZigVersion)
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
