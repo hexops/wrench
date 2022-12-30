@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -246,4 +247,69 @@ func AppendToFile(file, format string, v ...any) Cmd {
 		_, err = fmt.Fprintf(f, format, v...)
 		return errors.Wrap(err, "Fprintf")
 	}
+}
+
+func GitChangesExist(w io.Writer, dir string) (bool, error) {
+	output, err := Output(w, "git status --porcelain", WorkDir(dir))
+	if err != nil {
+		return false, err
+	}
+	output = strings.TrimSpace(output)
+	return len(output) > 0, nil
+}
+
+func GitConfigureRepo(w io.Writer, dir string) error {
+	err := ExecArgs(
+		"git",
+		[]string{"config", "user.name", os.Getenv("WRENCH_SECRET_GIT_CONFIG_USER_NAME")},
+		WorkDir(dir),
+	)(w)
+	if err != nil {
+		return err
+	}
+	err = ExecArgs(
+		"git",
+		[]string{"config", "user.email", os.Getenv("WRENCH_SECRET_GIT_CONFIG_USER_EMAIL")},
+		WorkDir(dir),
+	)(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GitCommit(w io.Writer, dir, message string) error {
+	err := ExecArgs("git", []string{"commit", "-s", "-m", message}, WorkDir(dir))(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GitCheckoutNewBranch(w io.Writer, dir, branchName string) error {
+	err := ExecArgs("git", []string{"checkout", "-B", branchName}, WorkDir(dir))(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GitPush(w io.Writer, dir, remoteURL string) error {
+	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
+		remoteURL = "https://" + remoteURL
+	}
+	u, err := url.Parse(remoteURL)
+	if err != nil {
+		return errors.Wrap(err, "Parse")
+	}
+	u.User = url.UserPassword(
+		os.Getenv("WRENCH_SECRET_GIT_PUSH_USERNAME"),
+		os.Getenv("WRENCH_SECRET_GIT_PUSH_PASSWORD"),
+	)
+
+	err = ExecArgs("git", []string{"push", u.String(), "--all"}, WorkDir(dir))(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
