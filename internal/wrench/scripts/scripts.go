@@ -285,7 +285,7 @@ func GitCommit(w io.Writer, dir, message string) error {
 
 func GitClone(w io.Writer, dir, remoteURL string) error {
 	remoteURL = cleanGitURL(remoteURL)
-	return ExecArgs("git", []string{"clone", remoteURL, dir}, WorkDir(dir))(w)
+	return ExecArgs("git", []string{"clone", remoteURL, dir})(w)
 }
 
 func GitCheckoutNewBranch(w io.Writer, dir, branchName string) error {
