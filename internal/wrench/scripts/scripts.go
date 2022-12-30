@@ -280,6 +280,10 @@ func GitConfigureRepo(w io.Writer, dir string) error {
 }
 
 func GitCommit(w io.Writer, dir, message string) error {
+	err := ExecArgs("git", []string{"add", "."}, WorkDir(dir))(w)
+	if err !+ nil {
+		return errors.Wrap(err, "git add")
+	}
 	return ExecArgs("git", []string{"commit", "-s", "-m", message}, WorkDir(dir))(w)
 }
 
