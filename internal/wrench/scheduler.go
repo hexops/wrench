@@ -107,7 +107,11 @@ func (b *Bot) schedulerWork(ctx context.Context) error {
 
 		// Job is not running/scheduled, and is set to Always run OR is a ScheduledStart.
 		if !schedule.Always {
-			schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
+			if lastJob == nil || lastJob.State == api.JobStateError {
+				schedule.Job.ScheduledStart = time.Now().Add(30 * time.Second)
+			} else {
+				schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
+			}
 		}
 
 		_, err = b.store.NewRunnerJob(ctx, schedule.Job)
