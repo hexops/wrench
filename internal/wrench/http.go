@@ -517,7 +517,7 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 			*prTemplate.Body = strings.ReplaceAll(
 				*prTemplate.Body,
 				"${JOB_LOGS_URL}",
-				fmt.Sprintf("%s/logs/job-%s", b.Config.ExternalURL, r.Job.ID.LogID()),
+				fmt.Sprintf("%s/logs/%s", b.Config.ExternalURL, r.Job.ID.LogID()),
 			)
 			pr, isNew, err := b.githubUpsertPullRequest(ctx, repoPair, prTemplate)
 			if err != nil {
