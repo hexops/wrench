@@ -517,6 +517,12 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 		if b.Config.GitPushPassword != "" {
 			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitPushPassword, "<redacted>")
 		}
+		if b.Config.GitConfigUserName != "" {
+			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitConfigUserName, "<redacted>")
+		}
+		if b.Config.GitConfigUserEmail != "" {
+			r.Job.Log = strings.ReplaceAll(r.Job.Log, b.Config.GitConfigUserEmail, "<redacted>")
+		}
 		secrets, err := b.store.Secrets(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "Secrets")
