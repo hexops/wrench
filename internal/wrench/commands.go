@@ -187,7 +187,8 @@ func (b *Bot) registerCommands() {
 			Title:          jobTitle,
 			TargetRunnerID: runnerID,
 			Payload: api.JobPayload{
-				Cmd: []string{"script", "test", gist},
+				Cmd:        []string{"script", "test", gist},
+				Background: true,
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -227,7 +228,8 @@ func (b *Bot) registerCommands() {
 			Title:          jobTitle,
 			TargetRunnerID: runnerID,
 			Payload: api.JobPayload{
-				Cmd: append([]string{"script", commandName}, commandArgs...),
+				Cmd:        append([]string{"script", commandName}, commandArgs...),
+				Background: commandName == "rebuild",
 			},
 		})
 		b.idLogf(job.LogID(), "job created: %v", jobTitle)
@@ -272,7 +274,8 @@ func (b *Bot) registerCommands() {
 				Title:          jobTitle,
 				TargetRunnerID: runner.ID,
 				Payload: api.JobPayload{
-					Cmd: append([]string{"script", commandName}, commandArgs...),
+					Cmd:        append([]string{"script", commandName}, commandArgs...),
+					Background: commandName == "rebuild",
 				},
 			})
 			b.idLogf(job.LogID(), "job created: %v", jobTitle)
