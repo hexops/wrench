@@ -308,8 +308,9 @@ func GitPush(w io.Writer, dir, remoteURL string) error {
 
 func cleanGitURL(remoteURL string) string {
 	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
-		remoteURL = "https://" + remoteURL
+		return "https://" + remoteURL
 	}
+	return remoteURL
 }
 
 func FindAndReplace(dir string, globs []string, replacer func(name string, contents []byte) ([]byte, error)) Cmd {
