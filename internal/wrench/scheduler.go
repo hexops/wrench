@@ -33,16 +33,16 @@ func (b *Bot) schedulerStart() error {
 				},
 			},
 		},
-		{
-			Every: 5 * time.Minute,
-			Job: api.Job{
-				Title:          "update-runners",
-				TargetRunnerID: "*",
-				Payload: api.JobPayload{
-					Cmd: []string{"script", "rebuild"},
-				},
-			},
-		},
+		// {
+		// 	Every: 5 * time.Minute,
+		// 	Job: api.Job{
+		// 		Title:          "update-runners",
+		// 		TargetRunnerID: "*",
+		// 		Payload: api.JobPayload{
+		// 			Cmd: []string{"script", "rebuild"},
+		// 		},
+		// 	},
+		// },
 		{
 			Every: 12 * time.Hour,
 			Job: api.Job{
