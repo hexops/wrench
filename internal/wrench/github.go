@@ -122,7 +122,10 @@ func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *
 	for _, existing := range pullRequests {
 		// TODO: don't hard-code wrench user here
 		wrenchGitHubUsername := "wrench-bot"
-		if *existing.State == "open" && *existing.Title == *pr.Title && *existing.User.Login == wrenchGitHubUsername {
+		if *existing.State == "open" &&
+			*existing.Title == *pr.Title &&
+			*existing.Head.Ref == *pr.Head &&
+			*existing.User.Login == wrenchGitHubUsername {
 			exists = existing
 		}
 	}
