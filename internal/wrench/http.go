@@ -476,15 +476,22 @@ jobSearch:
 				ID:                 job.ID,
 				Title:              job.Title,
 				Payload:            job.Payload,
-				GitPushUsername:    b.Config.GitPushUsername,
-				GitPushPassword:    b.Config.GitPushPassword,
-				GitConfigUserName:  b.Config.GitConfigUserName,
-				GitConfigUserEmail: b.Config.GitConfigUserEmail,
+				GitPushUsername:    stringIf(b.Config.GitPushUsername, job.Payload.GitPushBranchName != ""),
+				GitPushPassword:    stringIf(b.Config.GitPushPassword, job.Payload.GitPushBranchName != ""),
+				GitConfigUserName:  stringIf(b.Config.GitConfigUserName, job.Payload.GitPushBranchName != ""),
+				GitConfigUserEmail: stringIf(b.Config.GitConfigUserEmail, job.Payload.GitPushBranchName != ""),
 				Secrets:            secrets,
 			}}, nil
 		}
 	}
 	return &api.RunnerPollResponse{}, nil
+}
+
+func stringIf(s string, conditional bool) string {
+	if conditional {
+		return s
+	}
+	return ""
 }
 
 func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpdateRequest) (*api.RunnerJobUpdateResponse, error) {
