@@ -280,25 +280,20 @@ func GitConfigureRepo(w io.Writer, dir string) error {
 }
 
 func GitCommit(w io.Writer, dir, message string) error {
-	err := ExecArgs("git", []string{"commit", "-s", "-m", message}, WorkDir(dir))(w)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ExecArgs("git", []string{"commit", "-s", "-m", message}, WorkDir(dir))(w)
+}
+
+func GitClone(w io.Writer, dir, remoteURL string) error {
+	remoteURL = cleanGitURL(remoteURL)
+	return ExecArgs("git", []string{"clone", remoteURL, dir}, WorkDir(dir))(w)
 }
 
 func GitCheckoutNewBranch(w io.Writer, dir, branchName string) error {
-	err := ExecArgs("git", []string{"checkout", "-B", branchName}, WorkDir(dir))(w)
-	if err != nil {
-		return err
-	}
-	return nil
+	return ExecArgs("git", []string{"checkout", "-B", branchName}, WorkDir(dir))(w)
 }
 
 func GitPush(w io.Writer, dir, remoteURL string) error {
-	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
-		remoteURL = "https://" + remoteURL
-	}
+	remoteURL = cleanGitURL(remoteURL)
 	u, err := url.Parse(remoteURL)
 	if err != nil {
 		return errors.Wrap(err, "Parse")
@@ -308,11 +303,13 @@ func GitPush(w io.Writer, dir, remoteURL string) error {
 		os.Getenv("WRENCH_SECRET_GIT_PUSH_PASSWORD"),
 	)
 
-	err = ExecArgs("git", []string{"push", u.String(), "--all"}, WorkDir(dir))(w)
-	if err != nil {
-		return err
+	return ExecArgs("git", []string{"push", u.String(), "--all"}, WorkDir(dir))(w)
+}
+
+func cleanGitURL(remoteURL string) string {
+	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
+		remoteURL = "https://" + remoteURL
 	}
-	return nil
 }
 
 func FindAndReplace(dir string, globs []string, replacer func(name string, contents []byte) ([]byte, error)) Cmd {
