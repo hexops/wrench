@@ -92,12 +92,29 @@ scheduling:
 		}
 
 		if start {
-			_, err := b.store.NewRunnerJob(ctx, schedule.Job)
-			if err != nil {
-				b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
-				continue
+			if schedule.Job.TargetRunnerID == "*" {
+				runners, err := b.store.Runners(ctx)
+				if err != nil {
+					b.idLogf(schedulerLogID, "failed to query runners: %v", err)
+					continue
+				}
+				for _, runner := range runners {
+					schedule.Job.TargetRunnerID = runner.ID
+					_, err := b.store.NewRunnerJob(ctx, schedule.Job)
+					if err != nil {
+						b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
+						continue
+					}
+					b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
+				}
+			} else {
+				_, err := b.store.NewRunnerJob(ctx, schedule.Job)
+				if err != nil {
+					b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
+					continue
+				}
+				b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
 			}
-			b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
 		}
 	}
 
