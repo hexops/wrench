@@ -55,7 +55,8 @@ func init() {
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
 				}
-				err = GitPush(os.Stderr, workDir, repoURL)
+				forcePush := true
+				err = GitPush(os.Stderr, workDir, repoURL, forcePush)
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
 				}

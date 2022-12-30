@@ -296,7 +296,7 @@ func GitCheckoutNewBranch(w io.Writer, dir, branchName string) error {
 	return ExecArgs("git", []string{"checkout", "-B", branchName}, WorkDir(dir))(w)
 }
 
-func GitPush(w io.Writer, dir, remoteURL string) error {
+func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
 	remoteURL = cleanGitURL(remoteURL)
 	u, err := url.Parse(remoteURL)
 	if err != nil {
@@ -307,7 +307,11 @@ func GitPush(w io.Writer, dir, remoteURL string) error {
 		os.Getenv("WRENCH_SECRET_GIT_PUSH_PASSWORD"),
 	)
 
-	return ExecArgs("git", []string{"push", u.String(), "--all"}, WorkDir(dir))(w)
+	args := []string{"push", u.String(), "--all"}
+	if force {
+		args = append(args, "--force")
+	}
+	return ExecArgs("git", args, WorkDir(dir))(w)
 }
 
 func cleanGitURL(remoteURL string) string {
