@@ -19,7 +19,7 @@ func init() {
 
 			repos := []string{
 				"github.com/hexops/mach",
-				// "github.com/hexops/mach-examples",
+				"github.com/hexops/mach-examples",
 			}
 			pushed := []string{}
 			workDir := "zig-rewrite-work"
