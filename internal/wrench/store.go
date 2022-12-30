@@ -316,11 +316,11 @@ func (s *Store) JobByID(ctx context.Context, id api.JobID) (api.Job, error) {
 }
 
 type JobsFilter struct {
-	State, NotState              api.JobState
-	Title, NotTitle              string
-	ScheduledStartGreaterEqualTo time.Time
-	TargetRunnerID               string
-	ID                           api.JobID
+	State, NotState             api.JobState
+	Title, NotTitle             string
+	ScheduledStartLessOrEqualTo time.Time
+	TargetRunnerID              string
+	ID                          api.JobID
 }
 
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
@@ -338,8 +338,8 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 		if where.NotTitle != "" {
 			conds = append(conds, sqlf.Sprintf("title != %v", where.NotTitle))
 		}
-		if !where.ScheduledStartGreaterEqualTo.IsZero() {
-			conds = append(conds, sqlf.Sprintf("(scheduled_start_at >= %v OR scheduled_start_at IS NULL)", where.ScheduledStartGreaterEqualTo))
+		if !where.ScheduledStartLessOrEqualTo.IsZero() {
+			conds = append(conds, sqlf.Sprintf("(scheduled_start_at <= %v OR scheduled_start_at IS NULL)", where.ScheduledStartLessOrEqualTo))
 		}
 		if where.TargetRunnerID != "" {
 			conds = append(conds, sqlf.Sprintf("target_runner_id = %v", where.TargetRunnerID))
