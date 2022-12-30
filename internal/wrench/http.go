@@ -418,7 +418,7 @@ func (b *Bot) httpServeRunnerPoll(ctx context.Context, r *api.RunnerPollRequest)
 			continue // job is running
 		}
 		// job is dead
-		if strings.Contains(job.Title, "script rebuild") {
+		if len(job.Payload.Cmd) >= 2 && job.Payload.Cmd[0] == "script" && job.Payload.Cmd[1] == "rebuild" {
 			// `wrench script rebuild` is expected to not finish gracefully as the service will
 			// restart itself before the job completes.
 			job.State = api.JobStateSuccess
