@@ -44,7 +44,7 @@ func (b *Bot) schedulerStart() error {
 			},
 		},
 		{
-			Every: 30 * time.Minute,
+			Every: 12 * time.Hour,
 			Job: api.Job{
 				Title:          "update to latest Zig version",
 				TargetRunnerID: "linux-amd64",
