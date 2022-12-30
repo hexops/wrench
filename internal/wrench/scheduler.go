@@ -43,6 +43,31 @@ func (b *Bot) schedulerStart() error {
 				},
 			},
 		},
+		{
+			Every: 30 * time.Minute,
+			Job: api.Job{
+				Title:          "update to latest Zig version",
+				TargetRunnerID: "linux-amd64",
+				Payload: api.JobPayload{
+					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
+					GitPushBranchName: "wrench/update-zig",
+					Background:        true, // lightweight enough
+					PRTemplate: api.PRTemplate{
+						Title: "all: update to latest Zig version",
+						Head:  "wrench/update-zig",
+						Base:  "main",
+						Body: `This change updates us to the latest Zig version.
+
+I'll keep updating this PR so it remains up-to-date until you want to merge it.
+
+Here's the work I did to produce this: ${JOB_LOGS_URL}
+
+- _Wrench the Machanist_
+						`,
+					},
+				},
+			},
+		},
 	}
 	go func() {
 		ctx := context.Background()
