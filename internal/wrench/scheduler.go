@@ -57,72 +57,60 @@ func (b *Bot) schedulerStart() error {
 }
 
 func (b *Bot) schedulerWork(ctx context.Context) error {
-	activeJobs, err := b.store.Jobs(ctx,
-		// Starting OR Running
-		JobsFilter{NotState: api.JobStateSuccess},
-		JobsFilter{NotState: api.JobStateError},
-		JobsFilter{NotState: api.JobStateReady},
-	)
+	runners, err := b.store.Runners(ctx)
 	if err != nil {
-		return errors.Wrap(err, "Jobs")
+		return errors.Wrap(err, "Runners")
 	}
 
-scheduling:
-	for _, schedule := range b.schedule {
-		start := false
-		if schedule.Always {
-			for _, job := range activeJobs {
-				if job.Title == schedule.Job.Title {
-					// already exists
-					continue scheduling
-				}
-			}
-			start = true
-		} else if schedule.Every != 0 {
-			lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title)
-			if err != nil {
-				b.idLogf(schedulerLogID, "failed to query last job: %v", err)
-				continue
-			}
-			start = lastJob == nil || (lastJob.State != api.JobStateReady &&
-				lastJob.State != api.JobStateStarting &&
-				lastJob.State != api.JobStateRunning &&
-				time.Since(lastJob.Created) > schedule.Every)
+	scheduleJob := func(schedule ScheduledJob) {
+		var filters []JobsFilter
+		if schedule.Job.TargetRunnerID != "" {
+			filters = append(filters, JobsFilter{TargetRunnerID: schedule.Job.TargetRunnerID})
+		}
+		lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title, filters...)
+		if err != nil {
+			b.idLogf(schedulerLogID, "failed to query last job: %v", err)
+			return
+		}
+
+		start := lastJob == nil || (lastJob.State != api.JobStateReady &&
+			lastJob.State != api.JobStateStarting &&
+			lastJob.State != api.JobStateRunning)
+		if !start {
+			return
+		}
+
+		// Job is not running/scheduled, and is set to Always run OR is a ScheduledStart.
+		if !schedule.Always {
 			schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
 		}
 
-		if start {
-			if schedule.Job.TargetRunnerID == "*" {
-				runners, err := b.store.Runners(ctx)
-				if err != nil {
-					b.idLogf(schedulerLogID, "failed to query runners: %v", err)
-					continue
-				}
-				for _, runner := range runners {
-					schedule.Job.TargetRunnerID = runner.ID
-					_, err := b.store.NewRunnerJob(ctx, schedule.Job)
-					if err != nil {
-						b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
-						continue
-					}
-					b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
-				}
-			} else {
-				_, err := b.store.NewRunnerJob(ctx, schedule.Job)
-				if err != nil {
-					b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
-					continue
-				}
-				b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
+		_, err = b.store.NewRunnerJob(ctx, schedule.Job)
+		if err != nil {
+			b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
+			return
+		}
+		b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
+	}
+
+	for _, schedule := range b.schedule {
+		if schedule.Job.TargetRunnerID == "*" {
+			for _, runner := range runners {
+				schedule.Job.TargetRunnerID = runner.ID
+				scheduleJob(schedule)
+				continue
 			}
+		} else {
+			scheduleJob(schedule)
+			continue
 		}
 	}
 
 	return nil
 }
 
-func (b *Bot) lastJobWithTitle(ctx context.Context, title string) (*api.Job, error) {
-	lastJobs, err := b.store.Jobs(ctx, JobsFilter{Title: title})
+func (b *Bot) lastJobWithTitle(ctx context.Context, title string, filters ...JobsFilter) (*api.Job, error) {
+	lastJobs, err := b.store.Jobs(ctx, append([]JobsFilter{{Title: title}}, filters...)...)
 	if err != nil {
 		return nil, errors.Wrap(err, "Jobs")
 	}
