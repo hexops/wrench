@@ -64,7 +64,7 @@ The scripts are:
 				if err != nil {
 					return errors.Wrap(err, "Marshal")
 				}
-				fmt.Fprintf(os.Stderr, "%s", data)
+				fmt.Fprintf(os.Stdout, "%s\n", data)
 			}
 			return nil
 		}
