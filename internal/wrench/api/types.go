@@ -24,8 +24,8 @@ type RunnerJobUpdate struct {
 	// Log, if non-empty, are messages to log about the job.
 	Log string
 
-	// Pushed, if true, indicates changes were pushed to Git.
-	Pushed bool
+	// Pushed is a list of repositories that were pushed to, if any.
+	Pushed []string
 }
 
 type RunnerEnv struct {

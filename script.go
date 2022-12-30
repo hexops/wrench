@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hexops/cmder"
@@ -53,8 +55,16 @@ The scripts are:
 			if args[0] != script.Command {
 				continue
 			}
-			if err := script.Execute(args[1:]...); err != nil {
+			resp, err := script.Run(args[1:]...)
+			if err != nil {
 				return err
+			}
+			if resp != nil {
+				data, err := json.MarshalIndent(resp, "", "  ")
+				if err != nil {
+					return errors.Wrap(err, "Marshal")
+				}
+				fmt.Fprintf(os.Stderr, "%s", data)
 			}
 			return nil
 		}

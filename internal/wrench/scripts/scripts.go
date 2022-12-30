@@ -16,10 +16,22 @@ import (
 )
 
 type Script struct {
-	Command     string
-	Args        []string
-	Description string
-	Execute     func(args ...string) error
+	Command         string
+	Args            []string
+	Description     string
+	Execute         func(args ...string) error
+	ExecuteResponse func(args ...string) (*Response, error)
+}
+
+func (s *Script) Run(args ...string) (*Response, error) {
+	if s.ExecuteResponse != nil {
+		return s.ExecuteResponse(args...)
+	}
+	return nil, s.Execute(args...)
+}
+
+type Response struct {
+	PushedRepos []string
 }
 
 var Scripts = []Script{}

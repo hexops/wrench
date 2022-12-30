@@ -3,6 +3,7 @@ package wrench
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os/exec"
@@ -123,11 +124,12 @@ func (m lockedWriter) Write(p []byte) (n int, err error) {
 
 func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, cancel, done chan struct{}) {
 	var (
-		activeMu  sync.RWMutex
-		active    *api.Job
-		activeLog bytes.Buffer
-		logID     = "job-" + string(startJob.ID)
-		arch      = runtime.GOOS + "/" + runtime.GOARCH
+		activeMu          sync.RWMutex
+		active            *api.Job
+		activeLog         bytes.Buffer
+		activePushedRepos []string
+		logID             = "job-" + string(startJob.ID)
+		arch              = runtime.GOOS + "/" + runtime.GOARCH
 	)
 
 	activeMu.Lock()
@@ -164,9 +166,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_CONFIG_USER_NAME", startJob.GitConfigUserName))
 		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_USERNAME", startJob.GitPushUsername))
 		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_PASSWORD", startJob.GitPushPassword))
+		var responseBuf bytes.Buffer
 		cmd := scripts.NewCmd(lw, "wrench", active.Payload.Cmd, opts...)
 		cmd.Stderr = lw
-		cmd.Stdout = lw
+		cmd.Stdout = &responseBuf
 		go func() {
 			select {
 			case <-done:
@@ -184,6 +187,16 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 
 		activeMu.Lock()
 		defer activeMu.Unlock()
+		if err == nil {
+			var response *scripts.Response
+			if err2 := json.NewDecoder(&responseBuf).Decode(&response); err2 != nil {
+				err = fmt.Errorf("cannot unmarshal script response JSON (%v): '%s'", err2, responseBuf.String())
+			} else {
+				activePushedRepos = response.PushedRepos
+				fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activePushedRepos)
+			}
+		}
+
 		if err != nil {
 			active.State = api.JobStateError
 			fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
@@ -202,7 +215,7 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 					ID:     active.ID,
 					State:  active.State,
 					Log:    activeLog.String(),
-					Pushed: false, // TODO: pushing
+					Pushed: activePushedRepos,
 				}
 			}
 			resp, err := b.runner.RunnerJobUpdate(ctx, &api.RunnerJobUpdateRequest{
