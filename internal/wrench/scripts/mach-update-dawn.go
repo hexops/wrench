@@ -208,7 +208,6 @@ func init() {
 			if push {
 				if err := ExecArgs("git", []string{
 					"push",
-					"origin",
 					GitPushAuthURL(repoURL),
 					"HEAD:" + generatedBranchName,
 				}, WorkDir(workDir))(os.Stderr); err != nil {
