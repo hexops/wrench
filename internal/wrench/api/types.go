@@ -32,6 +32,8 @@ type RunnerJobUpdate struct {
 
 type ScriptResponse struct {
 	PushedRepos []string
+	CustomLogs  map[string]string
+	Metadata    map[string]string
 }
 
 type RunnerEnv struct {

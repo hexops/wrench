@@ -514,11 +514,22 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 		for _, repoRemoteURL := range r.Job.Response.PushedRepos {
 			repoPair := repoPairFromURL(repoRemoteURL)
 			prTemplate := job.Payload.PRTemplate.ToGitHub()
-			*prTemplate.Body = strings.ReplaceAll(
-				*prTemplate.Body,
-				"${JOB_LOGS_URL}",
-				fmt.Sprintf("%s/logs/%s", b.Config.ExternalURL, r.Job.ID.LogID()),
-			)
+
+			replacements := map[string]string{
+				"JOB_LOGS_URL": fmt.Sprintf("%s/logs/%s", b.Config.ExternalURL, r.Job.ID.LogID()),
+			}
+			for logName, logValue := range r.Job.Response.CustomLogs {
+				b.idLogf(r.Job.ID.LogID()+"-"+logName, "%s", logValue)
+				replacements["CUSTOM_LOG_"+uppercaseUnderscore(logName)] = fmt.Sprintf("%s/logs/%s-%s", b.Config.ExternalURL, r.Job.ID.LogID(), logName)
+			}
+			for metaName, metaValue := range r.Job.Response.Metadata {
+				b.idLogf(r.Job.ID.LogID(), "metadata: %s = %s", metaName, metaValue)
+				replacements["METADATA_"+uppercaseUnderscore(metaName)] = metaValue
+			}
+			for key, value := range replacements {
+				*prTemplate.Body = strings.ReplaceAll(*prTemplate.Body, "${"+key+"}", value)
+			}
+
 			pr, isNew, err := b.githubUpsertPullRequest(ctx, repoPair, prTemplate)
 			if err != nil {
 				return nil, errors.Wrap(err, "githubUpsertPullRequest")
