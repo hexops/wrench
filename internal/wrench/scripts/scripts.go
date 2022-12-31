@@ -274,6 +274,7 @@ func GitChangesExist(w io.Writer, dir string) (bool, error) {
 }
 
 func GitConfigureRepo(w io.Writer, dir string) error {
+	os.Setenv("GIT_TERMINAL_PROMPT", "0")
 	err := ExecArgs(
 		"git",
 		[]string{"config", "user.name", os.Getenv("WRENCH_SECRET_GIT_CONFIG_USER_NAME")},
