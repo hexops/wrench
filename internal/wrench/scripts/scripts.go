@@ -425,6 +425,7 @@ func FindAndReplace(dir string, globs []string, replacer func(name string, conte
 				return errors.Wrap(err, "Glob")
 			}
 			for _, match := range matches {
+				match = filepath.Join(dir, match)
 				if strings.Contains(match, ".git/") {
 					continue
 				}
