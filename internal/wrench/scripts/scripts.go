@@ -136,6 +136,23 @@ func Sequence(cmds ...Cmd) Cmd {
 	}
 }
 
+func CopyFile(src, dst string) Cmd {
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "cp %s %s\n", src, dst)
+
+		fi, err := os.Stat(src)
+		if err != nil {
+			return errors.Wrap(err, "Stat")
+		}
+		contents, err := os.ReadFile(src)
+		if err != nil {
+			return errors.Wrap(err, "ReadFile")
+		}
+		err = os.WriteFile(dst, contents, fi.Mode().Perm())
+		return errors.Wrap(err, "WriteFile")
+	}
+}
+
 func DownloadFile(url string, filepath string) Cmd {
 	return func(w io.Writer) error {
 		fmt.Fprintf(w, "DownloadFile: %s > %s\n", url, filepath)
@@ -292,22 +309,53 @@ func GitClone(w io.Writer, dir, remoteURL string) error {
 	return ExecArgs("git", []string{"clone", remoteURL, dir})(w)
 }
 
+func GitCheckout(w io.Writer, dir, branchName string) error {
+	return ExecArgs("git", []string{"checkout", branchName}, WorkDir(dir))(w)
+}
+
+func GitCheckoutRestore(w io.Writer, dir string, files ...string) error {
+	return ExecArgs("git", append([]string{"checkout", "--"}, files...), WorkDir(dir))(w)
+}
+
 func GitCheckoutNewBranch(w io.Writer, dir, branchName string) error {
 	return ExecArgs("git", []string{"checkout", "-B", branchName}, WorkDir(dir))(w)
 }
 
-func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
+func GitMerge(w io.Writer, dir, branchName string) error {
+	return ExecArgs("git", []string{"merge", branchName}, WorkDir(dir))(w)
+}
+
+func GitFetch(w io.Writer, dir, remote string) error {
+	return ExecArgs("git", []string{"fetch", remote}, WorkDir(dir))(w)
+}
+
+func GitResetHard(w io.Writer, dir, ref string) error {
+	return ExecArgs("git", []string{"reset", "--hard", ref}, WorkDir(dir))(w)
+}
+
+func GitCleanFxd(w io.Writer, dir string) error {
+	return ExecArgs("git", []string{"clean", "-fxd"}, WorkDir(dir))(w)
+}
+
+func GitRemoteAdd(w io.Writer, dir, remoteName, remoteURL string) error {
+	return ExecArgs("git", []string{"remote", "add", remoteName, remoteURL}, WorkDir(dir))(w)
+}
+
+func GitPushAuthURL(remoteURL string) string {
 	remoteURL = cleanGitURL(remoteURL)
 	u, err := url.Parse(remoteURL)
 	if err != nil {
-		return errors.Wrap(err, "Parse")
+		return remoteURL
 	}
 	u.User = url.UserPassword(
 		os.Getenv("WRENCH_SECRET_GIT_PUSH_USERNAME"),
 		os.Getenv("WRENCH_SECRET_GIT_PUSH_PASSWORD"),
 	)
+	return u.String()
+}
 
-	args := []string{"push", u.String(), "--all"}
+func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
+	args := []string{"push", GitPushAuthURL(remoteURL), "--all"}
 	if force {
 		args = append(args, "--force")
 	}
@@ -345,6 +393,33 @@ func FindAndReplace(dir string, globs []string, replacer func(name string, conte
 				err = os.WriteFile(match, replacement, 0o655) // perms will not change as file exists already
 				if err != nil {
 					return errors.Wrap(err, "WriteFile")
+				}
+			}
+		}
+		return nil
+	}
+}
+
+func FindAndDelete(dir string, globs []string, delete func(name string) (bool, error)) Cmd {
+	return func(w io.Writer) error {
+		fmt.Fprintf(w, "FindAndDelete: dir=%s globs=%s\n", dir, globs)
+		for _, glob := range globs {
+			fsys := os.DirFS(dir)
+			matches, err := doublestar.Glob(fsys, glob)
+			if err != nil {
+				return errors.Wrap(err, "Glob")
+			}
+			for _, match := range matches {
+				match = filepath.Join(dir, match)
+				shouldDelete, err := delete(match)
+				if err != nil {
+					return err
+				}
+				if shouldDelete {
+					fmt.Fprintf(w, "$ rm -rf %s\n", match)
+					if err := os.RemoveAll(match); err != nil {
+						return errors.Wrap(err, "RemoveAll")
+					}
 				}
 			}
 		}
