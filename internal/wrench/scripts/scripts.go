@@ -377,7 +377,7 @@ func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
 }
 
 func GitBranches(w io.Writer, dir string) ([]string, error) {
-	out, err := Output(w, `git branch --format %(refname:short)`, WorkDir(dir))
+	out, err := Output(w, `git branch -a --format %(refname:short)`, WorkDir(dir))
 	if err != nil {
 		return nil, errors.Wrap(err, "git branch")
 	}

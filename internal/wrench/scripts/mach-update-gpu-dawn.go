@@ -69,13 +69,13 @@ func init() {
 			var latestBranchTime *time.Time
 			latestBranch := ""
 			for _, branch := range branches {
-				if !strings.HasPrefix(branch, "generated-") {
+				if !strings.HasPrefix(branch, "origin/generated-") {
 					continue
 				}
 				// generated-yyyy-mm-dd OR generated-yyyy-mm-dd.unixtimestamp
 				var t time.Time
 				if strings.Contains(branch, ".") {
-					unixStampStr := strings.Split(strings.TrimPrefix(branch, "generated-"), ".")[1]
+					unixStampStr := strings.Split(strings.TrimPrefix(branch, "origin/generated-"), ".")[1]
 					unixStamp, err := strconv.ParseInt(unixStampStr, 10, 64)
 					if err != nil {
 						return nil, errors.Wrap(err, "parsing unix timestamp at end of: "+branch)
@@ -83,7 +83,7 @@ func init() {
 
 					t = time.Unix(unixStamp, 0)
 				} else {
-					t, err = time.Parse("2006-01-02", strings.TrimPrefix(branch, "generated-"))
+					t, err = time.Parse("2006-01-02", strings.TrimPrefix(branch, "origin/generated-"))
 					if err != nil {
 						return nil, errors.Wrap(err, "parsing date in: "+branch)
 					}
