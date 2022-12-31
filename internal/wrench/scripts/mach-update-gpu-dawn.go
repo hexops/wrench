@@ -54,7 +54,7 @@ func init() {
 				return nil, errors.New("failed to find current generated-yyyy-mm-dd[.unixstamp] in mach/libs/gpu-dawn/sdk.zig")
 			}
 
-			branches, err := GitBranches(os.Stderr, workDir)
+			branches, err := GitBranches(os.Stderr, dawnRepoDir)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitBranches")
 			}
@@ -97,7 +97,7 @@ func init() {
 			}
 
 			// Push changes if there are any
-			changesExist, err := GitChangesExist(os.Stderr, workDir)
+			changesExist, err := GitChangesExist(os.Stderr, machRepoDir)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitChangesExist")
 			}
@@ -105,20 +105,20 @@ func init() {
 				return &api.ScriptResponse{}, nil
 			}
 
-			err = GitCheckoutNewBranch(os.Stderr, workDir, os.Getenv("WRENCH_GIT_PUSH_BRANCH_NAME"))
+			err = GitCheckoutNewBranch(os.Stderr, machRepoDir, os.Getenv("WRENCH_GIT_PUSH_BRANCH_NAME"))
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
 			}
-			err = GitConfigureRepo(os.Stderr, workDir)
+			err = GitConfigureRepo(os.Stderr, machRepoDir)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitConfigureRepo")
 			}
-			err = GitCommit(os.Stderr, workDir, "gpu-dawn: update to latest version "+newBranch)
+			err = GitCommit(os.Stderr, machRepoDir, "gpu-dawn: update to latest version "+newBranch)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
 			}
 			forcePush := true
-			err = GitPush(os.Stderr, workDir, machRepoURL, forcePush)
+			err = GitPush(os.Stderr, machRepoDir, machRepoURL, forcePush)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
 			}
