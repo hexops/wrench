@@ -362,6 +362,18 @@ func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
 	return ExecArgs("git", args, WorkDir(dir))(w)
 }
 
+func GitBranches(w io.Writer, dir string) ([]string, error) {
+	out, err := Output(w, `git branch --format %(refname:short)`, WorkDir(dir))
+	if err != nil {
+		return nil, errors.Wrap(err, "git branch")
+	}
+	var branches []string
+	for _, line := range strings.Split(out, "\n") {
+		branches = append(branches, strings.TrimSpace(line))
+	}
+	return branches, nil
+}
+
 func cleanGitURL(remoteURL string) string {
 	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
 		return "https://" + remoteURL
