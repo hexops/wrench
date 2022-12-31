@@ -24,6 +24,16 @@ func init() {
 			dawnRepoURL := "https://github.com/hexops/dawn"
 			machRepoDir := filepath.Join(workDir, "mach")
 			machRepoURL := "https://github.com/hexops/mach"
+			updateDawn := true
+
+			if updateDawn {
+				timeNow := time.Now()
+				date := timeNow.Format("2006-01-02")
+				generatedBranch := fmt.Sprintf("generated-%s.%v", date, timeNow.Unix())
+				if err := Exec("wrench script mach-update-dawn " + generatedBranch)(os.Stderr); err != nil {
+					return nil, errors.Wrap(err, "mach-update-dawn")
+				}
+			}
 
 			// Clone or update the repositories
 			if err := GitCloneOrUpdateAndClean(os.Stderr, dawnRepoDir, dawnRepoURL); err != nil {
