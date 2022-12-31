@@ -97,7 +97,7 @@ func init() {
 			}
 
 			// Find and replace old -> new branch
-			oldBranch := currentVersion
+			oldBranch := "origin/" + currentVersion
 			newBranch := latestBranch
 			if err := FindAndReplace(machRepoDir, []string{"**/*.zig", "**/*.md"}, func(name string, contents []byte) ([]byte, error) {
 				contents = re.ReplaceAll(contents, []byte(newBranch))
