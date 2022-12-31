@@ -1,6 +1,7 @@
 package scripts
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -124,6 +125,7 @@ func init() {
 			if err != nil {
 				return nil, errors.Wrap(err, "dawnDiffBuild")
 			}
+			dawnDiffBuildAll := fmt.Sprintf("%s\n%s\n%s\n", dawnDiffGni, dawnDiffGn, dawnDiffBuild)
 			webgpuDiffHeader, err := Output(os.Stderr, "git diff "+oldBranch+".."+newBranch+" -- out/Debug/gen/include/dawn/webgpu.h", WorkDir(dawnRepoDir))
 			if err != nil {
 				return nil, errors.Wrap(err, "webgpuDiffHeader")
@@ -136,11 +138,9 @@ func init() {
 			return &api.ScriptResponse{
 				PushedRepos: []string{machRepoURL},
 				CustomLogs: map[string]string{
-					"dawn-diff-gni":         dawnDiffGni,
-					"dawn-diff-gn":          dawnDiffGn,
-					"dawn-diff-build":       dawnDiffBuild,
-					"webgpu-diff-header":    webgpuDiffHeader,
-					"webgpu-diff-dawn-json": webgpuDiffDawnJson,
+					"dawn-diff-build":  dawnDiffBuildAll,
+					"dawn-diff-header": webgpuDiffHeader,
+					"dawn-diff-json":   webgpuDiffDawnJson,
 				},
 				Metadata: map[string]string{
 					"OldBranch": oldBranch,
