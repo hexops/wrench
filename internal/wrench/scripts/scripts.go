@@ -290,6 +290,14 @@ func GitConfigureRepo(w io.Writer, dir string) error {
 	if err != nil {
 		return err
 	}
+	err = ExecArgs(
+		"git",
+		[]string{"config", "credential.helper", ""},
+		WorkDir(dir),
+	)(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
