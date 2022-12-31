@@ -371,6 +371,26 @@ func GitBranches(w io.Writer, dir string) ([]string, error) {
 	return branches, nil
 }
 
+func GitCloneOrUpdateAndClean(w io.Writer, workDir, repoURL string) error {
+	_, err := os.Stat(workDir)
+	if os.IsNotExist(err) {
+		if err := GitClone(os.Stderr, workDir, repoURL); err != nil {
+			return errors.Wrap(err, "GitClone")
+		}
+	} else {
+		if err := GitFetch(os.Stderr, workDir, "origin"); err != nil {
+			return errors.Wrap(err, "GitFetch")
+		}
+		if err := GitResetHard(os.Stderr, workDir, "origin/main"); err != nil {
+			return errors.Wrap(err, "GitResetHard")
+		}
+		if err := GitCleanFxd(os.Stderr, workDir); err != nil {
+			return errors.Wrap(err, "GitCleanFxd")
+		}
+	}
+	return nil
+}
+
 func cleanGitURL(remoteURL string) string {
 	if !strings.HasPrefix(remoteURL, "https://") && !strings.HasPrefix(remoteURL, "http://") {
 		return "https://" + remoteURL

@@ -55,21 +55,8 @@ func init() {
 			}
 
 			// Clone or update the repository.
-			_, err = os.Stat(workDir)
-			if os.IsNotExist(err) {
-				if err := GitClone(os.Stderr, workDir, repoURL); err != nil {
-					return errors.Wrap(err, "GitClone")
-				}
-			} else {
-				if err := GitFetch(os.Stderr, workDir, "origin"); err != nil {
-					return errors.Wrap(err, "GitFetch")
-				}
-				if err := GitResetHard(os.Stderr, workDir, "origin/main"); err != nil {
-					return errors.Wrap(err, "GitResetHard")
-				}
-				if err := GitCleanFxd(os.Stderr, workDir); err != nil {
-					return errors.Wrap(err, "GitCleanFxd")
-				}
+			if err := GitCloneOrUpdateAndClean(os.Stderr, workDir, repoURL); err != nil {
+				return errors.Wrap(err, "GitCloneOrUpdateAndClean")
 			}
 
 			// Update our "upstream" branch to point to latest upstream@main version.
