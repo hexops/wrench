@@ -299,6 +299,14 @@ func GitConfigureRepo(w io.Writer, dir string) error {
 	if err != nil {
 		return err
 	}
+	err = ExecArgs(
+		"git",
+		[]string{"config", "http.postBuffer", "157286400"},
+		WorkDir(dir),
+	)(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
