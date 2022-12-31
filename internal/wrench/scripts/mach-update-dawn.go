@@ -58,6 +58,10 @@ func init() {
 			if err := GitCloneOrUpdateAndClean(os.Stderr, workDir, repoURL); err != nil {
 				return errors.Wrap(err, "GitCloneOrUpdateAndClean")
 			}
+			err = GitConfigureRepo(os.Stderr, workDir)
+			if err != nil {
+				return errors.Wrap(err, "GitConfigureRepo")
+			}
 
 			// Update our "upstream" branch to point to latest upstream@main version.
 			if err := GitRemoteAdd(os.Stderr, workDir, "upstream", "https://dawn.googlesource.com/dawn"); err != nil {

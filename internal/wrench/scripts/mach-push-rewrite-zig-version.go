@@ -27,8 +27,12 @@ func init() {
 			defer os.RemoveAll(workDir)
 			for _, repoURL := range repos {
 				_ = os.RemoveAll(workDir)
-				if err := GitClone(os.Stderr, "zig-rewrite-work", repoURL); err != nil {
+				if err := GitClone(os.Stderr, workDir, repoURL); err != nil {
 					return nil, errors.Wrap(err, "GitClone")
+				}
+				err = GitConfigureRepo(os.Stderr, workDir)
+				if err != nil {
+					return nil, errors.Wrap(err, "GitConfigureRepo")
 				}
 
 				err := Exec("wrench script rewrite-zig-version "+wantZigVersion, WorkDir(workDir))(os.Stderr)
@@ -47,10 +51,6 @@ func init() {
 				err = GitCheckoutNewBranch(os.Stderr, workDir, os.Getenv("WRENCH_GIT_PUSH_BRANCH_NAME"))
 				if err != nil {
 					return nil, errors.Wrap(err, "GitCommit")
-				}
-				err = GitConfigureRepo(os.Stderr, workDir)
-				if err != nil {
-					return nil, errors.Wrap(err, "GitConfigureRepo")
 				}
 				err = GitCommit(os.Stderr, workDir, "all: update Zig to version "+wantZigVersion)
 				if err != nil {

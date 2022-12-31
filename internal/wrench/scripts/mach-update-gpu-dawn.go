@@ -39,8 +39,16 @@ func init() {
 			if err := GitCloneOrUpdateAndClean(os.Stderr, dawnRepoDir, dawnRepoURL); err != nil {
 				return nil, errors.Wrap(err, "GitCloneOrUpdateAndClean")
 			}
+			err := GitConfigureRepo(os.Stderr, dawnRepoDir)
+			if err != nil {
+				return nil, errors.Wrap(err, "GitConfigureRepo")
+			}
 			if err := GitCloneOrUpdateAndClean(os.Stderr, machRepoDir, machRepoURL); err != nil {
 				return nil, errors.Wrap(err, "GitCloneOrUpdateAndClean")
+			}
+			err = GitConfigureRepo(os.Stderr, machRepoDir)
+			if err != nil {
+				return nil, errors.Wrap(err, "GitConfigureRepo")
 			}
 
 			// Find the current version used by Mach
@@ -108,10 +116,6 @@ func init() {
 			err = GitCheckoutNewBranch(os.Stderr, machRepoDir, os.Getenv("WRENCH_GIT_PUSH_BRANCH_NAME"))
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
-			}
-			err = GitConfigureRepo(os.Stderr, machRepoDir)
-			if err != nil {
-				return nil, errors.Wrap(err, "GitConfigureRepo")
 			}
 			err = GitCommit(os.Stderr, machRepoDir, "gpu-dawn: update to latest version "+newBranch)
 			if err != nil {
