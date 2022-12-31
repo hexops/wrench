@@ -26,8 +26,12 @@ type RunnerJobUpdate struct {
 	// Log, if non-empty, are messages to log about the job.
 	Log string
 
-	// Pushed is a list of repositories that were pushed to, if any.
-	Pushed []string
+	// Response from a script execution, if any.
+	Response *ScriptResponse
+}
+
+type ScriptResponse struct {
+	PushedRepos []string
 }
 
 type RunnerEnv struct {

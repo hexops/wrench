@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/api"
 )
 
 func init() {
@@ -11,7 +12,7 @@ func init() {
 		Command:     "mach-push-rewrite-zig-version",
 		Args:        nil,
 		Description: "wrench installs prerequisites (Go), rebuilds itself, and restarts the service",
-		ExecuteResponse: func(args ...string) (*Response, error) {
+		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
 			wantZigVersion, err := QueryLatestZigVersion()
 			if err != nil {
 				return nil, errors.Wrap(err, "QueryLatestZigVersion")
@@ -62,7 +63,7 @@ func init() {
 				}
 				pushed = append(pushed, repoURL)
 			}
-			return &Response{PushedRepos: pushed}, nil
+			return &api.ScriptResponse{PushedRepos: pushed}, nil
 		},
 	})
 }

@@ -124,12 +124,12 @@ func (m lockedWriter) Write(p []byte) (n int, err error) {
 
 func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, cancel, done chan struct{}) {
 	var (
-		activeMu          sync.RWMutex
-		active            *api.Job
-		activeLog         bytes.Buffer
-		activePushedRepos []string
-		logID             = "job-" + string(startJob.ID)
-		arch              = runtime.GOOS + "/" + runtime.GOARCH
+		activeMu             sync.RWMutex
+		active               *api.Job
+		activeLog            bytes.Buffer
+		activeScriptResponse *api.ScriptResponse
+		logID                = "job-" + string(startJob.ID)
+		arch                 = runtime.GOOS + "/" + runtime.GOARCH
 	)
 
 	activeMu.Lock()
@@ -190,12 +190,14 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		activeMu.Lock()
 		defer activeMu.Unlock()
 		if err == nil {
-			var response *scripts.Response
+			var response *api.ScriptResponse
 			if err2 := json.NewDecoder(&responseBuf).Decode(&response); err2 != nil {
 				err = fmt.Errorf("cannot unmarshal script response JSON (%v): '%s'", err2, responseBuf.String())
 			} else {
-				activePushedRepos = response.PushedRepos
-				fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activePushedRepos)
+				activeScriptResponse = response
+				if len(activeScriptResponse.PushedRepos) > 0 {
+					fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activeScriptResponse.PushedRepos)
+				}
 			}
 		}
 
@@ -214,10 +216,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			var update *api.RunnerJobUpdate
 			if active != nil {
 				update = &api.RunnerJobUpdate{
-					ID:     active.ID,
-					State:  active.State,
-					Log:    activeLog.String(),
-					Pushed: activePushedRepos,
+					ID:       active.ID,
+					State:    active.State,
+					Log:      activeLog.String(),
+					Response: activeScriptResponse,
 				}
 			}
 			resp, err := b.runner.RunnerJobUpdate(ctx, &api.RunnerJobUpdateRequest{

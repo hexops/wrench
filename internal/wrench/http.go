@@ -509,9 +509,9 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 		return nil, errors.Wrap(err, "UpsertRunnerJob(0)")
 	}
 
-	if r.Job.State == api.JobStateSuccess && len(r.Job.Pushed) > 0 {
+	if r.Job.State == api.JobStateSuccess && len(r.Job.Response.PushedRepos) > 0 {
 		// Ensure pull requests exist.
-		for _, repoRemoteURL := range r.Job.Pushed {
+		for _, repoRemoteURL := range r.Job.Response.PushedRepos {
 			repoPair := repoPairFromURL(repoRemoteURL)
 			prTemplate := job.Payload.PRTemplate.ToGitHub()
 			*prTemplate.Body = strings.ReplaceAll(
