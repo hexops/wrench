@@ -206,8 +206,8 @@ func init() {
 				return errors.Wrap(err, "git commit")
 			}
 			if push {
-				force := false
-				if err := GitPush(os.Stderr, workDir, repoURL, force); err != nil {
+				err = ExecArgs("git", []string{"push"}, WorkDir(workDir))(os.Stderr)
+				if err != nil {
 					return errors.Wrap(err, "GitPush")
 				}
 			}
