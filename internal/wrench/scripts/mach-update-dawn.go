@@ -84,8 +84,11 @@ func init() {
 				return errors.Wrap(err, "GitMerge")
 			}
 			if push {
-				force := false
-				if err := GitPush(os.Stderr, workDir, repoURL, force); err != nil {
+				if err := ExecArgs("git", []string{
+					"push",
+					GitPushAuthURL(repoURL),
+					"HEAD:main",
+				}, WorkDir(workDir))(os.Stderr); err != nil {
 					return errors.Wrap(err, "GitPush")
 				}
 			}
