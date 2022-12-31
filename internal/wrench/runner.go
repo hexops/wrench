@@ -157,10 +157,7 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			scripts.Env("WRENCH_RUNNER_ID", b.Config.Runner),
 		}
 		for secretName, secretValue := range startJob.Secrets {
-			secretName = strings.Replace(secretName, "/", "_", -1)
-			secretName = strings.Replace(secretName, "-", "_", -1)
-			secretName = strings.ToUpper(secretName)
-			opts = append(opts, scripts.Env("WRENCH_SECRET_"+secretName, secretValue))
+			opts = append(opts, scripts.Env("WRENCH_SECRET_"+uppercaseUnderscore(secretName), secretValue))
 		}
 		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_USERNAME", startJob.GitPushUsername))
 		opts = append(opts, scripts.Env("WRENCH_SECRET_GIT_PUSH_PASSWORD", startJob.GitPushPassword))
@@ -248,4 +245,10 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			}
 		}
 	}()
+}
+
+func uppercaseUnderscore(s string) string {
+	s = strings.Replace(s, "/", "_", -1)
+	s = strings.Replace(s, "-", "_", -1)
+	return strings.ToUpper(s)
 }
