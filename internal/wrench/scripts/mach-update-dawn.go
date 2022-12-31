@@ -83,8 +83,8 @@ func init() {
 			if err := GitMerge(os.Stderr, workDir, "upstream/main"); err != nil {
 				return errors.Wrap(err, "GitMerge")
 			}
-			force := false
 			if push {
+				force := false
 				if err := GitPush(os.Stderr, workDir, repoURL, force); err != nil {
 					return errors.Wrap(err, "GitPush")
 				}
@@ -204,6 +204,12 @@ func init() {
 			err = ExecArgs("git", []string{"commit", "-s", "-m", "generated: commit vendored dependencies"}, WorkDir(workDir))(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "git commit")
+			}
+			if push {
+				force := false
+				if err := GitPush(os.Stderr, workDir, repoURL, force); err != nil {
+					return errors.Wrap(err, "GitPush")
+				}
 			}
 			return nil
 		},

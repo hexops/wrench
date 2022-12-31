@@ -30,7 +30,7 @@ func (s *Script) Run(args ...string) (*api.ScriptResponse, error) {
 	if s.ExecuteResponse != nil {
 		return s.ExecuteResponse(args...)
 	}
-	return nil, s.Execute(args...)
+	return &api.ScriptResponse{}, s.Execute(args...)
 }
 
 var Scripts = []Script{}
