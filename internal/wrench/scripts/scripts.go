@@ -369,7 +369,7 @@ func GitPushAuthURL(remoteURL string) string {
 }
 
 func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
-	args := []string{"push", GitPushAuthURL(remoteURL), "--all"}
+	args := []string{"push", GitPushAuthURL(remoteURL)}
 	if force {
 		args = append(args, "--force")
 	}
