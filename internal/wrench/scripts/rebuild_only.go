@@ -64,7 +64,7 @@ func init() {
 						fmt.Fprintf(w, "$ rm -f %s\n", exe2Path)
 						_ = os.Remove(exe2Path)
 						fmt.Fprintf(w, "$ mv %s %s\n", exePath, exe2Path)
-						err = os.Rename(exePath, exe2Path)
+						err = Move(exePath, exe2Path)
 						if err != nil {
 							return errors.Wrap(err, "Rename")
 						}
@@ -74,7 +74,7 @@ func init() {
 						}
 					}
 					fmt.Fprintf(w, "$ mv %s %s\n", newBinary, exePath)
-					err = os.Rename("wrench/bin/wrench", exePath)
+					err = Move("wrench/bin/wrench", exePath)
 					if err != nil {
 						return errors.Wrap(err, "Rename")
 					}
