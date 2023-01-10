@@ -45,7 +45,7 @@ func (b *Bot) schedulerStart() error {
 		// 	},
 		// },
 		{
-			Every: 12 * time.Hour,
+			Every: 24 * time.Hour,
 			Job: api.Job{
 				Title:          "update to latest Zig version",
 				TargetRunnerID: "linux-amd64",
@@ -70,7 +70,7 @@ Here's the work I did to produce this: ${JOB_LOGS_URL}
 			},
 		},
 		{
-			Every: 24 * time.Hour,
+			Every: 7 * 24 * time.Hour,
 			Job: api.Job{
 				Title:          "gpu-dawn: update to latest Dawn version",
 				TargetRunnerID: "darwin-amd64",
