@@ -139,10 +139,17 @@ func (b *Bot) githubUpsertPullRequest(ctx context.Context, repoPair string, pr *
 		*exists.Body = *pr.Body
 		*exists.Draft = *pr.Draft
 		_, _, err := b.github.PullRequests.Edit(ctx, org, repo, *exists.Number, exists)
+		if err != nil {
+			errClosed := strings.Contains(err.Error(), "Cannot change the base branch of a closed pull request")
+			if errClosed {
+				goto createNewPR
+			}
+		}
 		return exists, false, errors.Wrap(err, "PullRequests.Edit")
 	}
 
 	// Create a new PR.
+createNewPR:
 	newPR, _, err := b.github.PullRequests.Create(ctx, org, repo, pr)
 	return newPR, true, errors.Wrap(err, "PullRequests.Create")
 }
