@@ -533,7 +533,7 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 			pr, isNew, err := b.githubUpsertPullRequest(ctx, repoPair, prTemplate)
 			if err != nil {
 				if isGitHubRateLimit(err) {
-					b.idLogf("GitHub rate limit encountered, waiting for 5 minutes")
+					b.idLogf(r.Job.ID.LogID(), "GitHub rate limit encountered, waiting for 5 minutes")
 					b.logf("GitHub rate limit encountered, waiting for 5 minutes")
 					time.Sleep(5 * time.Minute)
 				}
