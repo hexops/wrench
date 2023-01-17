@@ -101,6 +101,13 @@ func (b *Bot) sync(ctx context.Context) {
 	}
 }
 
+func isGitHubRateLimit(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "rate limit exceeded")
+}
+
 func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*github.PullRequest, err error) {
 	cacheKey := repoPair + "-PullRequests"
 	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
