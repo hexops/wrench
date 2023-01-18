@@ -34,9 +34,11 @@ func init() {
 			// Download the Zig archive
 			extension := "tar.xz"
 			exeExt := ""
+			stripPathComponents := 1
 			if runtime.GOOS == "windows" {
 				extension = "zip"
 				exeExt = ".exe"
+				stripPathComponents = 0
 			}
 			url := fmt.Sprintf("https://ziglang.org/builds/zig-%s-%s-%s.%s", zigOS(), zigArch(), wantZigVersion, extension)
 			archiveFilePath := "zig." + extension
@@ -71,7 +73,7 @@ func init() {
 			}
 
 			// Extract the Go archive
-			err = ExtractArchive(archiveFilePath, "zig", 1)(os.Stderr)
+			err = ExtractArchive(archiveFilePath, "zig", stripPathComponents)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")
 			}
