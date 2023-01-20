@@ -261,6 +261,51 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"schedule-list", "list scheduled jobs"})
+	b.discordCommandsEmbedSecure["schedule-list"] = func(args ...string) *discordgo.MessageEmbed {
+		var buf bytes.Buffer
+		for _, scheduled := range b.schedule {
+			fmt.Fprintf(&buf, "* '%s' - %s\n", scheduled.Job.ID, scheduled.Job.Title)
+		}
+		if len(b.schedule) == 0 {
+			fmt.Fprintf(&buf, "no scheduled jobs\n")
+		}
+		return &discordgo.MessageEmbed{
+			Title:       "Scheduled jobs",
+			Description: buf.String(),
+		}
+	}
+
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"schedule-now [id]", "schedule the job now"})
+	b.discordCommandsEmbedSecure["schedule-now"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) != 1 {
+			return &discordgo.MessageEmbed{
+				Title:       "schedule-now - error",
+				Description: "expected [id] (see !wrench schedule-list for scheduled jobs)",
+			}
+		}
+
+		ctx := context.Background()
+		runners, err := b.store.Runners(ctx)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "schedule-now - error",
+				Description: err.Error(),
+			}
+		}
+		if err := b.scheduleJobNow(ctx, api.JobID(args[0]), runners); err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "schedule-now - error",
+				Description: err.Error(),
+			}
+		}
+
+		return &discordgo.MessageEmbed{
+			Title:       "Job schedule updated",
+			Description: fmt.Sprintf("Scheduled to run now: %s/runners", b.Config.ExternalURL),
+		}
+	}
+
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"script-all [command] [args]", "execute 'wrench script [cmd] [args]' on all runners"})
 	b.discordCommandsEmbedSecure["script-all"] = func(args ...string) *discordgo.MessageEmbed {
 		if len(args) < 1 {

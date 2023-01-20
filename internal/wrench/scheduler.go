@@ -22,6 +22,7 @@ func (b *Bot) schedulerStart() error {
 		{
 			Always: true,
 			Job: api.Job{
+				ID:             "github-runner",
 				Title:          "github-runner",
 				TargetRunnerID: "darwin-arm64",
 				Payload: api.JobPayload{
@@ -47,6 +48,7 @@ func (b *Bot) schedulerStart() error {
 		{
 			Every: 24 * time.Hour,
 			Job: api.Job{
+				ID:             "update-zig-version",
 				Title:          "update to latest Zig version",
 				TargetRunnerID: "linux-amd64",
 				Payload: api.JobPayload{
@@ -72,6 +74,7 @@ Here's the work I did to produce this: ${JOB_LOGS_URL}
 		{
 			Every: 7 * 24 * time.Hour,
 			Job: api.Job{
+				ID:             "gpu-dawn-update-dawn-version",
 				Title:          "gpu-dawn: update to latest Dawn version",
 				TargetRunnerID: "darwin-amd64",
 				Payload: api.JobPayload{
@@ -121,54 +124,75 @@ func (b *Bot) schedulerWork(ctx context.Context) error {
 		return errors.Wrap(err, "Runners")
 	}
 
-	scheduleJob := func(schedule ScheduledJob) {
-		var filters []JobsFilter
-		if schedule.Job.TargetRunnerID != "" {
-			filters = append(filters, JobsFilter{TargetRunnerID: schedule.Job.TargetRunnerID})
-		}
-		lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title, filters...)
-		if err != nil {
-			b.idLogf(schedulerLogID, "failed to query last job: %v", err)
-			return
-		}
-
-		start := lastJob == nil || (lastJob.State != api.JobStateReady &&
-			lastJob.State != api.JobStateStarting &&
-			lastJob.State != api.JobStateRunning)
-		if !start {
-			return
-		}
-
-		// Job is not running/scheduled, and is set to Always run OR is a ScheduledStart.
-		if !schedule.Always {
-			if lastJob == nil || lastJob.State == api.JobStateError {
-				schedule.Job.ScheduledStart = time.Now().Add(30 * time.Second)
-			} else {
-				schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
-			}
-		}
-
-		_, err = b.store.NewRunnerJob(ctx, schedule.Job)
-		if err != nil {
-			b.idLogf(schedulerLogID, "failed to create job: %v: %v", schedule.Job.Title, err)
-			return
-		}
-		b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
-	}
-
 	for _, schedule := range b.schedule {
-		if schedule.Job.TargetRunnerID == "*" {
-			for _, runner := range runners {
-				schedule.Job.TargetRunnerID = runner.ID
-				scheduleJob(schedule)
-				continue
-			}
-		} else {
-			scheduleJob(schedule)
+		if err := b.scheduleJob(ctx, schedule, runners, false); err != nil {
+			b.idLogf(schedulerLogID, "%v", err)
 			continue
 		}
 	}
+	return nil
+}
 
+func (b *Bot) scheduleJobNow(ctx context.Context, scheduledJobID api.JobID, runners []api.Runner) error {
+	var found *ScheduledJob
+	for _, scheduled := range b.schedule {
+		if scheduled.Job.ID == scheduledJobID {
+			found = &scheduled
+			break
+		}
+	}
+	if found == nil {
+		return errors.New("scheduled job not found")
+	}
+	return b.scheduleJob(ctx, *found, runners, true)
+}
+
+func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []api.Runner, force bool) error {
+	if schedule.Job.TargetRunnerID == "*" {
+		for _, runner := range runners {
+			schedule.Job.TargetRunnerID = runner.ID
+			break
+		}
+	}
+
+	var filters []JobsFilter
+	if schedule.Job.TargetRunnerID != "" {
+		filters = append(filters, JobsFilter{TargetRunnerID: schedule.Job.TargetRunnerID})
+	}
+	lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title, filters...)
+	if err != nil {
+		return errors.Wrap(err, "failed to query last job")
+	}
+
+	start := lastJob == nil || (lastJob.State != api.JobStateReady &&
+		lastJob.State != api.JobStateStarting &&
+		lastJob.State != api.JobStateRunning)
+
+	if !start && force && lastJob != nil {
+		lastJob.ScheduledStart = time.Time{}
+		if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
+			return errors.Wrap(err, "failed to update job")
+		}
+		return nil
+	}
+	if !start {
+		return nil
+	}
+
+	// Job is not running/scheduled, and is set to Always run OR is a ScheduledStart.
+	if !schedule.Always {
+		if lastJob == nil || lastJob.State == api.JobStateError {
+			schedule.Job.ScheduledStart = time.Now().Add(30 * time.Second)
+		} else {
+			schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
+		}
+	}
+
+	_, err = b.store.NewRunnerJob(ctx, schedule.Job)
+	if err != nil {
+		return errors.Wrap(err, "failed to create job")
+	}
+	b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
 	return nil
 }
 
