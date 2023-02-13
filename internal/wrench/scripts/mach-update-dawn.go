@@ -278,6 +278,7 @@ func dawnWriteVSToolchainHacks(workDir string) error {
 	vsToolchainPy := `
 print('vs_path = ""')
 print('sdk_path = ""')
+print('sdk_version = ""')
 print('vs_version = ""')
 print('wdk_dir = ""')
 print('runtime_dirs = ""')
