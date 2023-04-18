@@ -32,26 +32,62 @@ func (b *Bot) githubStart() error {
 
 // TODO: move to config?
 var githubRepoNames = []string{
-	"hexops/wrench",
+	// Mach packages
 	"hexops/mach",
+	"hexops/mach-core",
+	"hexops/mach-gpu",
+	"hexops/mach-gpu-dawn",
+	"hexops/mach-basisu",
+	"hexops/mach-freetype",
+	"hexops/mach-glfw",
+	"hexops/mach-ecs",
+	"hexops/mach-dusk",
+	"hexops/mach-earcut",
+	"hexops/mach-gamemode",
+	"hexops/mach-model3d",
+	"hexops/mach-sysjs",
+	"hexops/mach-sysaudio",
+
+	// Zig-packaged C libraries
+	"hexops/brotli",
+	"hexops/harfbuzz",
+	"hexops/freetype",
+	"hexops/wayland-headers",
+	"hexops/x11-headers",
+	"hexops/vulkan-headers",
+	"hexops/linux-audio-headers",
+	"hexops/glfw",
+	"hexops/basisu",
+	"hexops/dawn",
+	"hexops/DirectXShaderCompiler",
+
+	// Language bindings for Mach
+	"hexops/mach-rs",
+
+	// Examples
 	"hexops/mach-examples",
+	"hexops/mach-glfw-vulkan-example",
+
+	// Other useful libraries/tools
+	"hexops/fastfilter",
+	"hexops/zgo",
+
+	// Misc
+	"hexops/mach-example-assets",
+	"hexops/font-assets",
+	"hexops/machengine.org",
+	"hexops/devlog",
+	"hexops/hexops.com",
+	"hexops/zigmonthly.org",
+	"hexops/wrench",
+	"hexops/media",
+
+	// Going away soon
 	"hexops/sdk-linux-aarch64",
 	"hexops/sdk-linux-x86_64",
 	"hexops/sdk-windows-x86_64",
 	"hexops/sdk-macos-12.0",
 	"hexops/sdk-macos-11.3",
-	"hexops/mach-glfw-opengl-example",
-	"hexops/mach-glfw-vulkan-example",
-	"hexops/basisu",
-	// "soundio",
-	"hexops/freetype",
-	"hexops/glfw",
-	"hexops/dawn",
-	"hexops/hexops.com",
-	"hexops/zigmonthly.org",
-	"hexops/devlog",
-	"hexops/machengine.org",
-	"hexops/media",
 }
 
 func (b *Bot) sync(ctx context.Context) {
