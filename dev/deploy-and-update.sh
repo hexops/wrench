@@ -2,6 +2,8 @@
 set -exuo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"/..
 
+source ./dev/remote.sh
+
 ./dev/deploy.sh
 
 ssh $remote << EOF
