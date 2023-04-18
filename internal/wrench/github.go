@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/go-github/v48/github"
@@ -95,46 +96,53 @@ func (b *Bot) sync(ctx context.Context) {
 
 	b.idLogf(logID, "github sync: starting")
 	defer b.idLogf(logID, "github sync: finished")
+	var wg sync.WaitGroup
 	for _, repoPair := range githubRepoNames {
-		org, repo := splitRepoPair(repoPair)
-		page := 0
-		retry := 0
-		var pullRequests []*github.PullRequest
-		for {
-			b.idLogf(logID, "synchronizing: %s/%s", org, repo)
-			pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
-				State: "all",
-				ListOptions: github.ListOptions{
-					Page:    page,
-					PerPage: 1000,
-				},
-			})
-			if err != nil {
-				retry++
-				b.idLogf(logID, "error: %v (retry %v of 5)", err, retry)
-				if retry >= 5 {
+		repoPair := repoPair
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			org, repo := splitRepoPair(repoPair)
+			page := 0
+			retry := 0
+			var pullRequests []*github.PullRequest
+			for {
+				b.idLogf(logID, "synchronizing: %s/%s", org, repo)
+				pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
+					State: "all",
+					ListOptions: github.ListOptions{
+						Page:    page,
+						PerPage: 1000,
+					},
+				})
+				if err != nil {
+					retry++
+					b.idLogf(logID, "error: %v (retry %v of 5)", err, retry)
+					if retry >= 5 {
+						break
+					}
+					time.Sleep(5 * time.Second)
+					continue
+				}
+				pullRequests = append(pullRequests, pagePRs...)
+				b.idLogf(logID, "progress: queried %v pull requests total", len(pullRequests))
+				b.idLogf(logID, "progress: rate limit: %v", resp.Rate)
+
+				page = resp.NextPage
+				if resp.NextPage == 0 {
 					break
 				}
-				time.Sleep(5 * time.Second)
-				continue
 			}
-			pullRequests = append(pullRequests, pagePRs...)
-			b.idLogf(logID, "progress: queried %v pull requests total", len(pullRequests))
-			b.idLogf(logID, "progress: rate limit: %v", resp.Rate)
-
-			page = resp.NextPage
-			if resp.NextPage == 0 {
-				break
+			cacheKey := repoPair + "-PullRequests"
+			cacheValue, err := json.Marshal(pullRequests)
+			if err != nil {
+				b.idLogf(logID, "error: Marshal: %v", err)
+				return
 			}
-		}
-		cacheKey := repoPair + "-PullRequests"
-		cacheValue, err := json.Marshal(pullRequests)
-		if err != nil {
-			b.idLogf(logID, "error: Marshal: %v", err)
-			continue
-		}
-		b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+		}()
 	}
+	wg.Wait()
 }
 
 func isGitHubRateLimit(err error) bool {
