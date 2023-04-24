@@ -48,7 +48,7 @@ func init() {
 			}
 
 			// Remove existing install dir if it exists.
-			_ = os.RemoveAll("golang")
+			_ = os.RemoveAll("go")
 
 			goBinaryLocation, err := filepath.Abs("go/bin/go" + exeExt)
 			if err != nil {
