@@ -92,7 +92,7 @@ type Log struct {
 }
 
 func (s *Store) Logs(ctx context.Context, id string) ([]Log, error) {
-	q := sqlf.Sprintf(`SELECT timestamp, message FROM logs WHERE id=%v ORDER BY timestamp`, id)
+	q := sqlf.Sprintf(`SELECT * FROM (SELECT timestamp, message FROM logs WHERE id=%v) ORDER BY timestamp`, id)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Store) Logs(ctx context.Context, id string) ([]Log, error) {
 }
 
 func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
-	q := sqlf.Sprintf(`SELECT DISTINCT id FROM logs ORDER BY id`)
+	q := sqlf.Sprintf(`SELECT * FROM (SELECT DISTINCT id FROM logs) ORDER BY id`)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
