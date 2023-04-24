@@ -360,7 +360,7 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 			conds = append(conds, sqlf.Sprintf("id = %v", mustDecodeJobID(where.ID)))
 		}
 		if where.Limit != 0 {
-			limit = sqlf.Sprintf(" LIMIT %v")
+			limit = sqlf.Sprintf(" LIMIT %v", where.Limit)
 		}
 	}
 
