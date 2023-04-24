@@ -222,6 +222,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		JobsFilter{NotState: api.JobStateReady},
 		JobsFilter{NotState: api.JobStateStarting},
 		JobsFilter{NotState: api.JobStateRunning},
+		JobsFilter{Limit: 100},
 	)
 	if err != nil {
 		return errors.Wrap(err, "Jobs(1)")

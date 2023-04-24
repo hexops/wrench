@@ -331,10 +331,12 @@ type JobsFilter struct {
 	ScheduledStartLessOrEqualTo time.Time
 	TargetRunnerID              string
 	ID                          api.JobID
+	Limit                       int
 }
 
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
 	var conds []*sqlf.Query
+	limit := sqlf.Sprintf("")
 	for _, where := range filters {
 		if where.State != "" {
 			conds = append(conds, sqlf.Sprintf("state = %v", where.State))
@@ -357,13 +359,16 @@ func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, err
 		if where.ID != "" {
 			conds = append(conds, sqlf.Sprintf("id = %v", mustDecodeJobID(where.ID)))
 		}
+		if where.Limit != 0 {
+			limit = sqlf.Sprintf(" LIMIT %v")
+		}
 	}
 
 	whereClause := sqlf.Sprintf("")
 	if len(conds) > 0 {
 		whereClause = sqlf.Sprintf("WHERE %v", sqlf.Join(conds, "AND"))
 	}
-	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs %s ORDER BY id DESC`, whereClause)
+	q := sqlf.Sprintf(`SELECT `+jobFields+` FROM runner_jobs %s ORDER BY id DESC%v`, whereClause, limit)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
