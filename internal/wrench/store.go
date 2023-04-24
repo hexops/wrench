@@ -71,6 +71,16 @@ func (s *Store) ensureSchema() error {
 			updated_at TIMESTAMP NOT NULL,
 			created_at TIMESTAMP NOT NULL
 		);
+
+		CREATE INDEX IF NOT EXISTS idx_logs_id ON logs (id);
+
+		CREATE INDEX IF NOT EXISTS idx_cache_cache_name ON cache (cache_name);
+		CREATE INDEX IF NOT EXISTS idx_cache_key ON cache (key);
+
+		CREATE INDEX IF NOT EXISTS idx_runner_jobs_state ON runner_jobs (state);
+		CREATE INDEX IF NOT EXISTS idx_runner_jobs_title ON runner_jobs (title);
+		CREATE INDEX IF NOT EXISTS idx_runner_jobs_target_runner_id ON runner_jobs (target_runner_id);
+		CREATE INDEX IF NOT EXISTS idx_runner_jobs_id ON runner_jobs (id);
 	`)
 	return err
 }
