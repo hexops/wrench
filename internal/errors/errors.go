@@ -1,9 +1,8 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
-
-	errors "github.com/hexops/wrench/internal/errors/go_1_20_errors"
 )
 
 // Wrap returns an error annotating err with the specified message. If err is nil, Wrap returns nil.
