@@ -50,7 +50,7 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `<div>`)
 		{
 			fmt.Fprintf(w, `<img width="300px" align="left" src="%s">`, logo)
-			fmt.Fprintf(w, `<strong>Wrench</strong> here! I'm the <a href="https://machengine.org">Mach engine</a> mascot, and also help automate and maintain Mach project development.`)
+			fmt.Fprintf(w, `<div><strong>Wrench</strong> here! I'm the <a href="https://machengine.org">Mach engine</a> mascot, and also help automate and maintain Mach project development.</div>`)
 		}
 		fmt.Fprintf(w, `</div>`)
 
