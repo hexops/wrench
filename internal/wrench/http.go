@@ -75,8 +75,8 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `</ul>`)
 
 		fmt.Fprintf(w, `<h2>Discord integration</h2>`)
-		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <pre>#wrench</pre> to see what I'm up to!</p>`)
-		fmt.Fprintf(w, `<p>Type <pre>!wrench</pre> in the <pre>#spam</pre> channel or when direct messaging me for help.</p>`)
+		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <code>#wrench</code> to see what I'm up to!</p>`)
+		fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
