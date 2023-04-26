@@ -50,7 +50,7 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 40rem;">`)
 		{
 			fmt.Fprintf(w, `<img width="300px" align="left" src="%s">`, logo)
-			fmt.Fprintf(w, `<div><strong>Wrench</strong> here! I'm the <a href="https://machengine.org">Mach engine</a> mascot, and also help automate and maintain Mach project development.</div>`)
+			fmt.Fprintf(w, `<div><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain Mach projects. You can read about me in <em><a href="https://devlog.hexops.com/2023/how-wrench-helps-build-mach/">"Wrench helps automate and maintain Mach (the Zig game engine)"</a></em> or view my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
 		}
 		fmt.Fprintf(w, `</div>`)
 
@@ -77,11 +77,6 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `<h2>Discord integration</h2>`)
 		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <code>#wrench</code> to see what I'm up to!</p>`)
 		fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
-
-		fmt.Fprintf(w, `<h2>Implementation</h2>`)
-		fmt.Fprintf(w, `<p>You can learn more about how I was created in the blog post <a href="https://devlog.hexops.com/2023/how-wrench-helps-build-mach-engine/">How Wrench helps build Mach engine</a></p>`)
-		fmt.Fprintf(w, `<p>My code lives in the <a href="https://github.com/hexops/wrench">hexops/wrench</a> repository.</p>`)
-
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
