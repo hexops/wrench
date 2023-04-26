@@ -47,14 +47,23 @@ func (b *Bot) httpStart() error {
 
 		logo := "https://raw.githubusercontent.com/hexops/media/b71e82ae9ea20c22a2eb3ab95d8ba48684635620/mach/wrench_rocket.svg"
 		fmt.Fprintf(w, `<h1>[bot] wrench: let's fix this!</h1>`)
-		fmt.Fprintf(w, `<div>`)
+		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 40rem;">`)
 		{
 			fmt.Fprintf(w, `<img width="300px" align="left" src="%s">`, logo)
 			fmt.Fprintf(w, `<div><strong>Wrench</strong> here! I'm the <a href="https://machengine.org">Mach engine</a> mascot, and also help automate and maintain Mach project development.</div>`)
 		}
 		fmt.Fprintf(w, `</div>`)
 
-		fmt.Fprintf(w, `<h1>Features</h1>`)
+		fmt.Fprintf(w, `<h1>Where you can find me</h1>`)
+		fmt.Fprintf(w, `<ul>`)
+		{
+			fmt.Fprintf(w, `<li>On this website</li>`)
+			fmt.Fprintf(w, `<li>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a></li>`)
+			fmt.Fprintf(w, `<li>Making contributions <a href="https://github.com/wrench-bot">on GitHub</a> such as <a href="https://github.com/hexops/mach/pull/760">updating the version of Zig we use</a>, <a href="https://github.com/hexops/mach/pull/697">keeping our version of Dawn/WebGPU up-to-date</a>, and more.</li>`)
+		}
+		fmt.Fprintf(w, `</ul>`)
+
+		fmt.Fprintf(w, `<h1>Explore</h1>`)
 		fmt.Fprintf(w, `<ul>`)
 		{
 			fmt.Fprintf(w, `<li><a href="%s/projects">Projects overview</a></li>`, b.Config.ExternalURL)
@@ -64,6 +73,10 @@ func (b *Bot) httpStart() error {
 			fmt.Fprintf(w, `<li><a href="%s/rebuild">Trigger a rebuild of wrench.machengine.org (admin-only)</a></li>`, b.Config.ExternalURL)
 		}
 		fmt.Fprintf(w, `</ul>`)
+
+		fmt.Fprintf(w, `<h2>Discord integration</h2>`)
+		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <pre>#wrench</pre> to see what I'm up to!</p>`)
+		fmt.Fprintf(w, `<p>Type <pre>!wrench</pre> in the <pre>#spam</pre> channel or when direct messaging me for help.</p>`)
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
