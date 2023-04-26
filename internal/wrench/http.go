@@ -396,7 +396,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		status := ""
 		if pending > 0 {
 			status = "↻"
-		} else if failure {
+		} else if failure || *checkRuns.Total == 0 {
 			status = "✖️"
 		}
 
