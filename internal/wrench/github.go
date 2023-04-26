@@ -124,7 +124,7 @@ func (b *Bot) sync(ctx context.Context) {
 					continue
 				}
 				pullRequests = append(pullRequests, pagePRs...)
-				b.idLogf(logID, "%s/%s: progress: queried %v pull requests total (rate limit %v)", org, repo, len(pullRequests), resp.Rate)
+				b.idLogf(logID, "%s/%s: progress: queried %v pull requests total (rate limit %v/%v)", org, repo, len(pullRequests), resp.Rate.Remaining, resp.Rate.Limit)
 
 				page = resp.NextPage
 				if resp.NextPage == 0 {
