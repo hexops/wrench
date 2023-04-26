@@ -107,7 +107,6 @@ func (b *Bot) sync(ctx context.Context) {
 			retry := 0
 			var pullRequests []*github.PullRequest
 			for {
-				b.idLogf(logID, "synchronizing: %s/%s", org, repo)
 				pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
 					State: "all",
 					ListOptions: github.ListOptions{
@@ -117,7 +116,7 @@ func (b *Bot) sync(ctx context.Context) {
 				})
 				if err != nil {
 					retry++
-					b.idLogf(logID, "error: %v (retry %v of 5)", err, retry)
+					b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
 					if retry >= 5 {
 						break
 					}
@@ -125,8 +124,7 @@ func (b *Bot) sync(ctx context.Context) {
 					continue
 				}
 				pullRequests = append(pullRequests, pagePRs...)
-				b.idLogf(logID, "progress: queried %v pull requests total", len(pullRequests))
-				b.idLogf(logID, "progress: rate limit: %v", resp.Rate)
+				b.idLogf(logID, "%s/%s: progress: queried %v pull requests total (rate limit %v)", org, repo, len(pullRequests), resp.Rate)
 
 				page = resp.NextPage
 				if resp.NextPage == 0 {
