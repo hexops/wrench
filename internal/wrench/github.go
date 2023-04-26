@@ -105,6 +105,7 @@ func (b *Bot) sync(ctx context.Context) {
 			org, repo := splitRepoPair(repoPair)
 			page := 0
 			retry := 0
+
 			var pullRequests []*github.PullRequest
 			for {
 				pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
@@ -138,6 +139,20 @@ func (b *Bot) sync(ctx context.Context) {
 				return
 			}
 			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+
+			// Cache combined repository status (CI status check)
+			combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
+			if err != nil {
+				b.idLogf(logID, "%s/%s: error: %v (fetching combined status)", org, repo, err)
+				return
+			}
+			cacheKey = repoPair + "-Repositories-CombinedStatus-HEAD"
+			cacheValue, err = json.Marshal(combinedStatus)
+			if err != nil {
+				b.idLogf(logID, "error: Marshal: %v", err)
+				return
+			}
+			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
 		}()
 	}
 	wg.Wait()
@@ -152,6 +167,18 @@ func isGitHubRateLimit(err error) bool {
 
 func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*github.PullRequest, err error) {
 	cacheKey := repoPair + "-PullRequests"
+	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(entry.Value), &v); err != nil {
+		return nil, errors.Wrap(err, "Unmarshal")
+	}
+	return v, nil
+}
+
+func (b *Bot) githubCombinedStatusHEAD(ctx context.Context, repoPair string) (v *github.CombinedStatus, err error) {
+	cacheKey := repoPair + "-Repositories-CombinedStatus-HEAD"
 	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
 	if err != nil {
 		return nil, err

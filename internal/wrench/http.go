@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -49,6 +50,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
 	mux.Handle("/pull-requests/", handler("pull-requests", b.httpServePullRequests))
+	mux.Handle("/projects/", handler("projects", b.httpServeProjects))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 	mux.Handle("/api/runner/job-update", handler("api-runner-job-update", botHttpAPI(b, b.httpServeRunnerJobUpdate)))
 	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
@@ -310,8 +312,8 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 				}
 				values = append(values, []string{
 					fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, *pr.Title),
-					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, *pr.User.Login),
+					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, html.EscapeString(*pr.Title)),
+					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, html.EscapeString(*pr.User.Login)),
 					humanizeTimeRecent(*pr.CreatedAt),
 				})
 			}
@@ -331,6 +333,61 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 	if err := prList("closed", "closed", true, false); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
+	countPRs := func(repoPair, state string, draft, filterDraft bool) (int, error) {
+		count := 0
+		pullRequests, err := b.githubPullRequests(r.Context(), repoPair)
+		if err != nil {
+			return 0, err
+		}
+		for _, pr := range pullRequests {
+			if *pr.State != state {
+				continue
+			}
+			if filterDraft && draft != *pr.Draft {
+				continue
+			}
+			count++
+		}
+		return count, nil
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "<h2>Projects overview</h2>")
+	var values [][]string
+	for _, repoPair := range githubRepoNames {
+		numOpenPRs, err := countPRs(repoPair, "open", false, true)
+		if err != nil {
+			return err
+		}
+		numDraftPRs, err := countPRs(repoPair, "open", true, true)
+		if err != nil {
+			return err
+		}
+		numClosedPRs, err := countPRs(repoPair, "closed", true, false)
+		if err != nil {
+			return err
+		}
+
+		combinedStatus, err := b.githubCombinedStatusHEAD(r.Context(), repoPair)
+		if err != nil {
+			return err
+		}
+
+		values = append(values, []string{
+			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
+			fmt.Sprintf(`<a href="%s">%v</a>`, *combinedStatus.CommitURL, combinedStatus.State),
+			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs),
+			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs),
+			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs),
+		})
+	}
+
+	tableStyle(w)
+	table(w, []string{"repository", "CI status", "open PRs", "draft PRs", "closed PRs"}, values)
 	return nil
 }
 
