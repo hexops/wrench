@@ -405,9 +405,9 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		values = append(values, []string{
 			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
 			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status), status != ""),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
 		})
 	}
 
