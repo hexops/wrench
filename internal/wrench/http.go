@@ -379,7 +379,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 		values = append(values, []string{
 			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-			fmt.Sprintf(`<a href="%s">%v</a>`, *combinedStatus.CommitURL, combinedStatus.State),
+			fmt.Sprintf(`<a href="%s">%v</a>`, *combinedStatus.CommitURL, *combinedStatus.State),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs),
