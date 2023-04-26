@@ -293,7 +293,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) error {
-	prList := func(label, state string, includeDrafts bool) error {
+	prList := func(label, state string, draft, filterDraft bool) error {
 		fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
 		var values [][]string
 		for _, repoPair := range githubRepoNames {
@@ -305,29 +305,30 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 				if *pr.State != state {
 					continue
 				}
-				if *pr.Draft && !includeDrafts {
+				if filterDraft && draft != *pr.Draft {
 					continue
 				}
 				values = append(values, []string{
-					fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, repoPair),
+					fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
 					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, *pr.Title),
 					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, *pr.User.Login),
+					humanizeTimeRecent(*pr.CreatedAt),
 				})
 			}
 		}
 		tableStyle(w)
-		table(w, []string{"repository", "title", "author"}, values)
+		table(w, []string{"repository", "title", "author", "created"}, values)
 		return nil
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := prList("open", "open", false); err != nil {
+	if err := prList("open", "open", false, true); err != nil {
 		return err
 	}
-	if err := prList("draft", "open", true); err != nil {
+	if err := prList("draft", "open", true, true); err != nil {
 		return err
 	}
-	if err := prList("closed", "closed", true); err != nil {
+	if err := prList("closed", "closed", true, false); err != nil {
 		return err
 	}
 	return nil
