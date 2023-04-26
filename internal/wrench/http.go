@@ -372,14 +372,36 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		combinedStatus, err := b.githubCombinedStatusHEAD(r.Context(), repoPair)
+		// Determine CI status
+		checkRuns, err := b.githubCheckRunsHEAD(r.Context(), repoPair)
 		if err != nil {
 			return err
+		}
+		completed := 0
+		pending := 0
+		failure := false
+		headSHA := ""
+		for _, run := range checkRuns {
+			headSHA = *run.HeadSHA
+			if *run.Status == "completed" {
+				completed++
+			}
+			if *run.Status == "pending" {
+				pending++
+			}
+		}
+		status := ""
+		if pending > 0 {
+			status = "↻"
+		} else if failure {
+			status = "✖️"
+		} else {
+			status = "✔️"
 		}
 
 		values = append(values, []string{
 			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-			fmt.Sprintf(`<a href="%s">%v</a>`, *combinedStatus.CommitURL, *combinedStatus.State),
+			fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs),
 			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs),

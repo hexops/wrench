@@ -140,14 +140,28 @@ func (b *Bot) sync(ctx context.Context) {
 			}
 			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
 
-			// Cache combined repository status (CI status check)
+			// Cache combined repository status
 			combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
 			if err != nil {
 				b.idLogf(logID, "%s/%s: error: %v (fetching combined status)", org, repo, err)
 				return
 			}
-			cacheKey = repoPair + "-Repositories-CombinedStatus-HEAD"
+			cacheKey = repoPair + "-Repositories-GetCombinedStatus-HEAD"
 			cacheValue, err = json.Marshal(combinedStatus)
+			if err != nil {
+				b.idLogf(logID, "error: Marshal: %v", err)
+				return
+			}
+			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+
+			// Cache check runs for HEAD (CI status check)
+			checkRuns, _, err := b.github.Checks.ListCheckRunsForRef(ctx, org, repo, "HEAD", nil)
+			if err != nil {
+				b.idLogf(logID, "%s/%s: error: %v (fetching check runs)", org, repo, err)
+				return
+			}
+			cacheKey = repoPair + "-Checks-ListCheckRunsForRef-HEAD"
+			cacheValue, err = json.Marshal(checkRuns)
 			if err != nil {
 				b.idLogf(logID, "error: Marshal: %v", err)
 				return
@@ -178,7 +192,19 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 }
 
 func (b *Bot) githubCombinedStatusHEAD(ctx context.Context, repoPair string) (v *github.CombinedStatus, err error) {
-	cacheKey := repoPair + "-Repositories-CombinedStatus-HEAD"
+	cacheKey := repoPair + "-Repositories-GetCombinedStatus-HEAD"
+	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(entry.Value), &v); err != nil {
+		return nil, errors.Wrap(err, "Unmarshal")
+	}
+	return v, nil
+}
+
+func (b *Bot) githubCheckRunsHEAD(ctx context.Context, repoPair string) (v []*github.CheckRun, err error) {
+	cacheKey := repoPair + "-Checks-ListCheckRunsForRef-HEAD"
 	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
 	if err != nil {
 		return nil, err
