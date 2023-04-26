@@ -389,7 +389,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			if *run.Status == "pending" {
 				pending++
 			}
-			if *run.Conclusion == "failure" {
+			if run.Conclusion != nil && *run.Conclusion == "failure" {
 				failure = true
 			}
 		}
