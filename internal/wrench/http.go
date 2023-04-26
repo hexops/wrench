@@ -46,11 +46,12 @@ func (b *Bot) httpStart() error {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 		logo := "https://raw.githubusercontent.com/hexops/media/b71e82ae9ea20c22a2eb3ab95d8ba48684635620/mach/wrench_rocket.svg"
+		fmt.Fprintf(w, `<div style="padding: 1rem;">`)
 		fmt.Fprintf(w, `<h1>[bot] wrench: let's fix this!</h1>`)
-		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 40rem;">`)
+		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 50rem;">`)
 		{
-			fmt.Fprintf(w, `<img width="300px" align="left" src="%s">`, logo)
-			fmt.Fprintf(w, `<div><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain Mach projects. You can read about me in <em><a href="https://devlog.hexops.com/2023/how-wrench-helps-build-mach/">"Wrench helps automate and maintain Mach (the Zig game engine)"</a></em> or view my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
+			fmt.Fprintf(w, `<img width="250px" align="left" src="%s">`, logo)
+			fmt.Fprintf(w, `<div style="padding-left: 2rem;"><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain our projects. You can read about me in <em><a href="https://devlog.hexops.com/2023/how-wrench-helps-build-mach/">"Wrench helps automate and maintain Mach (the Zig game engine)"</a></em> or view my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
 		}
 		fmt.Fprintf(w, `</div>`)
 
@@ -77,6 +78,7 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `<h2>Discord integration</h2>`)
 		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <code>#wrench</code> to see what I'm up to!</p>`)
 		fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
+		fmt.Fprintf(w, `</div>`)
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
