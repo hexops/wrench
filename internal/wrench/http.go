@@ -48,6 +48,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
+	mux.Handle("/pull-requests/", handler("pull-requests", b.httpServePullRequests))
 	mux.Handle("/api/runner/poll", handler("api-runner-poll", botHttpAPI(b, b.httpServeRunnerPoll)))
 	mux.Handle("/api/runner/job-update", handler("api-runner-job-update", botHttpAPI(b, b.httpServeRunnerJobUpdate)))
 	mux.Handle("/api/runner/list", handler("api-runner-list", botHttpAPI(b, b.httpServeRunnerList)))
@@ -287,6 +288,47 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		}
 		tableStyle(w)
 		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "scheduled start", "last updated", "created"}, values)
+	}
+	return nil
+}
+
+func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) error {
+	prList := func(label, state string, includeDrafts bool) error {
+		fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
+		var values [][]string
+		for _, repoPair := range githubRepoNames {
+			pullRequests, err := b.githubPullRequests(r.Context(), repoPair)
+			if err != nil {
+				return err
+			}
+			for _, pr := range pullRequests {
+				if *pr.State != state {
+					continue
+				}
+				if *pr.Draft && !includeDrafts {
+					continue
+				}
+				values = append(values, []string{
+					fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, repoPair),
+					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, *pr.Title),
+					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, *pr.User.Login),
+				})
+			}
+		}
+		tableStyle(w)
+		table(w, []string{"repository", "title", "author"}, values)
+		return nil
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := prList("open", "open", false); err != nil {
+		return err
+	}
+	if err := prList("draft", "open", true); err != nil {
+		return err
+	}
+	if err := prList("closed", "closed", true); err != nil {
+		return err
 	}
 	return nil
 }
