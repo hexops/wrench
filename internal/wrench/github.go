@@ -33,9 +33,12 @@ func (b *Bot) githubStart() error {
 
 // TODO: move to config?
 var githubRepoNames = []string{
-	// Mach packages
+	// Critical repositories
 	"hexops/mach",
 	"hexops/mach-core",
+	"hexops/mach-examples",
+
+	// Mach packages
 	"hexops/mach-gpu",
 	"hexops/mach-gpu-dawn",
 	"hexops/mach-basisu",
@@ -66,7 +69,6 @@ var githubRepoNames = []string{
 	"hexops/mach-rs",
 
 	// Examples
-	"hexops/mach-examples",
 	"hexops/mach-glfw-vulkan-example",
 
 	// Other useful libraries/tools
