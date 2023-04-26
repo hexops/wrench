@@ -399,7 +399,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		} else if failure {
 			status = "✖️"
 		} else if *checkRuns.Total == 0 {
-			status = "--"
+			status = "∅"
 		}
 
 		values = append(values, []string{
