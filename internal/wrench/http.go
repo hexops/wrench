@@ -43,7 +43,27 @@ func (b *Bot) httpStart() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Let's fix this!"))
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+		logo := "https://raw.githubusercontent.com/hexops/media/b71e82ae9ea20c22a2eb3ab95d8ba48684635620/mach/wrench_rocket.svg"
+		fmt.Fprintf(w, `<h1>[bot] wrench: let's fix this!</h1>`)
+		fmt.Fprintf(w, `<div>`)
+		{
+			fmt.Fprintf(w, `<img width="300px" align="left" src="%s">`, logo)
+			fmt.Fprintf(w, `<strong>Wrench</strong> here! I'm the <a href="https://machengine.org">Mach engine</a> mascot, and also help automate and maintain Mach project development.`)
+		}
+		fmt.Fprintf(w, `</div>`)
+
+		fmt.Fprintf(w, `<h1>Features</h1>`)
+		fmt.Fprintf(w, `<ul>`)
+		{
+			fmt.Fprintf(w, `<li><a href="%s/projects">Projects overview</a></li>`, b.Config.ExternalURL)
+			fmt.Fprintf(w, `<li><a href="%s/pull-requests">Pull requests</a></li>`, b.Config.ExternalURL)
+			fmt.Fprintf(w, `<li><a href="%s/runners">Runners & jobs</a></li>`, b.Config.ExternalURL)
+			fmt.Fprintf(w, `<li><a href="%s/logs">Job logs</a></li>`, b.Config.ExternalURL)
+			fmt.Fprintf(w, `<li><a href="%s/rebuild">Trigger a rebuild of wrench.machengine.org (admin-only)</a></li>`, b.Config.ExternalURL)
+		}
+		fmt.Fprintf(w, `</ul>`)
 	})
 	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
