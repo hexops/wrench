@@ -203,7 +203,7 @@ func (b *Bot) githubCombinedStatusHEAD(ctx context.Context, repoPair string) (v 
 	return v, nil
 }
 
-func (b *Bot) githubCheckRunsHEAD(ctx context.Context, repoPair string) (v []*github.CheckRun, err error) {
+func (b *Bot) githubCheckRunsHEAD(ctx context.Context, repoPair string) (v *github.ListCheckRunsResults, err error) {
 	cacheKey := repoPair + "-Checks-ListCheckRunsForRef-HEAD"
 	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
 	if err != nil {

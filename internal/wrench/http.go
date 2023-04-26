@@ -381,7 +381,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		pending := 0
 		failure := false
 		headSHA := ""
-		for _, run := range checkRuns {
+		for _, run := range checkRuns.CheckRuns {
 			headSHA = *run.HeadSHA
 			if *run.Status == "completed" {
 				completed++
