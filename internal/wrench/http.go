@@ -389,22 +389,23 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			if *run.Status == "pending" {
 				pending++
 			}
+			if *run.Conclusion == "failure" {
+				failure = true
+			}
 		}
 		status := ""
 		if pending > 0 {
 			status = "↻"
 		} else if failure {
 			status = "✖️"
-		} else {
-			status = "✔️"
 		}
 
 		values = append(values, []string{
 			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-			fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
-			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs),
-			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs),
-			fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status), status != ""),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
+			stringIf(fmt.Sprintf(`<a href="https://github.com/%s">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
 		})
 	}
 
