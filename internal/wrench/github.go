@@ -25,8 +25,10 @@ func (b *Bot) githubStart() error {
 	b.github = github.NewClient(tc)
 
 	go func() {
-		b.sync(ctx)
-		time.Sleep(5 * time.Minute)
+		for {
+			b.sync(ctx)
+			time.Sleep(5 * time.Minute)
+		}
 	}()
 	return nil
 }
