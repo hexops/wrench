@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hexops/wrench/internal/wrench/api"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 )
 
 func (b *Bot) registerCommands() {
@@ -67,7 +68,8 @@ func (b *Bot) registerCommands() {
 		var buf bytes.Buffer
 
 		count := 0
-		for _, repoPair := range githubRepoNames {
+		for _, repo := range scripts.AllRepos {
+			repoPair := repo.Name
 			pullRequests, err := b.githubPullRequests(ctx, repoPair)
 			if err != nil {
 				return &discordgo.MessageEmbed{

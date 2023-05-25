@@ -333,7 +333,8 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 	prList := func(label, state string, draft, filterDraft bool) error {
 		fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
 		var values [][]string
-		for _, repoPair := range githubRepoNames {
+		for _, repo := range scripts.AllRepos {
+			repoPair := repo.Name
 			pullRequests, err := b.githubPullRequests(r.Context(), repoPair)
 			if err != nil {
 				return err
@@ -393,7 +394,8 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, "<h2>Projects overview</h2>")
 	var values [][]string
-	for _, repoPair := range githubRepoNames {
+	for _, repo := range scripts.AllRepos {
+		repoPair := repo.Name
 		numOpenPRs, err := countPRs(repoPair, "open", false, true)
 		if err != nil {
 			return err

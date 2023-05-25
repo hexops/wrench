@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-github/v48/github"
 	"github.com/hexops/wrench/internal/errors"
+	"github.com/hexops/wrench/internal/wrench/scripts"
 	"golang.org/x/oauth2"
 )
 
@@ -33,76 +34,14 @@ func (b *Bot) githubStart() error {
 	return nil
 }
 
-// TODO: move to config?
-var githubRepoNames = []string{
-	// Critical repositories
-	"hexops/mach",
-	"hexops/mach-core",
-	"hexops/mach-examples",
-
-	// Mach packages
-	"hexops/mach-gpu",
-	"hexops/mach-gpu-dawn",
-	"hexops/mach-basisu",
-	"hexops/mach-freetype",
-	"hexops/mach-glfw",
-	"hexops/mach-ecs",
-	"hexops/mach-dusk",
-	"hexops/mach-earcut",
-	"hexops/mach-gamemode",
-	"hexops/mach-model3d",
-	"hexops/mach-sysjs",
-	"hexops/mach-sysaudio",
-
-	// Zig-packaged C libraries
-	"hexops/brotli",
-	"hexops/harfbuzz",
-	"hexops/freetype",
-	"hexops/wayland-headers",
-	"hexops/x11-headers",
-	"hexops/vulkan-headers",
-	"hexops/linux-audio-headers",
-	"hexops/glfw",
-	"hexops/basisu",
-	"hexops/dawn",
-	"hexops/DirectXShaderCompiler",
-
-	// Language bindings for Mach
-	"hexops/mach-rs",
-
-	// Examples
-	"hexops/mach-glfw-vulkan-example",
-
-	// Other useful libraries/tools
-	"hexops/fastfilter",
-	"hexops/zgo",
-
-	// Misc
-	"hexops/mach-example-assets",
-	"hexops/font-assets",
-	"hexops/machengine.org",
-	"hexops/devlog",
-	"hexops/hexops.com",
-	"hexops/zigmonthly.org",
-	"hexops/wrench",
-	"hexops/media",
-
-	// Going away soon
-	"hexops/sdk-linux-aarch64",
-	"hexops/sdk-linux-x86_64",
-	"hexops/sdk-windows-x86_64",
-	"hexops/sdk-macos-12.0",
-	"hexops/sdk-macos-11.3",
-}
-
 func (b *Bot) sync(ctx context.Context) {
 	logID := "github-sync"
 
 	b.idLogf(logID, "github sync: starting")
 	defer b.idLogf(logID, "github sync: finished")
 	var wg sync.WaitGroup
-	for _, repoPair := range githubRepoNames {
-		repoPair := repoPair
+	for _, repo := range scripts.AllRepos {
+		repoPair := repo.Name
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

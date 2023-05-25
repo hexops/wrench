@@ -18,14 +18,14 @@ func init() {
 				return nil, errors.Wrap(err, "QueryLatestZigVersion")
 			}
 
-			repos := []string{
-				"github.com/hexops/mach",
-				"github.com/hexops/mach-examples",
-			}
 			pushed := []string{}
 			workDir := "zig-rewrite-work"
 			defer os.RemoveAll(workDir)
-			for _, repoURL := range repos {
+			for _, repo := range AllRepos {
+				if !repo.ZigCI {
+					continue
+				}
+				repoURL := "github.com/" + repo.Name
 				_ = os.RemoveAll(workDir)
 				if err := GitClone(os.Stderr, workDir, repoURL); err != nil {
 					return nil, errors.Wrap(err, "GitClone")

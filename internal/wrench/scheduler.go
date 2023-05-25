@@ -49,7 +49,7 @@ func (b *Bot) schedulerStart() error {
 			Job: api.Job{
 				ID:             "update-zig-version",
 				Title:          "update to latest Zig version",
-				TargetRunnerID: "linux-amd64",
+				TargetRunnerID: "linux-arm64",
 				Payload: api.JobPayload{
 					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
 					GitPushBranchName: "wrench/update-zig",
