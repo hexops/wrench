@@ -703,9 +703,10 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 				return nil, errors.Wrap(err, "githubUpsertPullRequest")
 			}
 			b.idLogf(r.Job.ID.LogID(), "pull request: %s", *pr.HTMLURL)
-			if isNew {
-				b.discord("I sent a PR just now: %s", *pr.HTMLURL)
-			}
+			_ = isNew
+			// if isNew {
+			// 	b.discord("I sent a PR just now: %s", *pr.HTMLURL)
+			// }
 		}
 	}
 
