@@ -341,12 +341,7 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 				return err
 			}
 			sort.Slice(pullRequests, func(i, j int) bool {
-				a := *pullRequests[i].User.Login == "wrench-bot"
-				b := *pullRequests[j].User.Login == "wrench-bot"
-				if a {
-					return false
-				}
-				return true
+				return *pullRequests[i].User.Login != "wrench-bot"
 			})
 			for _, pr := range pullRequests {
 				if *pr.State != state {
