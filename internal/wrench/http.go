@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"sort"
 	"strings"
 	"time"
 
@@ -340,23 +339,27 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 			if err != nil {
 				return err
 			}
-			sort.Slice(pullRequests, func(i, j int) bool {
-				return *pullRequests[i].User.Login != "wrench-bot"
-			})
-			for _, pr := range pullRequests {
-				if *pr.State != state {
-					continue
+			renderPRs := func(wrench bool) {
+				for _, pr := range pullRequests {
+					if wrench != (*pr.User.Login == "wrench-bot") {
+						continue
+					}
+					if *pr.State != state {
+						continue
+					}
+					if filterDraft && draft != *pr.Draft {
+						continue
+					}
+					values = append(values, []string{
+						fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
+						fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, html.EscapeString(*pr.Title)),
+						fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, html.EscapeString(*pr.User.Login)),
+						humanizeTimeRecent(*pr.CreatedAt),
+					})
 				}
-				if filterDraft && draft != *pr.Draft {
-					continue
-				}
-				values = append(values, []string{
-					fmt.Sprintf(`<a href="https://github.com/%s/pulls">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.HTMLURL, html.EscapeString(*pr.Title)),
-					fmt.Sprintf(`<a href="%s">%s</a>`, *pr.User.HTMLURL, html.EscapeString(*pr.User.Login)),
-					humanizeTimeRecent(*pr.CreatedAt),
-				})
 			}
+			renderPRs(false)
+			renderPRs(true)
 		}
 		tableStyle(w)
 		table(w, []string{"repository", "title", "author", "created"}, values)
