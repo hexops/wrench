@@ -333,13 +333,13 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 	prList := func(label, state string, draft, filterDraft bool) error {
 		fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
 		var values [][]string
-		for _, repo := range scripts.AllRepos {
-			repoPair := repo.Name
-			pullRequests, err := b.githubPullRequests(r.Context(), repoPair)
-			if err != nil {
-				return err
-			}
-			renderPRs := func(wrench bool) {
+		renderPRs := func(wrench bool) error {
+			for _, repo := range scripts.AllRepos {
+				repoPair := repo.Name
+				pullRequests, err := b.githubPullRequests(r.Context(), repoPair)
+				if err != nil {
+					return err
+				}
 				for _, pr := range pullRequests {
 					if wrench != (*pr.User.Login == "wrench-bot") {
 						continue
@@ -358,8 +358,13 @@ func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) erro
 					})
 				}
 			}
-			renderPRs(false)
-			renderPRs(true)
+			return nil
+		}
+		if err := renderPRs(false); err != nil {
+			return err
+		}
+		if err := renderPRs(true); err != nil {
+			return err
 		}
 		tableStyle(w)
 		table(w, []string{"repository", "title", "author", "created"}, values)
