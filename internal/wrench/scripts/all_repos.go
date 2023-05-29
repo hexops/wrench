@@ -42,8 +42,8 @@ var AllRepos = []Repo{
 	{Name: "hexops/mach-rs"},
 
 	// Examples
-	{Name: "hexops/mach-glfw-vulkan-example", ZigCI: false},
-	{Name: "hexops/mach-glfw-opengl-example", ZigCI: false},
+	{Name: "hexops/mach-glfw-vulkan-example", ZigCI: true},
+	{Name: "hexops/mach-glfw-opengl-example", ZigCI: true},
 
 	// Other useful libraries/tools
 	{Name: "hexops/fastfilter", ZigCI: true},
