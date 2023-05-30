@@ -448,7 +448,9 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		} else if failure {
 			status = "✖️"
 		} else if *checkRuns.Total == 0 {
-			status = "∅"
+			if repo.CI != scripts.None {
+				status = "∅"
+			}
 		}
 
 		values = append(values, []string{
