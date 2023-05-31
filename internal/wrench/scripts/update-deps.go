@@ -52,6 +52,7 @@ func init() {
 					repoURL := "github.com/" + split[1] + "/" + split[2]
 					cloneWorkDir := "tmp-clone"
 					_ = os.RemoveAll(cloneWorkDir)
+					defer os.RemoveAll(cloneWorkDir)
 					if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
 						return errors.Wrap(err, "GitClone")
 					}
@@ -66,6 +67,8 @@ func init() {
 					archiveFilePath := "tmp.tar.gz"
 					tmpDir := "tmp"
 					_ = os.RemoveAll(tmpDir)
+					defer os.RemoveAll(tmpDir)
+					defer os.RemoveAll(archiveFilePath)
 					err = DownloadFile(urlNode.StringLiteral, archiveFilePath)(os.Stderr)
 					if err != nil {
 						return errors.Wrap(err, "DownloadFile")
