@@ -70,6 +70,32 @@ Here's the work I did to produce this: ${JOB_LOGS_URL}
 				},
 			},
 		},
+		{
+			Every: 24 * time.Hour,
+			Job: api.Job{
+				ID:             "update-deps",
+				Title:          "update build.zig.zon dependencies",
+				TargetRunnerID: "linux-arm64",
+				Payload: api.JobPayload{
+					Cmd:               []string{"script", "push-update-deps"},
+					GitPushBranchName: "wrench/update-deps",
+					Background:        true, // lightweight enough
+					PRTemplate: api.PRTemplate{
+						Title: "all: update build.zig.zon dependencies",
+						Head:  "wrench/update-deps",
+						Base:  "main",
+						Body: `This change updates build.zig.zon to the latest version of dependencies.
+
+I'll keep updating this PR so it remains up-to-date until you want to merge it.
+
+Here's the work I did to produce this: ${JOB_LOGS_URL}
+
+\- _Wrench the Machanist_
+						`,
+					},
+				},
+			},
+		},
 		// 		{
 		// 			Every: 7 * 24 * time.Hour,
 		// 			Job: api.Job{
