@@ -388,6 +388,14 @@ func GitBranches(w io.Writer, dir string) ([]string, error) {
 	return branches, nil
 }
 
+func GitRevParse(w io.Writer, dir, rev string) (string, error) {
+	out, err := Output(w, `git rev-parse `+rev, WorkDir(dir))
+	if err != nil {
+		return "", errors.Wrap(err, "git rev-parse")
+	}
+	return out, nil
+}
+
 func GitCloneOrUpdateAndClean(w io.Writer, workDir, repoURL string) error {
 	_, err := os.Stat(workDir)
 	if os.IsNotExist(err) {
