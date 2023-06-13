@@ -49,7 +49,7 @@ func (b *Bot) schedulerStart() error {
 			Job: api.Job{
 				ID:             "update-zig-version",
 				Title:          "update to latest Zig version",
-				TargetRunnerID: "linux-arm64",
+				TargetRunnerID: "linux-amd64",
 				Payload: api.JobPayload{
 					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
 					GitPushBranchName: "wrench/update-zig",
@@ -75,7 +75,7 @@ Here's the work I did to produce this: ${JOB_LOGS_URL}
 			Job: api.Job{
 				ID:             "update-deps",
 				Title:          "update build.zig.zon dependencies",
-				TargetRunnerID: "linux-arm64",
+				TargetRunnerID: "linux-amd64",
 				Payload: api.JobPayload{
 					Cmd:               []string{"script", "push-update-deps"},
 					GitPushBranchName: "wrench/update-deps",
