@@ -107,7 +107,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		}
 		if handler, ok := b.discordCommandsEmbedSecure[cmd]; ok {
 			blocked := true
-			for _, allowed := range []string{"slimsag#2321"} {
+			for _, allowed := range []string{"slimsag"} {
 				fullUsername := fmt.Sprintf("%s#%v", m.Author.Username, m.Author.Discriminator)
 				if fullUsername == allowed {
 					blocked = false
@@ -117,7 +117,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			if blocked {
 				s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
 					Title:       "Forbidden",
-					Description: fmt.Sprintf("You are not allowed to run this command '%s'.", m.Author.ID),
+					Description: fmt.Sprintf("You are not allowed to run this command '%s'.", m.Author.Username),
 				})
 				return nil
 			}
