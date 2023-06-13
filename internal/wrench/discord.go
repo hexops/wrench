@@ -108,8 +108,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		if handler, ok := b.discordCommandsEmbedSecure[cmd]; ok {
 			blocked := true
 			for _, allowed := range []string{"slimsag"} {
-				fullUsername := fmt.Sprintf("%s#%v", m.Author.Username, m.Author.Discriminator)
-				if fullUsername == allowed {
+				if m.Author.Username == allowed {
 					blocked = false
 					break
 				}
