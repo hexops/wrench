@@ -34,6 +34,7 @@ var AllRepos = []Repo{
 	{Name: "hexops/mach-model3d", CI: Todo},
 	{Name: "hexops/mach-sysjs", CI: Todo},
 	{Name: "hexops/mach-sysaudio", CI: Todo},
+	{Name: "hexops/mach-ggml", CI: Zig},
 
 	// Zig-packaged C libraries
 	{Name: "hexops/brotli", CI: None},
