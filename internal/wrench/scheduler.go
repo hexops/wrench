@@ -2,6 +2,7 @@ package wrench
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/hexops/wrench/internal/errors"
@@ -96,40 +97,40 @@ Here's the work I did to produce this: ${JOB_LOGS_URL}
 				},
 			},
 		},
-		// 		{
-		// 			Every: 7 * 24 * time.Hour,
-		// 			Job: api.Job{
-		// 				ID:             "gpu-dawn-update-dawn-version",
-		// 				Title:          "gpu-dawn: update to latest Dawn version",
-		// 				TargetRunnerID: "darwin-amd64",
-		// 				Payload: api.JobPayload{
-		// 					Cmd:               []string{"script", "mach-update-gpu-dawn"},
-		// 					GitPushBranchName: "wrench/update-gpu-dawn",
-		// 					PRTemplate: api.PRTemplate{
-		// 						Title: "gpu-dawn: update to latest Dawn version",
-		// 						Head:  "wrench/update-gpu-dawn",
-		// 						Base:  "main",
-		// 						Body: strings.ReplaceAll(`This change updates libs/gpu-dawn to use latest Dawn version '${METADATA_NEWBRANCH}'
+		{
+			Every: 7 * 24 * time.Hour,
+			Job: api.Job{
+				ID:             "gpu-dawn-update-dawn-version",
+				Title:          "gpu-dawn: update to latest Dawn version",
+				TargetRunnerID: "darwin-amd64",
+				Payload: api.JobPayload{
+					Cmd:               []string{"script", "mach-update-gpu-dawn"},
+					GitPushBranchName: "wrench/update-gpu-dawn",
+					PRTemplate: api.PRTemplate{
+						Title: "gpu-dawn: update to latest Dawn version",
+						Head:  "wrench/update-gpu-dawn",
+						Base:  "main",
+						Body: strings.ReplaceAll(`This change updates libs/gpu-dawn to use latest Dawn version '${METADATA_NEWBRANCH}'
 
-		// The WebGPU API may have changed, review these diffs to see if 'libs/gpu' needs to be updated:
+The WebGPU API may have changed, review these diffs to see if 'libs/gpu' needs to be updated:
 
-		// * [ ] ['webgpu.h' header diff](${CUSTOM_LOG_DAWN_DIFF_HEADER})
-		// * [ ] [dawn.json diff](${CUSTOM_LOG_DAWN_DIFF_JSON})
+* [ ] ['webgpu.h' header diff](${CUSTOM_LOG_DAWN_DIFF_HEADER})
+* [ ] [dawn.json diff](${CUSTOM_LOG_DAWN_DIFF_JSON})
 
-		// Note:
+Note:
 
-		// * Once merged, the [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn) CI pipeline will produce binary releases and update 'libs/gpu' in this repository to begin using this new version.
-		// * If the mach-gpu-dawn CI fails, you may want to review the [Dawn build file changes](${CUSTOM_LOG_DAWN_DIFF_BUILD}) to see if 'gpu-dawn/sdk.zig' needs updates.
-		// * I'll keep updating this PR so it remains up-to-date until you want to merge it.
+* Once merged, the [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn) CI pipeline will produce binary releases and update 'libs/gpu' in this repository to begin using this new version.
+* If the mach-gpu-dawn CI fails, you may want to review the [Dawn build file changes](${CUSTOM_LOG_DAWN_DIFF_BUILD}) to see if 'gpu-dawn/sdk.zig' needs updates.
+* I'll keep updating this PR so it remains up-to-date until you want to merge it.
 
-		// The work I did to produce this can be viewed here: ${JOB_LOGS_URL}
+The work I did to produce this can be viewed here: ${JOB_LOGS_URL}
 
-		// \- _Wrench the Machanist_
-		// 						`, "'", "`"),
-		// 					},
-		// 				},
-		// 			},
-		// 		},
+\- _Wrench the Machanist_
+`, "'", "`"),
+					},
+				},
+			},
+		},
 	}
 	go func() {
 		ctx := context.Background()
