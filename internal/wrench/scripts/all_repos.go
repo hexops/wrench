@@ -70,7 +70,6 @@ var AllRepos = []Repo{
 	{Name: "hexops/zigmonthly.org", CI: Hugo},
 
 	// Misc
-	{Name: "hexops/mach-example-assets", CI: Todo},
 	{Name: "hexops/font-assets", CI: Todo},
 	{Name: "hexops/media", CI: None},
 
