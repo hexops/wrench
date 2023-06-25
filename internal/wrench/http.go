@@ -406,10 +406,10 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	fmt.Fprintf(w, "<h1>Projects overview</h1>")
-	for category, repos := range scripts.AllReposByCategory {
-		fmt.Fprintf(w, "<h2>%s</h2>", category)
+	for _, category := range scripts.AllReposByCategory {
+		fmt.Fprintf(w, "<h2>%s</h2>", category.Name)
 		var values [][]string
-		for _, repo := range repos {
+		for _, repo := range category.Repos {
 			repoPair := repo.Name
 			numOpenPRs, err := countPRs(repoPair, "open", false, true)
 			if err != nil {

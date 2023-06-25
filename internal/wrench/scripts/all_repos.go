@@ -21,19 +21,24 @@ var AllRepos = calculateAllRepos()
 
 func calculateAllRepos() []Repo {
 	var all []Repo
-	for _, repos := range AllReposByCategory {
-		all = append(all, repos...)
+	for _, category := range AllReposByCategory {
+		all = append(all, category.Repos...)
 	}
 	return all
 }
 
-var AllReposByCategory = map[string][]Repo{
-	"Primary repositories": {
+type RepoCategory struct {
+	Name  string
+	Repos []Repo
+}
+
+var AllReposByCategory = []RepoCategory{
+	{Name: "Primary repositories", Repos: []Repo{
 		{Name: "hexops/mach", CI: Zig},
 		{Name: "hexops/mach-core", CI: Zig},
 		{Name: "hexops/mach-examples", CI: Zig},
-	},
-	"Standalone packages": {
+	}},
+	{Name: "Standalone packages", Repos: []Repo{
 		{Name: "hexops/mach-gpu", CI: Zig},
 		{Name: "hexops/mach-gpu-dawn", CI: Zig},
 		{Name: "hexops/mach-basisu", CI: Zig},
@@ -48,8 +53,8 @@ var AllReposByCategory = map[string][]Repo{
 		{Name: "hexops/mach-sysaudio", CI: Todo},
 		{Name: "hexops/mach-ggml", CI: Zig},
 		{Name: "hexops/fastfilter", CI: Zig},
-	},
-	"Zig-packaged C libraries": {
+	}},
+	{Name: "Zig-packaged C libraries", Repos: []Repo{
 		{Name: "hexops/brotli", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/harfbuzz", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/freetype", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
@@ -62,33 +67,33 @@ var AllReposByCategory = map[string][]Repo{
 		{Name: "hexops/dawn", CI: None},
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
-	},
-	"Mach language bindings": {
+	}},
+	{Name: "Mach language bindings", Repos: []Repo{
 		{Name: "hexops/mach-rs", CI: Todo},
-	},
-	"Other examples": {
+	}},
+	{Name: "Other examples", Repos: []Repo{
 		{Name: "hexops/mach-glfw-vulkan-example", CI: Zig},
 		{Name: "hexops/mach-glfw-opengl-example", CI: Zig},
-	},
-	"Go projects": {
+	}},
+	{Name: "Go projects", Repos: []Repo{
 		{Name: "hexops/zgo", CI: Todo},
 		{Name: "hexops/wrench", CI: Go},
-	},
-	"Websites": {
+	}},
+	{Name: "Websites", Repos: []Repo{
 		{Name: "hexops/machengine.org", CI: Hugo},
 		{Name: "hexops/devlog", CI: Hugo},
 		{Name: "hexops/hexops.com", CI: Hugo},
 		{Name: "hexops/zigmonthly.org", CI: Hugo},
-	},
-	"Misc": {
+	}},
+	{Name: "Misc", Repos: []Repo{
 		{Name: "hexops/font-assets", CI: Todo},
 		{Name: "hexops/media", CI: None},
-	},
-	"system SDKs": {
+	}},
+	{Name: "System SDKs", Repos: []Repo{
 		{Name: "hexops/sdk-linux-aarch64", CI: None},
 		{Name: "hexops/sdk-linux-x86_64", CI: None},
 		{Name: "hexops/sdk-windows-x86_64", CI: None},
 		{Name: "hexops/sdk-macos-12.0", CI: None},
 		{Name: "hexops/sdk-macos-11.3", CI: None},
-	},
+	}},
 }
