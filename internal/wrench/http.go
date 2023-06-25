@@ -498,6 +498,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				statusColor = "#0d0"
 				status = "✓"
 			}
+			fmt.Println(repo.Name, repo.CI, repoPair, pending, completed, failure, *checkRuns.Total, reportNoCIAsGreen)
 
 			repoShortName := strings.TrimPrefix(repoPair, "hexops/")
 			fontSize := "14px"
