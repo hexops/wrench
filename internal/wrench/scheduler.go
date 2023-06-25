@@ -46,7 +46,7 @@ func (b *Bot) schedulerStart() error {
 		// 	},
 		// },
 		{
-			Every: 24 * time.Hour,
+			Every: 7 * 24 * time.Hour,
 			Job: api.Job{
 				ID:             "update-zig-version",
 				Title:          "update to latest Zig version",
