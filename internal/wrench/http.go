@@ -405,10 +405,42 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, "<h1>Projects overview</h1>")
+	fmt.Fprintf(w, `
+<style>
+.row {
+	display: flex;
+	justify-content: center;
+}
+.row>span {
+	font-weight: bold;
+	font-size: 20px;
+}
+.row>div {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background: #0d0;
+	width: 7rem;
+	height: 7rem;
+	border: 1px solid black;
+	margin: 1px;
+	padding: 1rem;
+}
+.row>div>span {
+	margin-bottom: 1rem;
+	font-weight: bold;
+	font-size: 20px;
+}
+.row>div>ul {
+	margin: 0;
+	padding: 0;
+}
+</style>
+`)
+
 	for _, category := range scripts.AllReposByCategory {
-		fmt.Fprintf(w, "<h2>%s</h2>", category.Name)
-		var values [][]string
+		fmt.Fprintf(w, `<div class="row"><span>%s</span></div>`, category.Name)
+		fmt.Fprintf(w, `<div class="row">`)
 		for _, repo := range category.Repos {
 			repoPair := repo.Name
 			numOpenPRs, err := countPRs(repoPair, "open", false, true)
@@ -445,7 +477,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 					failure = true
 				}
 			}
-			status := ""
+			status := "✓"
 			if pending > 0 {
 				status = "↻"
 			} else if failure {
@@ -456,17 +488,24 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				}
 			}
 
-			values = append(values, []string{
+			fmt.Fprintf(w, `<div>
+	<span>%s</span>
+	<ul>
+		<li>CI: %s</li>
+		<li>%s open</li>
+		<li>%s drafts</li>
+		<li>%s closed</li>
+	</ul>
+</div>`,
 				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status), status != ""),
-				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
-				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
-				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
-			})
-		}
+				fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
+				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs),
+				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs),
+				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs),
+			)
 
-		tableStyle(w)
-		table(w, []string{"repository", "CI status", "open PRs", "draft PRs", "closed PRs"}, values)
+		}
+		fmt.Fprintf(w, `</div>`)
 	}
 	return nil
 }
