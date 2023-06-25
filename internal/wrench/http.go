@@ -410,6 +410,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 .row {
 	display: flex;
 	justify-content: center;
+	flex-wrap: wrap;
 }
 .row>span {
 	font-weight: bold;
@@ -419,7 +420,6 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	background: #0d0;
 	width: 7rem;
 	height: 7rem;
 	border: 1px solid black;
@@ -430,6 +430,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	margin-bottom: 1rem;
 	font-weight: bold;
 	font-size: 20px;
+	word-break: break-word;
 }
 .row>div>ul {
 	margin: 0;
@@ -477,18 +478,21 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 					failure = true
 				}
 			}
+			statusColor := "#0d0"
 			status := "✓"
 			if pending > 0 {
 				status = "↻"
 			} else if failure {
 				status = "✖️"
+				statusColor = "red"
 			} else if *checkRuns.Total == 0 {
 				if repo.CI != scripts.None {
 					status = "∅"
+					statusColor = "grey"
 				}
 			}
 
-			fmt.Fprintf(w, `<div>
+			fmt.Fprintf(w, `<div style="background: %s;">
 	<span>%s</span>
 	<ul>
 		<li>CI: %s</li>
@@ -497,6 +501,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		<li>%s closed</li>
 	</ul>
 </div>`,
+				statusColor,
 				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
 				fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs),
