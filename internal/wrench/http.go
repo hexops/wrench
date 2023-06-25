@@ -502,9 +502,13 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				fontSize = "12px"
 			}
 
+			displayHidden := `display: hidden;`
+			if detail {
+				displayHidden = ""
+			}
 			fmt.Fprintf(w, `<div style="background: %s;">
 	<span style="font-size: `+fontSize+`;">%s %s</span>
-	<ul>
+	<ul style="%s">
 		<li>%s open</li>
 		<li>%s drafts</li>
 		<li>%s closed</li>
@@ -513,6 +517,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				statusColor,
 				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, repoShortName),
 				fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
+				displayHidden,
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs),
