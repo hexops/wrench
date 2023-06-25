@@ -423,8 +423,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	align-items: center;
 	width: 7rem;
 	height: 7rem;
-	border: 1px solid black;
-	margin: 1px;
+	outline: 1px solid black;
 }
 .row>div>span {
 	padding: .25rem;
