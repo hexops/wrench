@@ -419,15 +419,15 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 .row>div {
 	display: flex;
 	flex-direction: column;
+	justify-content: space-around;
 	align-items: center;
 	width: 7rem;
 	height: 7rem;
 	border: 1px solid black;
 	margin: 1px;
-	padding: 1rem;
 }
 .row>div>span {
-	margin-bottom: 1rem;
+	padding: .25rem;
 	font-weight: bold;
 	font-size: 20px;
 	word-break: break-word;
@@ -484,11 +484,11 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				status = "↻"
 			} else if failure {
 				status = "✖️"
-				statusColor = "red"
+				statusColor = "#ff5757"
 			} else if *checkRuns.Total == 0 {
 				if repo.CI != scripts.None {
 					status = "∅"
-					statusColor = "grey"
+					statusColor = "#d2d2d2"
 				}
 			}
 
