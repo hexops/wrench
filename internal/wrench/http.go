@@ -472,6 +472,12 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			headSHA := ""
 			for _, run := range checkRuns.CheckRuns {
 				headSHA = *run.HeadSHA
+				fmt.Println(
+					repo.Name,
+					repo.CI,
+					*run.Status,
+					run.Conclusion,
+				)
 				if *run.Status == "completed" {
 					completed++
 				}
@@ -498,7 +504,16 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				statusColor = "#0d0"
 				status = "✓"
 			}
-			fmt.Println(repo.Name, repo.CI, repoPair, pending, completed, failure, *checkRuns.Total, reportNoCIAsGreen)
+			fmt.Println(
+				repo.Name,
+				repo.CI,
+				repoPair,
+				pending,           // 0
+				completed,         // 3
+				failure,           // false
+				*checkRuns.Total,  // 6
+				reportNoCIAsGreen, // false
+			)
 
 			repoShortName := strings.TrimPrefix(repoPair, "hexops/")
 			fontSize := "14px"
