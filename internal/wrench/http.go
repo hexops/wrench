@@ -493,16 +493,15 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			}
 
 			fmt.Fprintf(w, `<div style="background: %s;">
-	<span>%s</span>
+	<span>%s %s</span>
 	<ul>
-		<li>CI: %s</li>
 		<li>%s open</li>
 		<li>%s drafts</li>
 		<li>%s closed</li>
 	</ul>
 </div>`,
-				statusColor,
 				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
+				statusColor,
 				fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs),
