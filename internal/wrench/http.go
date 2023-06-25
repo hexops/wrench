@@ -429,7 +429,6 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 .row>div>span {
 	padding: .25rem;
 	font-weight: bold;
-	font-size: 20px;
 	word-break: break-word;
 }
 .row>div>ul {
@@ -492,8 +491,14 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				}
 			}
 
+			repoShortName := strings.TrimPrefix(repoPair, "hexops/")
+			fontSize := "14px"
+			if len(repoShortName) > len("mach-freetype") {
+				fontSize = "12px"
+			}
+
 			fmt.Fprintf(w, `<div style="background: %s;">
-	<span>%s %s</span>
+	<span style="font-size: `+fontSize+`;">%s %s</span>
 	<ul>
 		<li>%s open</li>
 		<li>%s drafts</li>
@@ -501,7 +506,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	</ul>
 </div>`,
 				statusColor,
-				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
+				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, repoShortName),
 				fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs),
 				fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs),
