@@ -404,66 +404,70 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "<h2>Projects overview</h2>")
-	var values [][]string
-	for _, repo := range scripts.AllRepos {
-		repoPair := repo.Name
-		numOpenPRs, err := countPRs(repoPair, "open", false, true)
-		if err != nil {
-			return err
-		}
-		numDraftPRs, err := countPRs(repoPair, "open", true, true)
-		if err != nil {
-			return err
-		}
-		numClosedPRs, err := countPRs(repoPair, "closed", true, false)
-		if err != nil {
-			return err
+
+	fmt.Fprintf(w, "<h1>Projects overview</h1>")
+	for category, repos := range scripts.AllReposByCategory {
+		fmt.Fprintf(w, "<h2>%s</h2>", category)
+		var values [][]string
+		for _, repo := range repos {
+			repoPair := repo.Name
+			numOpenPRs, err := countPRs(repoPair, "open", false, true)
+			if err != nil {
+				return err
+			}
+			numDraftPRs, err := countPRs(repoPair, "open", true, true)
+			if err != nil {
+				return err
+			}
+			numClosedPRs, err := countPRs(repoPair, "closed", true, false)
+			if err != nil {
+				return err
+			}
+
+			// Determine CI status
+			checkRuns, err := b.githubCheckRunsHEAD(r.Context(), repoPair)
+			if err != nil {
+				return err
+			}
+			completed := 0
+			pending := 0
+			failure := false
+			headSHA := ""
+			for _, run := range checkRuns.CheckRuns {
+				headSHA = *run.HeadSHA
+				if *run.Status == "completed" {
+					completed++
+				}
+				if *run.Status == "pending" {
+					pending++
+				}
+				if run.Conclusion != nil && *run.Conclusion == "failure" {
+					failure = true
+				}
+			}
+			status := ""
+			if pending > 0 {
+				status = "↻"
+			} else if failure {
+				status = "✖️"
+			} else if *checkRuns.Total == 0 {
+				if repo.CI != scripts.None {
+					status = "∅"
+				}
+			}
+
+			values = append(values, []string{
+				fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
+				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status), status != ""),
+				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
+				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
+				stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
+			})
 		}
 
-		// Determine CI status
-		checkRuns, err := b.githubCheckRunsHEAD(r.Context(), repoPair)
-		if err != nil {
-			return err
-		}
-		completed := 0
-		pending := 0
-		failure := false
-		headSHA := ""
-		for _, run := range checkRuns.CheckRuns {
-			headSHA = *run.HeadSHA
-			if *run.Status == "completed" {
-				completed++
-			}
-			if *run.Status == "pending" {
-				pending++
-			}
-			if run.Conclusion != nil && *run.Conclusion == "failure" {
-				failure = true
-			}
-		}
-		status := ""
-		if pending > 0 {
-			status = "↻"
-		} else if failure {
-			status = "✖️"
-		} else if *checkRuns.Total == 0 {
-			if repo.CI != scripts.None {
-				status = "∅"
-			}
-		}
-
-		values = append(values, []string{
-			fmt.Sprintf(`<a href="https://github.com/%s">%s</a>`, repoPair, strings.TrimPrefix(repoPair, "hexops/")),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/commit/%s">%v</a>`, repoPair, headSHA, status), status != ""),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numOpenPRs), numOpenPRs > 0),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numDraftPRs), numDraftPRs > 0),
-			stringIf(fmt.Sprintf(`<a href="https://github.com/%s/pulls">%v</a>`, repoPair, numClosedPRs), numClosedPRs > 0),
-		})
+		tableStyle(w)
+		table(w, []string{"repository", "CI status", "open PRs", "draft PRs", "closed PRs"}, values)
 	}
-
-	tableStyle(w)
-	table(w, []string{"repository", "CI status", "open PRs", "draft PRs", "closed PRs"}, values)
 	return nil
 }
 
