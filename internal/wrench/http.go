@@ -502,7 +502,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				fontSize = "12px"
 			}
 
-			displayHidden := `display: hidden;`
+			displayHidden := `display: none;`
 			if detail {
 				displayHidden = ""
 			}
