@@ -492,7 +492,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 			repoShortName := strings.TrimPrefix(repoPair, "hexops/")
 			fontSize := "14px"
-			if len(repoShortName) > len("mach-freetype") {
+			if len(repoShortName) >= len("mach-freetype") {
 				fontSize = "12px"
 			}
 
