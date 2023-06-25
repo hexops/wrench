@@ -482,8 +482,9 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 					failure = true
 				}
 			}
-			statusColor := "#0d0"
-			status := "✓"
+
+			statusColor := "#fff"
+			status := "↻"
 			if pending > 0 {
 				status = "↻"
 			} else if failure {
@@ -494,6 +495,9 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 					status = "∅"
 					statusColor = "#d2d2d2"
 				}
+			} else {
+				statusColor = "#0d0"
+				status = "✓"
 			}
 
 			repoShortName := strings.TrimPrefix(repoPair, "hexops/")
