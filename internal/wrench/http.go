@@ -484,11 +484,6 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			}
 
 			reportNoCIAsGreen := repo.CI == scripts.None || repoPair == "hexops/machengine.org"
-			if pending > 0 && reportNoCIAsGreen {
-				pending = 0
-				completed++
-			}
-
 			statusColor := "#fff"
 			status := "↻"
 			if pending > 0 {
@@ -496,12 +491,10 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			} else if failure {
 				status = "✖️"
 				statusColor = "#ff5757"
-			} else if *checkRuns.Total == 0 {
-				if repo.CI != scripts.None && repoPair != "hexops/machengine.org" {
-					status = "∅"
-					statusColor = "#d2d2d2"
-				}
-			} else if completed > 0 {
+			} else if *checkRuns.Total == 0 && !reportNoCIAsGreen {
+				status = "∅"
+				statusColor = "#d2d2d2"
+			} else if completed > 0 || reportNoCIAsGreen {
 				statusColor = "#0d0"
 				status = "✓"
 			}
