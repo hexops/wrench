@@ -437,9 +437,15 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 </style>
 `)
 
-	for _, category := range scripts.AllReposByCategory {
-		fmt.Fprintf(w, `<div class="row"><span>%s</span></div>`, category.Name)
+	detail := r.URL.Query().Has("detail")
+	if !detail {
 		fmt.Fprintf(w, `<div class="row">`)
+	}
+	for _, category := range scripts.AllReposByCategory {
+		if detail {
+			fmt.Fprintf(w, `<div class="row"><span>%s</span></div>`, category.Name)
+			fmt.Fprintf(w, `<div class="row">`)
+		}
 		for _, repo := range category.Repos {
 			repoPair := repo.Name
 			numOpenPRs, err := countPRs(repoPair, "open", false, true)
@@ -484,7 +490,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 				status = "✖️"
 				statusColor = "#ff5757"
 			} else if *checkRuns.Total == 0 {
-				if repo.CI != scripts.None {
+				if repo.CI != scripts.None && repoPair != "hexops/machengine.org" {
 					status = "∅"
 					statusColor = "#d2d2d2"
 				}
@@ -513,6 +519,11 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			)
 
 		}
+		if detail {
+			fmt.Fprintf(w, `</div>`)
+		}
+	}
+	if !detail {
 		fmt.Fprintf(w, `</div>`)
 	}
 	return nil
