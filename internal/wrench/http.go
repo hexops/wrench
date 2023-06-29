@@ -167,7 +167,6 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 		return errors.Wrap(err, "parsing webhook")
 	}
 
-	b.idLogf("debug", "event: %+v", event)
 	switch ev := event.(type) {
 	case *github.PushEvent:
 		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
@@ -189,7 +188,6 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 		}
 		return nil
 	case *github.IssuesEvent:
-		b.idLogf("debug", "PRIVATE?: %+v", scripts.IsPrivateRepo(ev.Repo.GetFullName()))
 		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
 			return nil
 		}
@@ -261,10 +259,13 @@ func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
 }
 
 func (b *Bot) discordGitHubIssuesEvent(ev *github.IssuesEvent) error {
+	b.idLogf("debug", "discordGitHubIssuesEvent: %T", ev)
+	b.idLogf("debug", "discordGitHubIssuesEvent: action: %q", ev.GetAction())
 	if ev.GetAction() != "opened" {
 		return nil
 	}
 	author := ev.Issue.User.GetLogin()
+	b.idLogf("debug", "discordGitHubIssuesEvent: author: %q", author)
 	if author == "wrench-bot" {
 		return nil
 	}
