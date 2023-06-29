@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -100,13 +101,21 @@ func (h *hashedFile) Less(other *hashedFile) bool {
 	return h.normalizedPath < other.normalizedPath
 }
 
-func IsExecAny(mode os.FileMode) bool {
-	return mode&0o111 != 0
-}
-
 func isExecutable(mode fs.FileMode) byte {
-	if mode&0x40 != 0 {
+	if isExecutableBool(mode) {
 		return 1
 	}
 	return 0
+}
+
+func isExecutableBool(mode fs.FileMode) bool {
+	if runtime.GOOS == "windows" {
+		// TODO check the ACL on Windows.
+		// Until this is implemented, this could be a false negative on
+		// Windows, which is why we do not yet set executable_bit_only above
+		// when unpacking the tarball.
+		return false
+	}
+	const IXUSR = 0o100
+	return (mode & IXUSR) != 0
 }
