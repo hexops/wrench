@@ -1,5 +1,7 @@
 package scripts
 
+import "strings"
+
 type CIType string
 
 const (
@@ -19,12 +21,39 @@ type Repo struct {
 
 var AllRepos = calculateAllRepos()
 
+var isPrivateRepo = calculateIsPrivateRepo()
+
 func calculateAllRepos() []Repo {
 	var all []Repo
 	for _, category := range AllReposByCategory {
 		all = append(all, category.Repos...)
 	}
 	return all
+}
+
+const privateRepoCategory = "Private"
+
+func IsPrivateRepo(ownerSlashRepo string) bool {
+	if strings.Contains(ownerSlashRepo, "http:") || strings.Contains(ownerSlashRepo, "https:") || strings.Contains(ownerSlashRepo, "github.com") {
+		panic("illegal input: " + ownerSlashRepo)
+	}
+	if _, private := isPrivateRepo[ownerSlashRepo]; private {
+		return true
+	}
+	return false
+}
+
+func calculateIsPrivateRepo() map[string]struct{} {
+	private := map[string]struct{}{}
+	for _, category := range AllReposByCategory {
+		if category.Name != privateRepoCategory {
+			continue
+		}
+		for _, repo := range category.Repos {
+			private[repo.Name] = struct{}{}
+		}
+	}
+	return private
 }
 
 type RepoCategory struct {
@@ -96,7 +125,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/sdk-macos-12.0", CI: None},
 		{Name: "hexops/sdk-macos-11.3", CI: None},
 	}},
-	{Name: "Private", Repos: []Repo{
+	{Name: privateRepoCategory, Repos: []Repo{
 		{Name: "hexops/reignfields", CI: Zig},
 		{Name: "hexops/reignfields-assets", CI: None},
 	}},
