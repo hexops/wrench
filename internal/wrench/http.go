@@ -220,15 +220,20 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 		return nil
 	}
 	var out bytes.Buffer
+	numCommits := 0
 	for _, commit := range ev.Commits {
 		if commit.Author.GetLogin() == "wrench-bot" {
 			continue
 		}
+		numCommits++
 		fmt.Fprintf(&out, "* [%s](%s) (@%s)",
 			ellipsis(commitTitle(commit.GetMessage()), 60),
 			commit.GetURL(),
 			commit.Author.GetLogin(),
 		)
+	}
+	if numCommits == 0 {
+		return nil
 	}
 	embed := &discordgo.MessageEmbed{
 		Color:       3134534,
