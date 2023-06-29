@@ -322,11 +322,16 @@ func dawnFindNinjaGenerationTargets(dir string) ([]string, error) {
 			continue
 		}
 		ignored := map[string]bool{
-			"clang-tblgen.exe.pdb": true,
-			"llvm-tblgen.exe.pdb":  true,
-			"clang-tblgen":         true,
-			"llvm-tblgen":          true,
-			"clang_lib_codegen":    true,
+			"clang-tblgen.exe.pdb":                           true,
+			"llvm-tblgen.exe.pdb":                            true,
+			"clang-tblgen":                                   true,
+			"llvm-tblgen":                                    true,
+			"clang_lib_codegen":                              true,
+			"third_party/gn/dxc:clang-tblgen":                true,
+			"third_party/gn/dxc:clang_lib_codegen":           true,
+			"third_party/gn/dxc:llvm-tblgen":                 true,
+			"third_party/gn/dxc:gen_intrin_main_tables_15-h": true,
+			"third_party/gn/dxc:hlsl_dxcversion_autogen":     true,
 		}
 		if _, ignore := ignored[target]; ignore {
 			continue
