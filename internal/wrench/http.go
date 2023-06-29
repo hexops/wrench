@@ -892,6 +892,15 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 			repoPair := repoPairFromURL(repoRemoteURL)
 			prTemplate := job.Payload.PRTemplate.ToGitHub()
 
+			if *prTemplate.Base == "main" {
+				// Adjust to the actual default branch of the repository
+				for _, repo := range scripts.AllRepos {
+					if repoPair == repo.Name {
+						prTemplate.Base = &repo.Main
+						break
+					}
+				}
+			}
 			replacements := map[string]string{
 				"JOB_LOGS_URL": fmt.Sprintf("%s/logs/%s", b.Config.ExternalURL, r.Job.ID.LogID()),
 			}
