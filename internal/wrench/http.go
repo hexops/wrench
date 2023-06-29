@@ -896,7 +896,9 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 				// Adjust to the actual default branch of the repository
 				for _, repo := range scripts.AllRepos {
 					if repoPair == repo.Name {
-						prTemplate.Base = &repo.Main
+						if repo.Main != "" {
+							prTemplate.Base = &repo.Main
+						}
 						break
 					}
 				}
