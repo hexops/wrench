@@ -254,7 +254,7 @@ func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
 		Color:       3134534,
 		Description: *ev.PullRequest.Title,
 		Author: &discordgo.MessageEmbedAuthor{
-			Name:    fmt.Sprintf("@%s [%s] new PR #%v", author, *ev.Repo.FullName, *ev.PullRequest.Number),
+			Name:    fmt.Sprintf("[%s] @%s created PR #%v", *ev.Repo.FullName, author, *ev.PullRequest.Number),
 			URL:     *ev.PullRequest.HTMLURL,
 			IconURL: *ev.PullRequest.User.AvatarURL,
 		},
@@ -277,7 +277,7 @@ func (b *Bot) discordGitHubIssuesEvent(ev *github.IssuesEvent) error {
 		Color:       3134534,
 		Description: *ev.Issue.Title,
 		Author: &discordgo.MessageEmbedAuthor{
-			Name:    fmt.Sprintf("@%s [%s] new issue #%v", author, *ev.Repo.FullName, *ev.Issue.Number),
+			Name:    fmt.Sprintf("[%s] @%s created issue #%v", *ev.Repo.FullName, author, *ev.Issue.Number),
 			URL:     *ev.Issue.HTMLURL,
 			IconURL: *ev.Issue.User.AvatarURL,
 		},
