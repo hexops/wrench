@@ -216,6 +216,9 @@ func ellipsis(s string, max int) string {
 }
 
 func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
+	if *ev.Ref != "refs/heads/main" && *ev.Ref != "refs/heads/master" {
+		return nil
+	}
 	var out bytes.Buffer
 	for _, commit := range ev.Commits {
 		if commit.Author.GetLogin() == "wrench-bot" {
@@ -228,7 +231,8 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 		)
 	}
 	embed := &discordgo.MessageEmbed{
-		Title:       "Push - " + *ev.Repo.FullName,
+		Color:       3134534,
+		Title:       fmt.Sprintf("[%s] %v new commits", *ev.Repo.FullName, len(ev.Commits)),
 		URL:         *ev.Repo.HTMLURL,
 		Description: out.String(),
 	}
@@ -246,12 +250,14 @@ func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
 		return nil
 	}
 
-	var out bytes.Buffer
-	fmt.Fprintf(&out, "PR opened by @%s - %s", author, *ev.Repo.FullName)
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("PR: %s", *ev.PullRequest.Title),
-		URL:         *ev.PullRequest.HTMLURL,
-		Description: out.String(),
+		Color:       3134534,
+		Description: *ev.PullRequest.Title,
+		Author: &discordgo.MessageEmbedAuthor{
+			Name:    fmt.Sprintf("[%s] @%s - new PR #%v", *ev.Repo.FullName, author, *ev.PullRequest.ID),
+			URL:     *ev.PullRequest.HTMLURL,
+			IconURL: *ev.PullRequest.User.AvatarURL,
+		},
 	}
 	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
 		embed,
@@ -259,23 +265,22 @@ func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
 }
 
 func (b *Bot) discordGitHubIssuesEvent(ev *github.IssuesEvent) error {
-	b.idLogf("debug", "discordGitHubIssuesEvent: %T", ev)
-	b.idLogf("debug", "discordGitHubIssuesEvent: action: %q", ev.GetAction())
 	if ev.GetAction() != "opened" {
 		return nil
 	}
 	author := ev.Issue.User.GetLogin()
-	b.idLogf("debug", "discordGitHubIssuesEvent: author: %q", author)
 	if author == "wrench-bot" {
 		return nil
 	}
 
-	var out bytes.Buffer
-	fmt.Fprintf(&out, "Issue opened by @%s - %s", author, *ev.Repo.FullName)
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("Issue: %s", *ev.Issue.Title),
-		URL:         *ev.Issue.HTMLURL,
-		Description: out.String(),
+		Color:       3134534,
+		Description: *ev.Issue.Title,
+		Author: &discordgo.MessageEmbedAuthor{
+			Name:    fmt.Sprintf("[%s] @%s - new issue #%v", *ev.Issue.Repository.FullName, author, *ev.Issue.ID),
+			URL:     *ev.Issue.HTMLURL,
+			IconURL: *ev.Issue.User.AvatarURL,
+		},
 	}
 	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
 		embed,
