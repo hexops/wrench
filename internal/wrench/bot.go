@@ -34,7 +34,7 @@ type Bot struct {
 	discordCommandsEmbed       map[string]func(...string) *discordgo.MessageEmbed
 	discordCommandsEmbedSecure map[string]func(...string) *discordgo.MessageEmbed
 	runner                     *api.Client
-	webHookGitHubSelf          sync.Mutex
+	rebuildSelfMu              sync.Mutex
 	jobAcquire                 sync.Mutex
 	schedule                   []ScheduledJob
 }

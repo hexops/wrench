@@ -1,6 +1,7 @@
 package wrench
 
 import (
+	"bytes"
 	"context"
 	"crypto/subtle"
 	"crypto/tls"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/dustin/go-humanize"
 	"github.com/google/go-github/github"
 	"github.com/hexops/wrench/internal/errors"
@@ -81,7 +83,7 @@ func (b *Bot) httpStart() error {
 		fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
 		fmt.Fprintf(w, `</div>`)
 	})
-	mux.Handle("/webhook/github/self", handler("webhook", b.httpServeWebHookGitHubSelf))
+	mux.Handle("/webhook/github", handler("webhook", b.httpServeWebHookGitHub))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
@@ -148,9 +150,9 @@ func (b *Bot) httpStop() error {
 	return b.discordSession.Close()
 }
 
-func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request) error {
+func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) error {
 	if b.Config.GitHubWebHookSecret == "" {
-		b.logf("http: webhook: ignored: /webhook/github/self (config.GitHubWebHookSecret not set)")
+		b.logf("http: webhook: ignored: /webhook/github (config.GitHubWebHookSecret not set)")
 		return nil
 	}
 
@@ -165,12 +167,116 @@ func (b *Bot) httpServeWebHookGitHubSelf(w http.ResponseWriter, r *http.Request)
 		return errors.Wrap(err, "parsing webhook")
 	}
 
-	_, ok := event.(*github.PushEvent)
-	if !ok {
-		return fmt.Errorf("unexpected event type: %s", github.WebHookType(r))
+	switch ev := event.(type) {
+	case *github.PushEvent:
+		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
+			return nil
+		}
+		if err := b.discordGitHubPushEvent(ev); err != nil {
+			b.logf("http: discordGitHubPushEvent: %v", err)
+		}
+		if ev.Repo.GetFullName() == "hexops/wrench" {
+			return b.runRebuild()
+		}
+		return nil
+	case *github.PullRequestEvent:
+		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
+			return nil
+		}
+		if err := b.discordGitHubPullRequestEvent(ev); err != nil {
+			b.logf("http: discordGitHubPullRequestEvent: %v", err)
+		}
+		return nil
+	case *github.IssuesEvent:
+		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
+			return nil
+		}
+		if err := b.discordGitHubIssuesEvent(ev); err != nil {
+			b.logf("http: discordGitHubIssuesEvent: %v", err)
+		}
+		return nil
+	default:
+		return nil
+	}
+}
+
+func commitTitle(msg string) string {
+	split := strings.Split(msg, "\n")
+	if len(split) == 0 {
+		return ""
+	}
+	return split[0]
+}
+
+func ellipsis(s string, max int) string {
+	if len(s) > max-1 {
+		return s[:max-1] + "…"
+	}
+	return s
+}
+
+func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
+	var out bytes.Buffer
+	for _, commit := range ev.Commits {
+		if commit.Author.GetLogin() == "wrench-bot" {
+			continue
+		}
+		fmt.Fprintf(&out, "* [%s](%s) (@%s)",
+			ellipsis(commitTitle(commit.GetMessage()), 60),
+			commit.GetURL(),
+			commit.Author.GetLogin(),
+		)
+	}
+	embed := &discordgo.MessageEmbed{
+		Title:       "Push - " + *ev.Repo.FullName,
+		URL:         *ev.Repo.HTMLURL,
+		Description: out.String(),
+	}
+	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
+		embed,
+	})
+}
+
+func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
+	if ev.GetAction() != "opened" {
+		return nil
+	}
+	author := ev.PullRequest.User.GetLogin()
+	if author == "wrench-bot" {
+		return nil
 	}
 
-	return b.runRebuild()
+	var out bytes.Buffer
+	fmt.Fprintf(&out, "PR opened by @%s - %s", author, *ev.Repo.FullName)
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("PR: %s", *ev.PullRequest.Title),
+		URL:         *ev.PullRequest.HTMLURL,
+		Description: out.String(),
+	}
+	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
+		embed,
+	})
+}
+
+func (b *Bot) discordGitHubIssuesEvent(ev *github.IssuesEvent) error {
+	if ev.GetAction() != "opened" {
+		return nil
+	}
+	author := ev.Issue.User.GetLogin()
+	if author == "wrench-bot" {
+		return nil
+	}
+
+	var out bytes.Buffer
+	fmt.Fprintf(&out, "Issue opened by @%s - %s", author, *ev.Repo.FullName)
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("Issue: %s", *ev.Issue.Title),
+		URL:         *ev.Issue.HTMLURL,
+		Description: out.String(),
+	}
+	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
+		embed,
+	})
 }
 
 func (b *Bot) httpServeRebuild(w http.ResponseWriter, r *http.Request) error {
@@ -178,8 +284,8 @@ func (b *Bot) httpServeRebuild(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (b *Bot) runRebuild() error {
-	b.webHookGitHubSelf.Lock()
-	defer b.webHookGitHubSelf.Unlock()
+	b.rebuildSelfMu.Lock()
+	defer b.rebuildSelfMu.Unlock()
 
 	logID := "restart-self"
 	w := b.idWriter(logID)
