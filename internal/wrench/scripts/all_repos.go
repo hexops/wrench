@@ -96,4 +96,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/sdk-macos-12.0", CI: None},
 		{Name: "hexops/sdk-macos-11.3", CI: None},
 	}},
+	{Name: "Private", Repos: []Repo{
+		{Name: "hexops/reignfields", CI: Zig},
+		{Name: "hexops/reignfields-assets", CI: None},
+	}},
 }
