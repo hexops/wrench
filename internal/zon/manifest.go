@@ -20,7 +20,7 @@ func ComputePackageHash(dir string) (string, error) {
 		files []hashedFile
 		wg    sync.WaitGroup
 	)
-	filepath.Walk(dir, func(path string, fi fs.FileInfo, err error) error {
+	_ = filepath.Walk(dir, func(path string, fi fs.FileInfo, err error) error {
 		if fi.IsDir() {
 			return nil
 		}

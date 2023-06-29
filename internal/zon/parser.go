@@ -135,7 +135,7 @@ func (n *Node) Write(w io.Writer, indent, prefix string) error {
 	fmt.Fprintf(w, ".{\n")
 	for _, tag := range n.Tags {
 		fmt.Fprintf(w, prefix+indent+".%s = ", tag.Name)
-		tag.Node.Write(w, indent, prefix+indent)
+		_ = tag.Node.Write(w, indent, prefix+indent)
 		fmt.Fprintf(w, ",")
 		fmt.Fprintf(w, "\n")
 	}
