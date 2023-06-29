@@ -277,7 +277,7 @@ func (b *Bot) discordGitHubIssuesEvent(ev *github.IssuesEvent) error {
 		Color:       3134534,
 		Description: *ev.Issue.Title,
 		Author: &discordgo.MessageEmbedAuthor{
-			Name:    fmt.Sprintf("[%s] @%s - new issue #%v", *ev.Issue.Repository.FullName, author, *ev.Issue.ID),
+			Name:    fmt.Sprintf("[%s] @%s - new issue #%v", *ev.Repo.FullName, author, *ev.Issue.ID),
 			URL:     *ev.Issue.HTMLURL,
 			IconURL: *ev.Issue.User.AvatarURL,
 		},
