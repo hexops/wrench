@@ -321,6 +321,16 @@ func dawnFindNinjaGenerationTargets(dir string) ([]string, error) {
 		if strings.Contains(target, "tests") {
 			continue
 		}
+		ignored := map[string]bool{
+			"clang-tblgen.exe.pdb": true,
+			"llvm-tblgen.exe.pdb":  true,
+			"clang-tblgen":         true,
+			"llvm-tblgen":          true,
+			"clang_lib_codegen":    true,
+		}
+		if _, ignore := ignored[target]; ignore {
+			continue
+		}
 		spirvAllowed := strings.HasPrefix(target, "third_party/vulkan-deps/spirv-tools/src:")
 		spirvAllowed = spirvAllowed && (strings.Contains(target, "_header") ||
 			strings.Contains(target, "_tables") ||
