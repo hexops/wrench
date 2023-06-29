@@ -62,7 +62,7 @@ func (b *Bot) idLogf(id, format string, v ...any) {
 	}
 	// May be called before DB is initialized.
 	if b.store != nil {
-		b.store.Log(context.Background(), id, msg)
+		_ = b.store.Log(context.Background(), id, msg)
 	}
 }
 
@@ -82,7 +82,7 @@ func (w writerFunc) Write(p []byte) (n int, err error) {
 func (b *Bot) Start(s service.Service) error {
 	serviceLogger, _ := s.Logger(nil)
 	if serviceLogger != nil && !service.Interactive() {
-		serviceLogger.Info("wrench service started")
+		_ = serviceLogger.Info("wrench service started")
 	}
 
 	go func() {
@@ -90,7 +90,7 @@ func (b *Bot) Start(s service.Service) error {
 			if !service.Interactive() {
 				b.logf("wrench service: FATAL: %s", err)
 				if serviceLogger != nil {
-					serviceLogger.Error("wrench service: FATAL:", err)
+					_ = serviceLogger.Error("wrench service: FATAL:", err)
 				}
 			}
 			log.Fatal(err)
@@ -137,7 +137,9 @@ func (b *Bot) run(s service.Service) error {
 		}
 		b.registerCommands()
 	} else {
-		b.runnerStart()
+		if err := b.runnerStart(); err != nil {
+			return errors.Wrap(err, "runner")
+		}
 	}
 
 	b.started = true
@@ -156,7 +158,7 @@ func (b *Bot) run(s service.Service) error {
 func (b *Bot) Stop(s service.Service) error {
 	serviceLogger, _ := s.Logger(nil)
 	if serviceLogger != nil && !service.Interactive() {
-		serviceLogger.Info("wrench service stopped")
+		_ = serviceLogger.Info("wrench service stopped")
 	}
 	return b.stop()
 }

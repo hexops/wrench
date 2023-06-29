@@ -2,7 +2,6 @@ package scripts
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -33,7 +32,7 @@ func init() {
 			defer resp.Body.Close()
 
 			// Write gist to a tmp file
-			tmpFile, err := ioutil.TempFile("", "wrench-test")
+			tmpFile, err := os.CreateTemp("", "wrench-test")
 			if err != nil {
 				return errors.Wrap(err, "TempFile")
 			}

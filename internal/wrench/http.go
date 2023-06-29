@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -115,13 +116,28 @@ func (b *Bot) httpStart() error {
 			Handler: mux,
 		}
 
-		go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
+		go func() {
+			err := http.ListenAndServe(":http", certManager.HTTPHandler(nil))
+			if err != nil {
+				log.Fatal("ListenAndServe:", err)
+			}
+		}()
 
 		// Key and cert are provided by LetsEncrypt
-		go server.ListenAndServeTLS("", "")
+		go func() {
+			err := server.ListenAndServeTLS("", "")
+			if err != nil {
+				log.Fatal("ListenAndServeTLS:", err)
+			}
+		}()
 		return nil
 	}
-	go http.ListenAndServe(b.Config.Address, mux)
+	go func() {
+		err := http.ListenAndServe(b.Config.Address, mux)
+		if err != nil {
+			log.Fatal("ListenAndServe(addr):", err)
+		}
+	}()
 	return nil
 }
 
@@ -600,8 +616,8 @@ func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {
 		if !ok || subtle.ConstantTimeCompare([]byte(pass), []byte(b.Config.Secret)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="wrench"`)
 			w.WriteHeader(401)
-			w.Write([]byte("Unauthorised.\n"))
-			return nil
+			_, err := w.Write([]byte("Unauthorised.\n"))
+			return err
 		}
 
 		return handler(w, r)

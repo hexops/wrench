@@ -81,7 +81,11 @@ func (b *Bot) sync(ctx context.Context) {
 				b.idLogf(logID, "error: Marshal: %v", err)
 				return
 			}
-			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			if err != nil {
+				b.idLogf(logID, "error: CacheSet: %v", err)
+				return
+			}
 
 			// Cache combined repository status
 			combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
@@ -95,7 +99,11 @@ func (b *Bot) sync(ctx context.Context) {
 				b.idLogf(logID, "error: Marshal: %v", err)
 				return
 			}
-			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			if err != nil {
+				b.idLogf(logID, "error: CacheSet: %v", err)
+				return
+			}
 
 			// Cache check runs for HEAD (CI status check)
 			checkRuns, _, err := b.github.Checks.ListCheckRunsForRef(ctx, org, repo, "HEAD", nil)
@@ -109,7 +117,11 @@ func (b *Bot) sync(ctx context.Context) {
 				b.idLogf(logID, "error: Marshal: %v", err)
 				return
 			}
-			b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+			if err != nil {
+				b.idLogf(logID, "error: CacheSet: %v", err)
+				return
+			}
 		}()
 	}
 	wg.Wait()
@@ -134,6 +146,7 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 	return v, nil
 }
 
+//nolint:unused
 func (b *Bot) githubCombinedStatusHEAD(ctx context.Context, repoPair string) (v *github.CombinedStatus, err error) {
 	cacheKey := repoPair + "-Repositories-GetCombinedStatus-HEAD"
 	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)

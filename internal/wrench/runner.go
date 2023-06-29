@@ -175,7 +175,7 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 				return
 			case <-cancel:
 			}
-			cmd.Process.Kill()
+			_ = cmd.Process.Kill()
 		}()
 		err := cmd.Run()
 		if err != nil {

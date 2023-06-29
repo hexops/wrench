@@ -114,11 +114,11 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 				}
 			}
 			if blocked {
-				s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+				_, err := s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
 					Title:       "Forbidden",
 					Description: fmt.Sprintf("You are not allowed to run this command '%s'.", m.Author.Username),
 				})
-				return nil
+				return err
 			}
 			response := handler(args[1:]...)
 			if response != nil {
