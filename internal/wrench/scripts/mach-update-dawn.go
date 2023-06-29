@@ -73,7 +73,7 @@ func init() {
 			if push {
 				if err := ExecArgs("git", []string{
 					"push",
-					GitPushAuthURL(repoURL),
+					GitRemoteURLWithAuth(repoURL),
 					"refs/remotes/upstream/main:refs/heads/upstream",
 				}, WorkDir(workDir))(os.Stderr); err != nil {
 					return errors.Wrap(err, "GitPush")
@@ -90,7 +90,7 @@ func init() {
 			if push {
 				if err := ExecArgs("git", []string{
 					"push",
-					GitPushAuthURL(repoURL),
+					GitRemoteURLWithAuth(repoURL),
 					"HEAD:main",
 				}, WorkDir(workDir))(os.Stderr); err != nil {
 					return errors.Wrap(err, "GitPush")
@@ -215,7 +215,7 @@ func init() {
 			if push {
 				if err := ExecArgs("git", []string{
 					"push",
-					GitPushAuthURL(repoURL),
+					GitRemoteURLWithAuth(repoURL),
 					"HEAD:" + generatedBranchName,
 				}, WorkDir(workDir))(os.Stderr); err != nil {
 					return errors.Wrap(err, "GitPush")

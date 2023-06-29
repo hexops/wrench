@@ -319,7 +319,7 @@ func GitCommit(w io.Writer, dir, message string) error {
 }
 
 func GitClone(w io.Writer, dir, remoteURL string) error {
-	remoteURL = cleanGitURL(remoteURL)
+	remoteURL = GitRemoteURLWithAuth(cleanGitURL(remoteURL))
 	return ExecArgs("git", []string{"clone", remoteURL, dir})(w)
 }
 
@@ -355,7 +355,7 @@ func GitRemoteAdd(w io.Writer, dir, remoteName, remoteURL string) error {
 	return ExecArgs("git", []string{"remote", "add", remoteName, remoteURL}, WorkDir(dir))(w)
 }
 
-func GitPushAuthURL(remoteURL string) string {
+func GitRemoteURLWithAuth(remoteURL string) string {
 	remoteURL = cleanGitURL(remoteURL)
 	u, err := url.Parse(remoteURL)
 	if err != nil {
@@ -369,7 +369,7 @@ func GitPushAuthURL(remoteURL string) string {
 }
 
 func GitPush(w io.Writer, dir, remoteURL string, force bool) error {
-	args := []string{"push", GitPushAuthURL(remoteURL)}
+	args := []string{"push", GitRemoteURLWithAuth(remoteURL)}
 	if force {
 		args = append(args, "--force")
 	}
