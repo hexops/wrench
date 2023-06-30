@@ -231,7 +231,6 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 		fmt.Fprintf(&out, "* [[%s](%s)] [%s](%s): [%s](%s) (@%s)\n",
 			*ev.Repo.FullName,
 			*ev.Repo.HTMLURL,
-			commit.
 			"", //commit.GetSHA()[:7],
 			*commit.URL,
 			ellipsis(commitTitle(commit.GetMessage()), 60),
