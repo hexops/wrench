@@ -580,6 +580,9 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 		}
 		for _, repo := range category.Repos {
 			repoPair := repo.Name
+			if scripts.IsPrivateRepo(repoPair) {
+				continue
+			}
 			numOpenPRs, err := countPRs(repoPair, "open", false, true)
 			if err != nil {
 				return err
