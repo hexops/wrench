@@ -87,7 +87,6 @@ func hashFile(path, normalizedPath string, fi fs.FileInfo) ([]byte, error) {
 	if _, err := io.Copy(h, f); err != nil {
 		return nil, errors.Wrap(err, "sha256 hash")
 	}
-	fmt.Printf("%s: %x\n", normalizedPath, h.Sum(nil))
 	return h.Sum(nil), nil
 }
 
