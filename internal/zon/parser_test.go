@@ -29,7 +29,8 @@ func TestParse(t *testing.T) {
             .hash = "1220c7059f62cf479e1c3de773cddb71aeb5824ac74528392cd38715f586d7a52e2f",
         },
     },
-}`).Equal(t, buf.String())
+}
+`).Equal(t, buf.String())
 }
 
 const build_zig_zon = `.{
