@@ -75,15 +75,8 @@ func (b *Bot) sync(ctx context.Context) {
 					break
 				}
 			}
-			cacheKey := repoPair + "-PullRequests"
-			cacheValue, err := json.Marshal(pullRequests)
-			if err != nil {
-				b.idLogf(logID, "error: Marshal: %v", err)
-				return
-			}
-			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
-			if err != nil {
-				b.idLogf(logID, "error: CacheSet: %v", err)
+			if err := b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests); err != nil {
+				b.idLogf(logID, "error: githubUpdatePullRequests: %v", err)
 				return
 			}
 
@@ -93,8 +86,8 @@ func (b *Bot) sync(ctx context.Context) {
 				b.idLogf(logID, "%s/%s: error: %v (fetching combined status)", org, repo, err)
 				return
 			}
-			cacheKey = repoPair + "-Repositories-GetCombinedStatus-HEAD"
-			cacheValue, err = json.Marshal(combinedStatus)
+			cacheKey := repoPair + "-Repositories-GetCombinedStatus-HEAD"
+			cacheValue, err := json.Marshal(combinedStatus)
 			if err != nil {
 				b.idLogf(logID, "error: Marshal: %v", err)
 				return
@@ -127,6 +120,27 @@ func (b *Bot) sync(ctx context.Context) {
 	wg.Wait()
 }
 
+func (b *Bot) githubUpdatePRNow(ctx context.Context, repoPair string, updated *github.PullRequest) {
+	if err := b.githubUpdatePRNowFallible(ctx, repoPair, updated); err != nil {
+		b.idLogf("github", "githubUpdatePRNow: %v", err)
+	}
+}
+
+func (b *Bot) githubUpdatePRNowFallible(ctx context.Context, repoPair string, updated *github.PullRequest) error {
+	pullRequests, err := b.githubPullRequests(ctx, repoPair)
+	if err != nil {
+		return errors.Wrap(err, "githubPullRequests")
+	}
+	for i, pr := range pullRequests {
+		if *pr.Number != *updated.Number {
+			continue
+		}
+		pullRequests[i] = updated
+		break
+	}
+	return b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests)
+}
+
 func isGitHubRateLimit(err error) bool {
 	if err == nil {
 		return false
@@ -144,6 +158,19 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 		return nil, errors.Wrap(err, "Unmarshal")
 	}
 	return v, nil
+}
+
+func (b *Bot) githubUpdatePullRequestsCache(ctx context.Context, repoPair string, pullRequests []*github.PullRequest) error {
+	cacheKey := repoPair + "-PullRequests"
+	cacheValue, err := json.Marshal(pullRequests)
+	if err != nil {
+		return errors.Wrap(err, "Marshal")
+	}
+	err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+	if err != nil {
+		return errors.Wrap(err, "CacheSet")
+	}
+	return nil
 }
 
 //nolint:unused

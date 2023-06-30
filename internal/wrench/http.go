@@ -18,7 +18,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dustin/go-humanize"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v48/github"
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/api"
 	"github.com/hexops/wrench/internal/wrench/scripts"
@@ -186,6 +186,7 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 		if err := b.discordGitHubPullRequestEvent(ev); err != nil {
 			b.logf("http: discordGitHubPullRequestEvent: %v", err)
 		}
+		b.githubUpdatePRNow(r.Context(), ev.Repo.GetFullName(), ev.PullRequest)
 		return nil
 	case *github.IssuesEvent:
 		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
