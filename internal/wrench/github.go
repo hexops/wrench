@@ -131,12 +131,17 @@ func (b *Bot) githubUpdatePRNowFallible(ctx context.Context, repoPair string, up
 	if err != nil {
 		return errors.Wrap(err, "githubPullRequests")
 	}
+	found := false
 	for i, pr := range pullRequests {
 		if *pr.Number != *updated.Number {
 			continue
 		}
 		pullRequests[i] = updated
+		found = true
 		break
+	}
+	if !found {
+		pullRequests = append(pullRequests, updated)
 	}
 	return b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests)
 }
