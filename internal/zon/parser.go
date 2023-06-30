@@ -128,8 +128,11 @@ type Node struct {
 }
 
 func (n *Node) Write(w io.Writer, indent, prefix string) error {
-	n.write(w, indent, prefix)
+	if err := n.write(w, indent, prefix); err != nil {
+		return err
+	}
 	fmt.Fprintf(w, "\n")
+	return nil
 }
 
 func (n *Node) write(w io.Writer, indent, prefix string) error {
