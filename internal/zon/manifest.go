@@ -112,6 +112,7 @@ func isExecutable(mode fs.FileMode) byte {
 	// return 0
 }
 
+//nolint:unused
 func isExecutableBool(mode fs.FileMode) bool {
 	if runtime.GOOS == "windows" {
 		// TODO check the ACL on Windows.
