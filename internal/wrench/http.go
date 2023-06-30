@@ -227,7 +227,11 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			continue
 		}
 		numCommits++
-		fmt.Fprintf(&out, "* [%s](%s) (@%s)",
+		fmt.Fprintf(&out, "* [[%s](%s)] [%s](%s): [%s](%s) (@%s)\n",
+			*ev.Repo.FullName,
+			*ev.Repo.HTMLURL,
+			commit.GetSHA()[:7],
+			*commit.URL,
 			ellipsis(commitTitle(commit.GetMessage()), 60),
 			commit.GetURL(),
 			commit.Author.GetLogin(),
@@ -236,15 +240,7 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 	if numCommits == 0 {
 		return nil
 	}
-	embed := &discordgo.MessageEmbed{
-		Color:       3134534,
-		Title:       fmt.Sprintf("[%s] %v new commits", *ev.Repo.FullName, len(ev.Commits)),
-		URL:         *ev.Repo.HTMLURL,
-		Description: out.String(),
-	}
-	return b.discordSendMessageToChannelEmbeds("github", []*discordgo.MessageEmbed{
-		embed,
-	})
+	return b.discordSendMessageToChannel("github", out.String())
 }
 
 func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {
