@@ -227,9 +227,6 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			continue
 		}
 		numCommits++
-		if len(ev.Commits) > 1 {
-			fmt.Fprintf(&out, "* ")
-		}
 		fmt.Fprintf(&out, "[[%s](<%s>)] [%s](<%s>): %s (@%s)\n",
 			*ev.Repo.FullName,
 			*ev.Repo.HTMLURL,
