@@ -227,11 +227,10 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			continue
 		}
 		numCommits++
-		fmt.Printf("commit: %+v\n", commit)
 		fmt.Fprintf(&out, "* [[%s](%s)] [%s](%s): [%s](%s) (@%s)\n",
 			*ev.Repo.FullName,
 			*ev.Repo.HTMLURL,
-			"", //commit.GetSHA()[:7],
+			*commit.ID,
 			*commit.URL,
 			ellipsis(commitTitle(commit.GetMessage()), 60),
 			commit.GetURL(),
