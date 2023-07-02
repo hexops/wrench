@@ -96,6 +96,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/dawn", CI: None},
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
+		{Name: "hexops/direct3d-headers", CI: Zig},
 	}},
 	{Name: "Mach language bindings", Repos: []Repo{
 		{Name: "hexops/mach-rs", CI: Todo},
