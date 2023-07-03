@@ -90,6 +90,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/wayland-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/x11-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/vulkan-headers", CI: Zig, HasUpdateVerifyScripts: true},
+		{Name: "hexops/opengl-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/linux-audio-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/glfw", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/basisu", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
