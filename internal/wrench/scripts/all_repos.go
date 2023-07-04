@@ -92,6 +92,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/vulkan-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/opengl-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/linux-audio-headers", CI: Zig, HasUpdateVerifyScripts: true},
+		{Name: "hexops/xcode-frameworks", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/glfw", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/basisu", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/dawn", CI: None},
@@ -119,13 +120,6 @@ var AllReposByCategory = []RepoCategory{
 	{Name: "Misc", Repos: []Repo{
 		{Name: "hexops/font-assets", CI: Zig},
 		{Name: "hexops/media", CI: None},
-	}},
-	{Name: "System SDKs", Repos: []Repo{
-		{Name: "hexops/sdk-linux-aarch64", CI: None},
-		{Name: "hexops/sdk-linux-x86_64", CI: None},
-		{Name: "hexops/sdk-windows-x86_64", CI: None},
-		{Name: "hexops/sdk-macos-12.0", CI: None},
-		{Name: "hexops/sdk-macos-11.3", CI: None},
 	}},
 	{Name: privateRepoCategory, Repos: []Repo{
 		{Name: "hexops/reignfields", CI: Zig},
