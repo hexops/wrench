@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -17,6 +18,12 @@ func init() {
 		Args:        []string{},
 		Description: "Update build.zig.zon dependencies",
 		Execute: func(args ...string) error {
+			const wrenchUpdateCache = ".wrench-update-cache"
+			if err := os.MkdirAll(wrenchUpdateCache, os.ModePerm); err != nil {
+				return err
+			}
+			defer os.RemoveAll(wrenchUpdateCache)
+
 			fsys := os.DirFS(".")
 			matches, err := doublestar.Glob(fsys, "**/build.zig.zon")
 			if err != nil {
@@ -50,11 +57,12 @@ func init() {
 					}
 					split := strings.Split(u.Path, "/")
 					repoURL := "github.com/" + split[1] + "/" + split[2]
-					cloneWorkDir := "tmp-clone"
-					_ = os.RemoveAll(cloneWorkDir)
-					defer os.RemoveAll(cloneWorkDir)
-					if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
-						return errors.Wrap(err, "GitClone")
+					cloneWorkDir := filepath.Join(wrenchUpdateCache, split[1]+"-"+split[2])
+
+					if _, err := os.Stat(cloneWorkDir); os.IsNotExist(err) {
+						if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
+							return errors.Wrap(err, "GitClone")
+						}
 					}
 					latestHEAD, err := GitRevParse(os.Stderr, cloneWorkDir, "HEAD")
 					if err != nil {
@@ -64,16 +72,17 @@ func init() {
 					u.Path = strings.Join(split, "/")
 					urlNode.StringLiteral = u.String()
 
-					archiveFilePath := "tmp.tar.gz"
+					archiveFilePath := filepath.Join(wrenchUpdateCache, latestHEAD+".tar.gz")
+					if _, err := os.Stat(archiveFilePath); os.IsNotExist(err) {
+						err = DownloadFile(urlNode.StringLiteral, archiveFilePath)(os.Stderr)
+						if err != nil {
+							return errors.Wrap(err, "DownloadFile")
+						}
+					}
+					stripPathComponents := 1
 					tmpDir := "tmp"
 					_ = os.RemoveAll(tmpDir)
 					defer os.RemoveAll(tmpDir)
-					defer os.RemoveAll(archiveFilePath)
-					err = DownloadFile(urlNode.StringLiteral, archiveFilePath)(os.Stderr)
-					if err != nil {
-						return errors.Wrap(err, "DownloadFile")
-					}
-					stripPathComponents := 1
 					err = ExtractArchive(archiveFilePath, tmpDir, stripPathComponents)(os.Stderr)
 					if err != nil {
 						return errors.Wrap(err, "ExtractArchive")
