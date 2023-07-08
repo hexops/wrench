@@ -53,13 +53,13 @@ func init() {
 
 			// Find the current version used by Mach
 			re := regexp.MustCompile(`generated-\d{4}-\d{2}-\d{2}(\.\d*)?`)
-			fileContents, err := os.ReadFile(filepath.Join(machRepoDir, "libs/gpu-dawn/sdk.zig"))
+			fileContents, err := os.ReadFile(filepath.Join(machRepoDir, "libs/gpu-dawn/build.zig"))
 			if err != nil {
 				return nil, errors.Wrap(err, "ReadFile")
 			}
 			currentVersion := re.FindString(string(fileContents))
 			if currentVersion == "" {
-				return nil, errors.New("failed to find current generated-yyyy-mm-dd[.unixstamp] in mach/libs/gpu-dawn/sdk.zig")
+				return nil, errors.New("failed to find current generated-yyyy-mm-dd[.unixstamp] in mach/libs/gpu-dawn/build.zig")
 			}
 
 			branches, err := GitBranches(os.Stderr, dawnRepoDir)

@@ -120,7 +120,7 @@ The WebGPU API may have changed, review these diffs to see if 'libs/gpu' needs t
 Note:
 
 * Once merged, the [mach-gpu-dawn](https://github.com/hexops/mach-gpu-dawn) CI pipeline will produce binary releases and update 'libs/gpu' in this repository to begin using this new version.
-* If the mach-gpu-dawn CI fails, you may want to review the [Dawn build file changes](${CUSTOM_LOG_DAWN_DIFF_BUILD}) to see if 'gpu-dawn/sdk.zig' needs updates.
+* If the mach-gpu-dawn CI fails, you may want to review the [Dawn build file changes](${CUSTOM_LOG_DAWN_DIFF_BUILD}) to see if 'gpu-dawn/build.zig' needs updates.
 * I'll keep updating this PR so it remains up-to-date until you want to merge it.
 
 The work I did to produce this can be viewed here: ${JOB_LOGS_URL}
