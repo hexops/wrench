@@ -27,8 +27,8 @@ jobs:
           LDFLAGS="$LDFLAGS -X '$PREFIX.GoVersion=$GOVERSION'"
           RELEASE_NAME="release-$(git rev-parse --short HEAD)"
 
-          GOARCH="amd64" GOOS="linux" go build -ldflags "$LDFLAGS" -o wrench_linux_amd64 .
-          GOARCH="arm64" GOOS="linux" go build -ldflags "$LDFLAGS" -o wrench_linux_arm64 .
+          CGO_ENABLED=0 GOARCH="amd64" GOOS="linux" go build -ldflags "$LDFLAGS" -o wrench_linux_amd64 .
+          CGO_ENABLED=0 GOARCH="arm64" GOOS="linux" go build -ldflags "$LDFLAGS" -o wrench_linux_arm64 .
           GOARCH="amd64" GOOS="windows" go build -ldflags "$LDFLAGS" -o wrench_windows_amd64 .
           GOARCH="arm64" GOOS="windows" go build -ldflags "$LDFLAGS" -o wrench_windows_arm64 .
           GOARCH="amd64" GOOS="darwin" go build -ldflags "$LDFLAGS" -o wrench_darwin_amd64 .
