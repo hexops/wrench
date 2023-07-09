@@ -244,11 +244,15 @@ func ExtractArchive(archiveFilePath, dst string, stripPathComponents int) Cmd {
 }
 
 func stripComponents(path string, n int) string {
-	elems := strings.Split(path, string(os.PathSeparator))
+	pathSep := "/"
+	if strings.Contains(path, "\\") {
+		pathSep = "\\"
+	}
+	elems := strings.Split(path, pathSep)
 	if len(elems) >= n {
 		elems = elems[n:]
 	}
-	return strings.Join(elems, string(os.PathSeparator))
+	return strings.Join(elems, pathSep)
 }
 
 func AppendToFile(file, format string, v ...any) Cmd {
