@@ -30,7 +30,40 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 
 func (b *Bot) httpPkgRoot(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<h1>pkg.machengine.org</h1>`)
+	fmt.Fprintf(w, "%s", `
+<h1 style="margin-bottom: 0.25rem;">pkg.machengine.org</h1>
+<strong style="font-weight: 16px; margin-top: 0; margin-left: 1rem;"><em>The <a href="https://machengine.org">Mach</a> package download server</em></strong>
+
+<div style="margin-left: 2rem;"">
+
+<h3 style="margin-top: 2rem;">Zig downloads</h3>
+<p>This site acts as a mirror of <a href="https://ziglang.org/download">ziglang.org/download</a></p>
+<div style="margin-left: 1rem;">
+	<p>The rewrite logic is as follows:</p>
+	<pre>
+<strong>https://ziglang.org/builds/$FILE</strong> -> <strong>https://pkg.machengine.org/zig/$FILE</strong>
+</pre>
+</div>
+<p>Note: .tar.gz, .zip, and .minisig signatures are available for download. Signatures can also be downloaded from ziglang.org for verification purposes.</p>
+
+<h3 style="margin-top: 2rem;">Mach downloads</h3>
+<p>This site serves Zig packages for all <a href="https://wrench.machengine.org/projects/">Mach projects</a>.</p>
+<div style="margin-left: 1rem;">
+	<p>The rewrite logic is as follows:</p>
+	<pre>
+<strong>https://github.com/hexops/$PROJECT/archive/$FILE</strong> -> <strong>https://pkg.machengine.org/$PROJECT/$FILE</strong>
+</pre>
+</div>
+
+<h3 style="margin-top: 2rem;">Contact</h3>
+<ul>
+	<li><a href="https://github.com/hexops/mach/issues?q=is%3Aopen+is%3Aissue+label%3Awrench">Issue tracker</a></li>
+	<li><a href="https://discord.gg/XNG3NZgCqp">Mach discord</a></li>
+	<li><a href="https://github.com/hexops/wrench">Wrench source on GitHub</a></li>
+</ul>
+
+</div>
+`)
 	return nil
 }
 

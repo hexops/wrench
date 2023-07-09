@@ -163,7 +163,7 @@ Examples:
 		} else {
 			_, err := os.Stat(configFile)
 			if os.IsNotExist(err) {
-				fmt.Println("Please create your own config file:", config)
+				fmt.Println("Please create your own config file:", configFile)
 				fmt.Println("Refer to: https://github.com/hexops/wrench/blob/main/internal/wrench/config.go")
 				return nil
 			}
