@@ -24,7 +24,6 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 			return
 		}
 		handler("pkg", b.httpPkgPkg).ServeHTTP(w, r)
-		return
 	})
 	return mux
 }
