@@ -44,6 +44,62 @@ func (b *Bot) httpStart() error {
 		})
 	}
 
+	var mux http.Handler
+	if b.Config.PkgProxy {
+		b.logf("http: PkgProxy mode enabled")
+		mux = b.httpMuxPkgProxy(handler)
+	} else {
+		mux = b.httpMuxDefault(handler)
+	}
+
+	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
+	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
+		// Serve HTTPS using LetsEncrypt
+		u, err := url.Parse(b.Config.ExternalURL)
+		if err != nil {
+			return fmt.Errorf("expected valid config.ExternalURL for LetsEncrypt, found: %v", b.Config.ExternalURL)
+		}
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			Cache:      autocert.DirCache(b.Config.LetsEncryptCacheDir),
+			Email:      b.Config.LetsEncryptEmail,
+			HostPolicy: autocert.HostWhitelist(u.Hostname()),
+		}
+
+		server := &http.Server{
+			Addr: ":https",
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+			Handler: mux,
+		}
+
+		go func() {
+			err := http.ListenAndServe(":http", certManager.HTTPHandler(nil))
+			if err != nil {
+				log.Fatal("ListenAndServe:", err)
+			}
+		}()
+
+		// Key and cert are provided by LetsEncrypt
+		go func() {
+			err := server.ListenAndServeTLS("", "")
+			if err != nil {
+				log.Fatal("ListenAndServeTLS:", err)
+			}
+		}()
+		return nil
+	}
+	go func() {
+		err := http.ListenAndServe(b.Config.Address, mux)
+		if err != nil {
+			log.Fatal("ListenAndServe(addr):", err)
+		}
+	}()
+	return nil
+}
+
+func (b *Bot) httpMuxDefault(handler func(prefix string, handle handlerFunc) http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -95,52 +151,7 @@ func (b *Bot) httpStart() error {
 	mux.Handle("/api/secrets/list", handler("api-secrets-list", botHttpAPI(b, b.httpServeSecretsList)))
 	mux.Handle("/api/secrets/delete", handler("api-secrets-delete", botHttpAPI(b, b.httpServeSecretsDelete)))
 	mux.Handle("/api/secrets/upsert", handler("api-secrets-upsert", botHttpAPI(b, b.httpServeSecretsUpsert)))
-
-	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)
-	if strings.HasSuffix(b.Config.Address, ":443") || strings.HasSuffix(b.Config.Address, ":https") {
-		// Serve HTTPS using LetsEncrypt
-		u, err := url.Parse(b.Config.ExternalURL)
-		if err != nil {
-			return fmt.Errorf("expected valid config.ExternalURL for LetsEncrypt, found: %v", b.Config.ExternalURL)
-		}
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			Cache:      autocert.DirCache(b.Config.LetsEncryptCacheDir),
-			Email:      b.Config.LetsEncryptEmail,
-			HostPolicy: autocert.HostWhitelist(u.Hostname()),
-		}
-
-		server := &http.Server{
-			Addr: ":https",
-			TLSConfig: &tls.Config{
-				GetCertificate: certManager.GetCertificate,
-			},
-			Handler: mux,
-		}
-
-		go func() {
-			err := http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-			if err != nil {
-				log.Fatal("ListenAndServe:", err)
-			}
-		}()
-
-		// Key and cert are provided by LetsEncrypt
-		go func() {
-			err := server.ListenAndServeTLS("", "")
-			if err != nil {
-				log.Fatal("ListenAndServeTLS:", err)
-			}
-		}()
-		return nil
-	}
-	go func() {
-		err := http.ListenAndServe(b.Config.Address, mux)
-		if err != nil {
-			log.Fatal("ListenAndServe(addr):", err)
-		}
-	}()
-	return nil
+	return mux
 }
 
 func (b *Bot) httpStop() error {

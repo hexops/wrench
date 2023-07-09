@@ -18,6 +18,9 @@ type Config struct {
 	// Disabled if an empty string.
 	Address string `toml:"Address,omitempty"`
 
+	// Act as a Zig package proxy like pkg.machengine.org, instead of as a regular wrench server.
+	PkgProxy bool `toml:"PkgProxy,omitempty"`
+
 	// (optional) Discord bot token. See README.md for details on how to create this.
 	//
 	// Disabled if an empty string.

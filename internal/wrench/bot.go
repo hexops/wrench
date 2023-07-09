@@ -59,6 +59,7 @@ func (b *Bot) idLogf(id, format string, v ...any) {
 	timeNow := time.Now().Format(time.RFC3339)
 	for _, line := range strings.Split(msg, "\n") {
 		fmt.Fprintf(b.logFile, "%s %s: %s\n", timeNow, id, line)
+		fmt.Fprintf(os.Stderr, "%s %s: %s\n", timeNow, id, line)
 	}
 	// May be called before DB is initialized.
 	if b.store != nil {
@@ -119,23 +120,27 @@ func (b *Bot) run(s service.Service) error {
 	}
 
 	if b.Config.Runner == "" {
-		b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
-		if err != nil {
-			return errors.Wrap(err, "OpenStore")
-		}
-		if err := b.githubStart(); err != nil {
-			return errors.Wrap(err, "github")
-		}
-		if err := b.discordStart(); err != nil {
-			return errors.Wrap(err, "discord")
+		if !b.Config.PkgProxy {
+			b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
+			if err != nil {
+				return errors.Wrap(err, "OpenStore")
+			}
+			if err := b.githubStart(); err != nil {
+				return errors.Wrap(err, "github")
+			}
+			if err := b.discordStart(); err != nil {
+				return errors.Wrap(err, "discord")
+			}
 		}
 		if err := b.httpStart(); err != nil {
 			return errors.Wrap(err, "http")
 		}
-		if err := b.schedulerStart(); err != nil {
-			return errors.Wrap(err, "scheduler")
+		if !b.Config.PkgProxy {
+			if err := b.schedulerStart(); err != nil {
+				return errors.Wrap(err, "scheduler")
+			}
+			b.registerCommands()
 		}
-		b.registerCommands()
 	} else {
 		if err := b.runnerStart(); err != nil {
 			return errors.Wrap(err, "runner")
@@ -178,8 +183,10 @@ func (b *Bot) stop() error {
 		if err := b.httpStop(); err != nil {
 			return errors.Wrap(err, "http")
 		}
-		if err := b.store.Close(); err != nil {
-			return errors.Wrap(err, "Store.Close")
+		if b.store != nil {
+			if err := b.store.Close(); err != nil {
+				return errors.Wrap(err, "Store.Close")
+			}
 		}
 		if err := b.schedulerStop(); err != nil {
 			return errors.Wrap(err, "scheduler")

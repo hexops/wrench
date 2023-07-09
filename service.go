@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
@@ -64,6 +65,9 @@ Use "wrench service <command> -h" for more information about a command.
 }
 
 func defaultConfigFilePath() string {
+	if _, err := os.Stat("config.toml"); err == nil {
+		return "config.toml"
+	}
 	u, err := user.Current()
 	if err == nil {
 		return filepath.Join(u.HomeDir, "wrench/config.toml")

@@ -153,11 +153,6 @@ func CopyFile(src, dst string) Cmd {
 func DownloadFile(url string, filepath string) Cmd {
 	return func(w io.Writer) error {
 		fmt.Fprintf(w, "DownloadFile: %s > %s\n", url, filepath)
-		out, err := os.Create(filepath)
-		if err != nil {
-			return errors.Wrap(err, "Create")
-		}
-		defer out.Close()
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -169,6 +164,11 @@ func DownloadFile(url string, filepath string) Cmd {
 			return fmt.Errorf("bad response status: %s", resp.Status)
 		}
 
+		out, err := os.Create(filepath)
+		if err != nil {
+			return errors.Wrap(err, "Create")
+		}
+		defer out.Close()
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
 			return errors.Wrap(err, "Copy")
