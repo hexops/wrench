@@ -183,6 +183,11 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 		if scripts.IsPrivateRepo(ev.Repo.GetFullName()) {
 			return nil
 		}
+		if ev.Repo.GetFullName() == "hexops/dawn" {
+			// Do not post Discord messages for hexops/dawn commits (which occur as part of automated
+			// updates)
+			return nil
+		}
 		if err := b.discordGitHubPushEvent(ev); err != nil {
 			b.logf("http: discordGitHubPushEvent: %v", err)
 		}
