@@ -22,8 +22,8 @@ func init() {
 			workDir := "mach-update-gpu-dawn"
 			dawnRepoDir := filepath.Join(workDir, "dawn")
 			dawnRepoURL := "https://github.com/hexops/dawn"
-			machRepoDir := filepath.Join(workDir, "mach")
-			machRepoURL := "https://github.com/hexops/mach"
+			machRepoDir := filepath.Join(workDir, "mach-gpu-dawn")
+			machRepoURL := "https://github.com/hexops/mach-gpu-dawn"
 			updateDawn := true
 
 			if updateDawn {
@@ -53,13 +53,13 @@ func init() {
 
 			// Find the current version used by Mach
 			re := regexp.MustCompile(`generated-\d{4}-\d{2}-\d{2}(\.\d*)?`)
-			fileContents, err := os.ReadFile(filepath.Join(machRepoDir, "libs/gpu-dawn/build.zig"))
+			fileContents, err := os.ReadFile(filepath.Join(machRepoDir, "build.zig"))
 			if err != nil {
 				return nil, errors.Wrap(err, "ReadFile")
 			}
 			currentVersion := re.FindString(string(fileContents))
 			if currentVersion == "" {
-				return nil, errors.New("failed to find current generated-yyyy-mm-dd[.unixstamp] in mach/libs/gpu-dawn/build.zig")
+				return nil, errors.New("failed to find current generated-yyyy-mm-dd[.unixstamp] in build.zig")
 			}
 
 			branches, err := GitBranches(os.Stderr, dawnRepoDir)
@@ -119,7 +119,7 @@ func init() {
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
 			}
-			err = GitCommit(os.Stderr, machRepoDir, "gpu-dawn: update to latest version "+newBranch)
+			err = GitCommit(os.Stderr, machRepoDir, "update to latest Dawn version "+newBranch)
 			if err != nil {
 				return nil, errors.Wrap(err, "GitCommit")
 			}
