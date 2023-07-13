@@ -118,6 +118,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/zigmonthly.org", CI: Hugo},
 	}},
 	{Name: "Misc", Repos: []Repo{
+		{Name: "hexops/mach-core-example-assets", CI: Zig},
 		{Name: "hexops/font-assets", CI: Zig},
 		{Name: "hexops/media", CI: None},
 	}},
