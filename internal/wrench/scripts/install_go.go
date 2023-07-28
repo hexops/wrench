@@ -84,11 +84,13 @@ func ensureGoBinOnPath() error {
 	if err != nil {
 		return err
 	}
+	goBin = strings.TrimSpace(goBin)
 	if goBin == "" {
 		goPath, err := Output(os.Stderr, "go env GOPATH")
 		if err != nil {
 			return err
 		}
+		goPath = strings.TrimSpace(goPath)
 		goBin = filepath.Join(goPath, "bin")
 	}
 	return EnsureOnPathPermanent(goBin)
