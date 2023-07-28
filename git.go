@@ -10,9 +10,7 @@ import (
 // gitCommands contains all registered 'wrench git' subcommands.
 var gitCommands cmder.Commander
 
-var (
-	gitFlagSet = flag.NewFlagSet("git", flag.ExitOnError)
-)
+var gitFlagSet = flag.NewFlagSet("git", flag.ExitOnError)
 
 func init() {
 	const usage = `wrench git: manage git repositories

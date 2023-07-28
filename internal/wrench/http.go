@@ -211,6 +211,7 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 		if err := b.discordGitHubIssuesEvent(ev); err != nil {
 			b.logf("http: discordGitHubIssuesEvent: %v", err)
 		}
+		b.githubUpdateIssueNow(r.Context(), ev.Repo.GetFullName(), ev.Issue)
 		return nil
 	default:
 		return nil

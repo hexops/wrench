@@ -80,6 +80,37 @@ func (b *Bot) sync(ctx context.Context) {
 				return
 			}
 
+			var issues []*github.Issue
+			for {
+				pageIssues, resp, err := b.github.Issues.ListByRepo(ctx, org, repo, &github.IssueListByRepoOptions{
+					State: "all",
+					ListOptions: github.ListOptions{
+						Page:    page,
+						PerPage: 1000,
+					},
+				})
+				if err != nil {
+					retry++
+					b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
+					if retry >= 5 {
+						break
+					}
+					time.Sleep(5 * time.Second)
+					continue
+				}
+				issues = append(issues, pageIssues...)
+				b.idLogf(logID, "%s/%s: progress: queried %v issues total (rate limit %v/%v)", org, repo, len(issues), resp.Rate.Remaining, resp.Rate.Limit)
+
+				page = resp.NextPage
+				if resp.NextPage == 0 {
+					break
+				}
+			}
+			if err := b.githubUpdateIssuesCache(ctx, repoPair, issues); err != nil {
+				b.idLogf(logID, "error: githubUpdateIssues: %v", err)
+				return
+			}
+
 			// Cache combined repository status
 			combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
 			if err != nil {
@@ -146,6 +177,32 @@ func (b *Bot) githubUpdatePRNowFallible(ctx context.Context, repoPair string, up
 	return b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests)
 }
 
+func (b *Bot) githubUpdateIssueNow(ctx context.Context, repoPair string, updated *github.Issue) {
+	if err := b.githubUpdateIssueNowFallible(ctx, repoPair, updated); err != nil {
+		b.idLogf("github", "githubUpdateIssueNow: %v", err)
+	}
+}
+
+func (b *Bot) githubUpdateIssueNowFallible(ctx context.Context, repoPair string, updated *github.Issue) error {
+	issues, err := b.githubIssues(ctx, repoPair)
+	if err != nil {
+		return errors.Wrap(err, "githubIssues")
+	}
+	found := false
+	for i, pr := range issues {
+		if *pr.Number != *updated.Number {
+			continue
+		}
+		issues[i] = updated
+		found = true
+		break
+	}
+	if !found {
+		issues = append(issues, updated)
+	}
+	return b.githubUpdateIssuesCache(ctx, repoPair, issues)
+}
+
 func isGitHubRateLimit(err error) bool {
 	if err == nil {
 		return false
@@ -168,6 +225,31 @@ func (b *Bot) githubPullRequests(ctx context.Context, repoPair string) (v []*git
 func (b *Bot) githubUpdatePullRequestsCache(ctx context.Context, repoPair string, pullRequests []*github.PullRequest) error {
 	cacheKey := repoPair + "-PullRequests"
 	cacheValue, err := json.Marshal(pullRequests)
+	if err != nil {
+		return errors.Wrap(err, "Marshal")
+	}
+	err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+	if err != nil {
+		return errors.Wrap(err, "CacheSet")
+	}
+	return nil
+}
+
+func (b *Bot) githubIssues(ctx context.Context, repoPair string) (v []*github.Issue, err error) {
+	cacheKey := repoPair + "-Issues"
+	entry, err := b.store.CacheKey(ctx, githubAPICacheName, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(entry.Value), &v); err != nil {
+		return nil, errors.Wrap(err, "Unmarshal")
+	}
+	return v, nil
+}
+
+func (b *Bot) githubUpdateIssuesCache(ctx context.Context, repoPair string, issues []*github.Issue) error {
+	cacheKey := repoPair + "-Issues"
+	cacheValue, err := json.Marshal(issues)
 	if err != nil {
 		return errors.Wrap(err, "Marshal")
 	}
