@@ -98,7 +98,7 @@ func OutputArgs(w io.Writer, name string, args []string, opt ...CmdOption) (stri
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("'%s': error: exit code: %v", name, exitError.ExitCode())
+			return strings.TrimSpace(buf.String()), fmt.Errorf("'%s': error: exit code: %v", name, exitError.ExitCode())
 		}
 		return "", err
 	}
