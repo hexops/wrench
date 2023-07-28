@@ -70,7 +70,26 @@ func init() {
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")
 			}
+
+			if err := ensureGoBinOnPath(); err != nil {
+				return errors.Wrap(err, "ensureGoBinOnPath")
+			}
 			return nil
 		},
 	})
+}
+
+func ensureGoBinOnPath() error {
+	goBin, err := Output(os.Stderr, "go env GOBIN")
+	if err != nil {
+		return err
+	}
+	if goBin == "" {
+		goPath, err := Output(os.Stderr, "go env GOPATH")
+		if err != nil {
+			return err
+		}
+		goBin = filepath.Join(goPath, "bin")
+	}
+	return EnsureOnPathPermanent(goBin)
 }
