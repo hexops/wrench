@@ -80,7 +80,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach-model3d", CI: Zig},
 		{Name: "hexops/mach-sysjs", CI: Todo},
 		{Name: "hexops/mach-sysaudio", CI: Zig},
-		{Name: "hexops/mach-ggml", CI: Zig},
+		{Name: "hexops/mach-opus", CI: Zig},
+		{Name: "hexops/mach-flac", CI: Zig},
 		{Name: "hexops/fastfilter", CI: Zig},
 	}},
 	{Name: "Zig-packaged C libraries", Repos: []Repo{
@@ -99,6 +100,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/direct3d-headers", CI: Zig},
+		{Name: "hexops/opus", CI: Zig},
+		{Name: "hexops/flac", CI: Zig},
 	}},
 	{Name: "Mach language bindings", Repos: []Repo{
 		{Name: "hexops/mach-rs", CI: Todo},
