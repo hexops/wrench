@@ -326,6 +326,37 @@ createNewPR:
 	return newPR, true, errors.Wrap(err, "PullRequests.Create")
 }
 
+func (b *Bot) githubUpsertIssue(ctx context.Context, repoPair string, issue *github.IssueRequest) (*github.Issue, bool, error) {
+	issues, err := b.githubIssues(ctx, repoPair)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "issues")
+	}
+	var exists *github.Issue
+	for _, existing := range issues {
+		// TODO: don't hard-code wrench user here
+		wrenchGitHubUsername := "wrench-bot"
+		if *existing.State == "open" &&
+			*existing.Title == *issue.Title &&
+			*existing.User.Login == wrenchGitHubUsername {
+			exists = existing
+		}
+	}
+
+	org, repo := splitRepoPair(repoPair)
+	if exists != nil {
+		// Update the existing issue. Really this is a best-effort partial update, the webhook will
+		// do the real update to it later.
+		*exists.Title = *issue.Title
+		*exists.Body = *issue.Body
+		_, _, err := b.github.Issues.Edit(ctx, org, repo, *exists.Number, issue)
+		return exists, false, errors.Wrap(err, "Issues.Edit")
+	}
+
+	// Create a new issue.
+	newIssue, _, err := b.github.Issues.Create(ctx, org, repo, issue)
+	return newIssue, true, errors.Wrap(err, "Issues.Create")
+}
+
 func (b *Bot) githubStop() error {
 	return nil
 }

@@ -195,6 +195,9 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 				if len(activeScriptResponse.PushedRepos) > 0 {
 					fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activeScriptResponse.PushedRepos)
 				}
+				if len(activeScriptResponse.UpsertIssues) > 0 {
+					fmt.Fprintf(&activeLog, "job upserted issues to repos: %v\n", activeScriptResponse.UpsertIssues)
+				}
 			}
 		}
 

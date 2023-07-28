@@ -957,6 +957,32 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 		}
 	}
 
+	if r.Job.State == api.JobStateSuccess && len(r.Job.Response.UpsertIssues) > 0 {
+		// Ensure pull requests exist.
+		for _, upsertIssue := range r.Job.Response.UpsertIssues {
+			issueRequest := &github.IssueRequest{
+				Title: &upsertIssue.Title,
+				Body:  &upsertIssue.Body,
+			}
+
+			issue, isNew, err := b.githubUpsertIssue(ctx, upsertIssue.RepoPair, issueRequest)
+			if err != nil {
+				b.idLogf(r.Job.ID.LogID(), "error creating issue: %v", err)
+				if isGitHubRateLimit(err) {
+					b.idLogf(r.Job.ID.LogID(), "GitHub rate limit encountered, waiting for 5 minutes")
+					b.logf("GitHub rate limit encountered, waiting for 5 minutes")
+					time.Sleep(5 * time.Minute)
+				}
+				return nil, errors.Wrap(err, "githubUpsertIssue")
+			}
+			b.idLogf(r.Job.ID.LogID(), "issue: %s", *issue.HTMLURL)
+			_ = isNew
+			// if isNew {
+			// 	b.discord("I created an issue just now: %s", *issue.HTMLURL)
+			// }
+		}
+	}
+
 	// Log job messages.
 	if r.Job.Log != "" {
 		if b.Config.GitPushUsername != "" {
