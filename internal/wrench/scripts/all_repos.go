@@ -101,7 +101,9 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/direct3d-headers", CI: Zig},
 		{Name: "hexops/opus", CI: Zig},
+		{Name: "hexops/opusfile", CI: Zig},
 		{Name: "hexops/flac", CI: Zig},
+		{Name: "hexops/ogg", CI: Zig},
 	}},
 	{Name: "Mach language bindings", Repos: []Repo{
 		{Name: "hexops/mach-rs", CI: Todo},
