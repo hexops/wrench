@@ -3,6 +3,7 @@ package scripts
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hexops/wrench/internal/wrench/api"
@@ -29,7 +30,7 @@ func init() {
 			}
 			var brokenLinks [][3]string
 			for _, result := range results {
-				fmt.Println("checked", result.URL)
+				fmt.Fprintln(os.Stderr, "checked", result.URL)
 			l:
 				for _, link := range result.Links {
 					if link.Error == "" {
