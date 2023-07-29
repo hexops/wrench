@@ -51,7 +51,7 @@ func init() {
 							continue l
 						}
 					}
-					notAllowed = append(notAllowed, [2]string{link.URL, result.URL})
+					notAllowed = append(notAllowed, [2]string{result.URL, link.URL})
 				}
 			}
 
@@ -73,7 +73,7 @@ func init() {
 
 			return &api.ScriptResponse{UpsertIssues: []api.UpsertIssue{
 				{
-					RepoPair: "hexops/machengine.org",
+					RepoPair: "hexops/mach",
 					Title:    "website: found asset URLs that are not allowed",
 					Body:     buf.String(),
 				},

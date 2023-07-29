@@ -46,6 +46,17 @@ func (b *Bot) schedulerStart() error {
 				},
 			},
 		},
+		{
+			Every: 24 * time.Hour,
+			Job: api.Job{
+				ID:             "web-check-broken-urls",
+				Title:          "website: check for broken URLs",
+				TargetRunnerID: "linux-amd64",
+				Payload: api.JobPayload{
+					Cmd: []string{"script", "web-check-broken-urls"},
+				},
+			},
+		},
 		// {
 		// 	Every: 5 * time.Minute,
 		// 	Job: api.Job{
