@@ -17,7 +17,8 @@ func init() {
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
 			website := "https://machengine.org/next"
 			ignoredBrokenURLPrefixes := []string{
-				"https://stackoverflow.com",
+				"https://stackoverflow.com", // SO prevents scraping so always 403
+				"https://alain.xyz/blog/",   // JavaScript IDs
 			}
 
 			if err := installMuffet(); err != nil {
