@@ -28,6 +28,7 @@ func init() {
 				"**/*.md",
 				"**/*.yml",
 				"**/*.yaml",
+				"build.zig",
 			}, replacer)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "FindAndReplace")
