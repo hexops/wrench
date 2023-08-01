@@ -56,8 +56,18 @@ func init() {
 						return errors.Wrap(err, "Parse")
 					}
 					split := strings.Split(u.Path, "/")
-					repoURL := "github.com/" + split[1] + "/" + split[2]
-					cloneWorkDir := filepath.Join(wrenchUpdateCache, split[1]+"-"+split[2])
+
+					orgName := split[1]
+					repoName := split[2]
+					if u.Host == "pkg.machengine.org" {
+						// https://pkg.machengine.org/mach-ecs/3c5e29fb08b737a10fedfa70a7659d3506626435.tar.gz
+						orgName = "hexops"
+						repoName = split[1]
+					}
+
+					repoURL := "github.com/" + orgName + "/" + repoName
+					cacheKey := orgName + "-" + repoName
+					cloneWorkDir := filepath.Join(wrenchUpdateCache, cacheKey)
 
 					if _, err := os.Stat(cloneWorkDir); os.IsNotExist(err) {
 						if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
@@ -68,7 +78,11 @@ func init() {
 					if err != nil {
 						return errors.Wrap(err, "GitRevParse")
 					}
-					split[4] = latestHEAD + ".tar.gz"
+					if u.Host == "github.com" {
+						split[4] = latestHEAD + ".tar.gz"
+					} else if u.Host == "pkg.machengine.org" {
+						split[2] = latestHEAD + ".tar.gz"
+					}
 					u.Path = strings.Join(split, "/")
 					urlNode.StringLiteral = u.String()
 
