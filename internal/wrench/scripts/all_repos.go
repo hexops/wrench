@@ -94,6 +94,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/opengl-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/linux-audio-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/xcode-frameworks", CI: Zig, HasUpdateVerifyScripts: true},
+		{Name: "hexops/xcode-frameworks-pkg", CI: Zig, HasUpdateVerifyScripts: false},
 		{Name: "hexops/glfw", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/basisu", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/dawn", CI: None},
