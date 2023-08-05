@@ -73,6 +73,11 @@ func init() {
 						if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
 							return errors.Wrap(err, "GitClone")
 						}
+						if repoName == "mach-sysjs" {
+							if err := GitCheckout(os.Stderr, cloneWorkDir, "v0"); err != nil {
+								return errors.Wrap(err, "GitCheckout")
+							}
+						}
 					}
 					latestHEAD, err := GitRevParse(os.Stderr, cloneWorkDir, "HEAD")
 					if err != nil {
