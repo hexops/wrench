@@ -354,7 +354,7 @@ func dawnCleanupThirdParty(dir string) error {
 	// Remove gitmodules, some third_party/ repositories contain these and leaving them around would
 	// cause any recursive submodule clones to fail because e.g. some reference internal Google
 	// repositories. We don't want them anyway.
-	if err := FindAndDelete(dir, []string{"third_party/**/.gitmodules"}, func(name string) (bool, error) {
+	if err := FindAndDelete(dir, []string{".gitmodules", "third_party/**/.gitmodules"}, func(name string) (bool, error) {
 		return true, nil
 	})(os.Stderr); err != nil {
 		return errors.Wrap(err, "FindAndDelete")
@@ -404,6 +404,7 @@ func dawnCleanupThirdParty(dir string) error {
 		"third_party/zlib/google/test/",
 		"third_party/webgpu-cts/",
 		"third_party/benchmark/",
+		"third_party/gpuweb/",
 		"third_party/gpuweb-cts/",
 		"third_party/protobuf/",
 		"third_party/markupsafe/",
@@ -413,6 +414,21 @@ func dawnCleanupThirdParty(dir string) error {
 		"third_party/swiftshader/third_party/SPIRV-Tools",   // already in third_party/vulkan-deps/spirv-tools
 		"third_party/swiftshader/third_party/SPIRV-Headers", // already in third_party/vulkan-deps/spirv-headers
 		"third_party/swiftshader/third_party/llvm-subzero",  // already in third_party/vulkan-deps/llvm-subzero
+
+		"third_party/vulkan-deps/vulkan-headers/",
+		"third_party/libc++/",
+		"third_party/libc++abi/",
+		"third_party/angle/",
+		"third_party/clang-format/",
+		"third_party/google_benchmark/",
+		"third_party/dxc/",
+		"third_party/dxheaders/",
+		"third_party/swiftshader/",
+		"third_party/ninja/",
+		"third_party/node-addon-api/",
+		"third_party/node-api-headers/",
+		"third_party/gn/",
+		"test/tint/",
 	} {
 		_ = os.RemoveAll(filepath.Join(dir, path))
 	}
