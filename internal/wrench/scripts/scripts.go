@@ -392,6 +392,30 @@ func GitBranches(w io.Writer, dir string) ([]string, error) {
 	return branches, nil
 }
 
+func GitLsTree(w io.Writer, ref, path, workDir string) ([]string, error) {
+	out, err := OutputArgs(w, "git", []string{"ls-tree", "--name-only", ref, "--", path}, WorkDir(workDir))
+	if err != nil {
+		return nil, errors.Wrap(err, "git ls-tree")
+	}
+	var paths []string
+	for _, line := range strings.Split(out, "\n") {
+		paths = append(paths, strings.TrimSpace(line))
+	}
+	return paths, nil
+}
+
+func GitLsTreeFull(w io.Writer, ref, path, workDir string) ([]string, error) {
+	out, err := OutputArgs(w, "git", []string{"ls-tree", "--full-tree", "-r", "--name-only", ref, "--", path}, WorkDir(workDir))
+	if err != nil {
+		return nil, errors.Wrap(err, "git ls-tree")
+	}
+	var paths []string
+	for _, line := range strings.Split(out, "\n") {
+		paths = append(paths, strings.TrimSpace(line))
+	}
+	return paths, nil
+}
+
 func GitRevParse(w io.Writer, dir, rev string) (string, error) {
 	out, err := Output(w, `git rev-parse `+rev, WorkDir(dir))
 	if err != nil {
