@@ -22,6 +22,7 @@ func init() {
 			website := "https://machengine.org/next"
 			allowedURLPrefixes := []string{
 				"https://machengine.org",
+				"https://media.machengine.org",
 				"https://raw.githubusercontent.com",
 				"https://github.com",
 			}
@@ -43,7 +44,7 @@ func init() {
 					if ext == "" {
 						ext = path.Ext(u.Query().Get("url"))
 					}
-					if ext == "" {
+					if ext == "" || ext == ".html" {
 						continue
 					}
 					for _, allowedPrefix := range allowedURLPrefixes {
