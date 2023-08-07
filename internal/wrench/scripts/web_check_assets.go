@@ -58,6 +58,7 @@ func init() {
 			}
 
 			var buf bytes.Buffer
+			var issues []api.UpsertIssue
 			if len(notAllowed) > 0 {
 				fmt.Fprintf(&buf, "[Wrench](https://wrench.machengine.org) here! I found these URLs linking assets on %s that are not allowed:\n\n", website)
 				hosts := map[string]struct{}{}
@@ -71,15 +72,15 @@ func init() {
 					}
 				}
 				fmt.Fprintf(&buf, "\nThe allowlist can be found [here](https://github.com/hexops/wrench/blob/main/internal/wrench/scripts/web_check_assets.go).")
-			}
 
-			return &api.ScriptResponse{UpsertIssues: []api.UpsertIssue{
-				{
+				issues = append(issues, api.UpsertIssue{
 					RepoPair: "hexops/mach",
 					Title:    "website: found asset URLs that are not allowed",
 					Body:     buf.String(),
-				},
-			}}, nil
+				})
+			}
+
+			return &api.ScriptResponse{UpsertIssues: issues}, nil
 		},
 	})
 }
