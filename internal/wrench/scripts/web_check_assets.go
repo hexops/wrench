@@ -25,6 +25,7 @@ func init() {
 				"https://media.machengine.org",
 				"https://raw.githubusercontent.com",
 				"https://github.com",
+				"https://images.weserv.nl",
 			}
 
 			if err := installMuffet(); err != nil {
