@@ -42,6 +42,10 @@ func init() {
 							continue l
 						}
 					}
+					if strings.Contains(link.Error, "body size exceeds the given limit") && strings.HasPrefix(link.URL, "https://media.machengine.org") {
+						// large file
+						continue
+					}
 					brokenLinks = append(brokenLinks, [3]string{result.URL, link.URL, link.Error})
 				}
 			}
