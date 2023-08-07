@@ -42,7 +42,9 @@ func init() {
 							continue l
 						}
 					}
-					if strings.Contains(link.Error, "body size exceeds the given limit") && strings.HasPrefix(link.URL, "https://media.machengine.org") {
+					ignoreLargeBody := strings.HasPrefix(link.URL, "https://media.machengine.org")
+					ignoreLargeBody = ignoreLargeBody || strings.HasPrefix(link.URL, "https://pkg.machengine.org")
+					if ignoreLargeBody && strings.Contains(link.Error, "body size exceeds the given limit") {
 						// large file
 						continue
 					}
