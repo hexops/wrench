@@ -22,7 +22,7 @@ func init() {
 			workDir := "zig-rewrite-work"
 			defer os.RemoveAll(workDir)
 			for _, repo := range AllRepos {
-				if repo.CI != Zig {
+				if repo.Name != "hexops/machengine.org" && repo.CI != Zig {
 					continue
 				}
 				repoURL := "github.com/" + repo.Name
