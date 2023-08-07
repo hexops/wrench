@@ -53,6 +53,7 @@ func init() {
 			}
 
 			var buf bytes.Buffer
+			var issues []api.UpsertIssue
 			if len(brokenLinks) > 0 {
 				fmt.Fprintf(&buf, "[Wrench](https://wrench.machengine.org) here! I found these broken links on %s:\n\n", website)
 				for _, pair := range brokenLinks {
@@ -60,15 +61,13 @@ func init() {
 					fmt.Fprintf(&buf, "* %s (on [this page](%s), %s)\n", urlString, onPageURL, err)
 				}
 				fmt.Fprintf(&buf, "\nInvalid reports above can be ignored by adding to the [exclusion list here](https://github.com/hexops/wrench/blob/main/internal/wrench/scripts/web_check_broken_urls.go).")
-			}
-
-			return &api.ScriptResponse{UpsertIssues: []api.UpsertIssue{
-				{
+				issues = append(issues, api.UpsertIssue{
 					RepoPair: "hexops/mach",
 					Title:    "website: broken links",
 					Body:     buf.String(),
-				},
-			}}, nil
+				})
+			}
+			return &api.ScriptResponse{UpsertIssues: issues}, nil
 		},
 	})
 }
