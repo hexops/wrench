@@ -20,6 +20,11 @@ func init() {
 				"https://stackoverflow.com", // SO prevents scraping so always 403
 				"https://alain.xyz/blog/",   // JavaScript IDs
 			}
+			ignoredLargeBodySizeURLPrefixes := []string{
+				"https://media.machengine.org", // videos
+				"https://pkg.machengine.org",   // zig tarball downloads
+				"https://github.com/hexops/machengine.org/archive/refs/heads/gh-pages.zip", // website download
+			}
 
 			if err := installMuffet(); err != nil {
 				return nil, err
@@ -42,11 +47,13 @@ func init() {
 							continue l
 						}
 					}
-					ignoreLargeBody := strings.HasPrefix(link.URL, "https://media.machengine.org")
-					ignoreLargeBody = ignoreLargeBody || strings.HasPrefix(link.URL, "https://pkg.machengine.org")
-					if ignoreLargeBody && strings.Contains(link.Error, "body size exceeds the given limit") {
+					if strings.Contains(link.Error, "body size exceeds the given limit") {
 						// large file
-						continue
+						for _, ignoredPrefix := range ignoredLargeBodySizeURLPrefixes {
+							if strings.HasPrefix(link.URL, ignoredPrefix) {
+								continue l
+							}
+						}
 					}
 					brokenLinks = append(brokenLinks, [3]string{result.URL, link.URL, link.Error})
 				}
