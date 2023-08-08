@@ -22,7 +22,8 @@ func init() {
 			website := "https://machengine.org/next"
 			allowedURLPrefixes := []string{
 				"https://machengine.org",
-				"https://media.machengine.org",
+				"https://media.machengine.org", // videos
+				"https://pkg.machengine.org",   // zig tarball downloads
 				"https://raw.githubusercontent.com",
 				"https://github.com",
 				"https://images.weserv.nl",
