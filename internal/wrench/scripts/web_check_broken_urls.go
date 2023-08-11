@@ -19,6 +19,7 @@ func init() {
 			ignoredBrokenURLPrefixes := []string{
 				"https://stackoverflow.com", // SO prevents scraping so always 403
 				"https://alain.xyz/blog/",   // JavaScript IDs
+
 			}
 			ignoredLargeBodySizeURLPrefixes := []string{
 				"https://media.machengine.org", // videos
@@ -53,6 +54,12 @@ func init() {
 							if strings.HasPrefix(link.URL, ignoredPrefix) {
 								continue l
 							}
+						}
+					}
+					if strings.Contains(link.Error, "id #") && strings.Contains(link.Error, " not found") {
+						if strings.HasPrefix(link.URL, "https://github.com/") || strings.HasPrefix(link.URL, "https://gitlab.com") {
+							// Dynamic JS headings
+							continue l
 						}
 					}
 					brokenLinks = append(brokenLinks, [3]string{result.URL, link.URL, link.Error})

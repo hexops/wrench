@@ -46,7 +46,7 @@ func init() {
 					if ext == "" {
 						ext = path.Ext(u.Query().Get("url"))
 					}
-					if ext == "" || ext == ".html" {
+					if ext == "" || ext == ".html" || ext == ".pdf" {
 						continue
 					}
 					for _, allowedPrefix := range allowedURLPrefixes {
