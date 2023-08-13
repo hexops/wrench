@@ -19,7 +19,7 @@ func init() {
 		Args:        nil,
 		Description: "wrench checks machengine.org asset URLs",
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
-			website := "https://machengine.org/next"
+			website := "https://machengine.org"
 			allowedURLPrefixes := []string{
 				"https://machengine.org",
 				"https://media.machengine.org", // videos

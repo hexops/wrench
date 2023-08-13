@@ -15,7 +15,7 @@ func init() {
 		Args:        nil,
 		Description: "wrench checks machengine.org for broken URLs",
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
-			website := "https://machengine.org/next"
+			website := "https://machengine.org"
 			ignoredBrokenURLPrefixes := []string{
 				"https://stackoverflow.com", // SO prevents scraping so always 403
 				"https://alain.xyz/blog/",   // JavaScript IDs
