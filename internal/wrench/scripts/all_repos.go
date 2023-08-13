@@ -65,6 +65,7 @@ var AllReposByCategory = []RepoCategory{
 	{Name: "Primary repositories", Repos: []Repo{
 		{Name: "hexops/mach", CI: Zig},
 		{Name: "hexops/mach-core", CI: Zig},
+		{Name: "hexops/mach-core-getting-started", CI: Zig},
 		{Name: "hexops/mach-examples", CI: Zig},
 	}},
 	{Name: "Standalone packages", Repos: []Repo{
