@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/go-github/v48/github"
@@ -39,116 +38,112 @@ func (b *Bot) sync(ctx context.Context) {
 
 	b.idLogf(logID, "github sync: starting")
 	defer b.idLogf(logID, "github sync: finished")
-	var wg sync.WaitGroup
 	for _, repo := range scripts.AllRepos {
+		time.Sleep(1 * time.Minute)
+
 		repoPair := repo.Name
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			org, repo := splitRepoPair(repoPair)
-			page := 0
-			retry := 0
+		org, repo := splitRepoPair(repoPair)
+		page := 0
+		retry := 0
 
-			var pullRequests []*github.PullRequest
-			for {
-				pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
-					State: "all",
-					ListOptions: github.ListOptions{
-						Page:    page,
-						PerPage: 1000,
-					},
-				})
-				if err != nil {
-					retry++
-					b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
-					if retry >= 5 {
-						break
-					}
-					time.Sleep(5 * time.Second)
-					continue
-				}
-				pullRequests = append(pullRequests, pagePRs...)
-				b.idLogf(logID, "%s/%s: progress: queried %v pull requests total (rate limit %v/%v)", org, repo, len(pullRequests), resp.Rate.Remaining, resp.Rate.Limit)
-
-				page = resp.NextPage
-				if resp.NextPage == 0 {
+		var pullRequests []*github.PullRequest
+		for {
+			pagePRs, resp, err := b.github.PullRequests.List(ctx, org, repo, &github.PullRequestListOptions{
+				State: "all",
+				ListOptions: github.ListOptions{
+					Page:    page,
+					PerPage: 1000,
+				},
+			})
+			if err != nil {
+				retry++
+				b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
+				if retry >= 5 {
 					break
 				}
+				time.Sleep(5 * time.Second)
+				continue
 			}
-			if err := b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests); err != nil {
-				b.idLogf(logID, "error: githubUpdatePullRequests: %v", err)
-				return
+			pullRequests = append(pullRequests, pagePRs...)
+			b.idLogf(logID, "%s/%s: progress: queried %v pull requests total (rate limit %v/%v)", org, repo, len(pullRequests), resp.Rate.Remaining, resp.Rate.Limit)
+
+			page = resp.NextPage
+			if resp.NextPage == 0 {
+				break
 			}
+		}
+		if err := b.githubUpdatePullRequestsCache(ctx, repoPair, pullRequests); err != nil {
+			b.idLogf(logID, "error: githubUpdatePullRequests: %v", err)
+			return
+		}
 
-			var issues []*github.Issue
-			for {
-				pageIssues, resp, err := b.github.Issues.ListByRepo(ctx, org, repo, &github.IssueListByRepoOptions{
-					State: "all",
-					ListOptions: github.ListOptions{
-						Page:    page,
-						PerPage: 1000,
-					},
-				})
-				if err != nil {
-					retry++
-					b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
-					if retry >= 5 {
-						break
-					}
-					time.Sleep(5 * time.Second)
-					continue
-				}
-				issues = append(issues, pageIssues...)
-				b.idLogf(logID, "%s/%s: progress: queried %v issues total (rate limit %v/%v)", org, repo, len(issues), resp.Rate.Remaining, resp.Rate.Limit)
-
-				page = resp.NextPage
-				if resp.NextPage == 0 {
+		var issues []*github.Issue
+		for {
+			pageIssues, resp, err := b.github.Issues.ListByRepo(ctx, org, repo, &github.IssueListByRepoOptions{
+				State: "all",
+				ListOptions: github.ListOptions{
+					Page:    page,
+					PerPage: 1000,
+				},
+			})
+			if err != nil {
+				retry++
+				b.idLogf(logID, "%s/%s: error: %v (retry %v of 5)", org, repo, err, retry)
+				if retry >= 5 {
 					break
 				}
+				time.Sleep(5 * time.Second)
+				continue
 			}
-			if err := b.githubUpdateIssuesCache(ctx, repoPair, issues); err != nil {
-				b.idLogf(logID, "error: githubUpdateIssues: %v", err)
-				return
-			}
+			issues = append(issues, pageIssues...)
+			b.idLogf(logID, "%s/%s: progress: queried %v issues total (rate limit %v/%v)", org, repo, len(issues), resp.Rate.Remaining, resp.Rate.Limit)
 
-			// Cache combined repository status
-			combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
-			if err != nil {
-				b.idLogf(logID, "%s/%s: error: %v (fetching combined status)", org, repo, err)
-				return
+			page = resp.NextPage
+			if resp.NextPage == 0 {
+				break
 			}
-			cacheKey := repoPair + "-Repositories-GetCombinedStatus-HEAD"
-			cacheValue, err := json.Marshal(combinedStatus)
-			if err != nil {
-				b.idLogf(logID, "error: Marshal: %v", err)
-				return
-			}
-			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
-			if err != nil {
-				b.idLogf(logID, "error: CacheSet: %v", err)
-				return
-			}
+		}
+		if err := b.githubUpdateIssuesCache(ctx, repoPair, issues); err != nil {
+			b.idLogf(logID, "error: githubUpdateIssues: %v", err)
+			return
+		}
 
-			// Cache check runs for HEAD (CI status check)
-			checkRuns, _, err := b.github.Checks.ListCheckRunsForRef(ctx, org, repo, "HEAD", nil)
-			if err != nil {
-				b.idLogf(logID, "%s/%s: error: %v (fetching check runs)", org, repo, err)
-				return
-			}
-			cacheKey = repoPair + "-Checks-ListCheckRunsForRef-HEAD"
-			cacheValue, err = json.Marshal(checkRuns)
-			if err != nil {
-				b.idLogf(logID, "error: Marshal: %v", err)
-				return
-			}
-			err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
-			if err != nil {
-				b.idLogf(logID, "error: CacheSet: %v", err)
-				return
-			}
-		}()
+		// Cache combined repository status
+		combinedStatus, _, err := b.github.Repositories.GetCombinedStatus(ctx, org, repo, "HEAD", nil)
+		if err != nil {
+			b.idLogf(logID, "%s/%s: error: %v (fetching combined status)", org, repo, err)
+			return
+		}
+		cacheKey := repoPair + "-Repositories-GetCombinedStatus-HEAD"
+		cacheValue, err := json.Marshal(combinedStatus)
+		if err != nil {
+			b.idLogf(logID, "error: Marshal: %v", err)
+			return
+		}
+		err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+		if err != nil {
+			b.idLogf(logID, "error: CacheSet: %v", err)
+			return
+		}
+
+		// Cache check runs for HEAD (CI status check)
+		checkRuns, _, err := b.github.Checks.ListCheckRunsForRef(ctx, org, repo, "HEAD", nil)
+		if err != nil {
+			b.idLogf(logID, "%s/%s: error: %v (fetching check runs)", org, repo, err)
+			return
+		}
+		cacheKey = repoPair + "-Checks-ListCheckRunsForRef-HEAD"
+		cacheValue, err = json.Marshal(checkRuns)
+		if err != nil {
+			b.idLogf(logID, "error: Marshal: %v", err)
+			return
+		}
+		err = b.store.CacheSet(ctx, githubAPICacheName, cacheKey, string(cacheValue), nil)
+		if err != nil {
+			b.idLogf(logID, "error: CacheSet: %v", err)
+			return
+		}
 	}
-	wg.Wait()
 }
 
 func (b *Bot) githubUpdatePRNow(ctx context.Context, repoPair string, updated *github.PullRequest) {
