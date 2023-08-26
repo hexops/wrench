@@ -381,6 +381,7 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "Stats")
 	}
+
 	// stats := []api.Stat{
 	// 	{
 	// 		Time:     time.Now(),
@@ -400,6 +401,24 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 	// 		Value:    3 * 1024 * 1024,
 	// 		Metadata: map[string]any{"zig version": "0.12.0-dev.170+750998eef.3"},
 	// 	},
+	// }
+
+	// var stats []api.Stat
+	// for _, d := range []time.Duration{
+	// 	1 * time.Nanosecond,
+	// 	1 * time.Millisecond,
+	// 	123 * time.Millisecond,
+	// 	1 * time.Second,
+	// 	(1 * time.Minute) + (23 * time.Second),
+	// 	(1 * time.Hour) + (2 * time.Minute) + (34 * time.Second),
+	// 	12 * time.Hour,
+	// } {
+	// 	stats = append(stats, api.Stat{
+	// 		Time:     time.Now(),
+	// 		Type:     api.StatTypeNs,
+	// 		Value:    int64(d),
+	// 		Metadata: map[string]any{"zig version": "0.12.0-dev.170+750998eef"},
+	// 	})
 	// }
 
 	unit := ""
@@ -442,26 +461,27 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	function oneDecimal(v) {
 		return Math.round(v * 10) / 10;
 	}
-	function msToTime(duration) {
-		var milliseconds = parseInt((duration%1000)/100)
-		, seconds = parseInt((duration/1000)%60)
-		, minutes = parseInt((duration/(1000*60))%60)
-		, hours = parseInt((duration/(1000*60*60))%24);
-
-		if (hours === 0 && minutes === 0 && seconds === 0) {
-			return milliseconds + 'ms'
-		} else if (hours === 0 && minutes === 0) {
-			return minutes + 'm ' + seconds + 's '
-		} else if (hours === 0) {
-			return minutes + 'm ' + seconds + 's ' + milliseconds + 'ms '
+	function formatNanoseconds(ns) {
+		var ms = 1e+6;
+		var s = ms * 1000.0;
+		var m = s * 60.0;
+		var h = m * 60.0;
+		if ((ns/ms) < 1.0) {
+			return ns + 'ns'
+		} else if ((ns/s) < 1.0) {
+			return Math.round(ns/ms) + 'ms'
+		} else if ((ns/m) < 1.0) {
+			return oneDecimal(ns/s) + 's'
+		} else if ((ns/h) < 1.0) {
+			return Math.trunc(ns/m) + 'm' + Math.round((ns%m)/s) + 's'
+		} else {
+			return Math.trunc(ns/h) + 'h' + Math.trunc((ns%h)/m) + 'm' + Math.round(((ns%h)%m)/s) + 's'
 		}
-		return hours + 'h ' + minutes + 'm ' + seconds + 's ' + milliseconds + 'ms '
 	}
 	function formatValue(v) {
 		if (unit == 'ns') {
-			return msToTime(unit / 1e+6);
-		}
-		if (unit == 'b') {
+			return formatNanoseconds(v);
+		} else if (unit == 'b') {
 			var kib = 1024.0;
 			var mib = kib * 1024;
 			var gib = mib * 1024;
