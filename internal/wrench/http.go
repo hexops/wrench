@@ -1168,6 +1168,8 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 			if stat.Time.IsZero() {
 				stat.Time = time.Now()
 			}
+			stat.Metadata["runner"] = r.ID
+			stat.Metadata["arch"] = r.Arch
 			if err := b.store.RecordStat(ctx, stat); err != nil {
 				b.idLogf(r.Job.ID.LogID(), "error recording stat: %v", err)
 			}
