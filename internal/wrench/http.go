@@ -381,7 +381,28 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "Stats")
 	}
+	// stats := []api.Stat{
+	// 	{
+	// 		Time:     time.Now(),
+	// 		Type:     api.StatTypeBytes,
+	// 		Value:    1 * 1024,
+	// 		Metadata: map[string]any{"zig version": "0.12.0-dev.170+750998eef"},
+	// 	},
+	// 	{
+	// 		Time:     time.Now().Add(24 * time.Hour),
+	// 		Type:     api.StatTypeBytes,
+	// 		Value:    4 * 1024 * 1024,
+	// 		Metadata: map[string]any{"zig version": "0.12.0-dev.170+750998eef.2"},
+	// 	},
+	// 	{
+	// 		Time:     time.Now().Add(48 * time.Hour),
+	// 		Type:     api.StatTypeBytes,
+	// 		Value:    3 * 1024 * 1024,
+	// 		Metadata: map[string]any{"zig version": "0.12.0-dev.170+750998eef.3"},
+	// 	},
+	// }
 
+	unit := ""
 	var data [][]any
 	var metadata []map[string]any
 	for index, stat := range stats {
@@ -394,6 +415,7 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 		if v, ok := meta["zig version"]; ok {
 			meta["label"] = v
 		}
+		unit = stat.Type
 		meta["time"] = stat.Time.UTC().String()
 		metadata = append(metadata, meta)
 	}
@@ -406,6 +428,7 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 <body>
 	<div id="div_g" style="width:100%; height:600px;"></div>
 	<p>Select a region to zoom in. Refresh the page to zoom out. Ctrl + drag mouse to pan.</p>
+	<div id="gutter"></div>
 
 	<link rel="stylesheet" href="https://dygraphs.com/dist/dygraph.css">
 	<script src="https://dygraphs.com/dist/dygraph.js"></script>
@@ -413,8 +436,56 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 <script>
 var data = {{.Data}};
 var metadata = {{.Metadata}};
+var unit = {{.Unit}};
 
 document.addEventListener("DOMContentLoaded", function(event) { 
+	function oneDecimal(v) {
+		return Math.round(v * 10) / 10;
+	}
+	function msToTime(duration) {
+		var milliseconds = parseInt((duration%1000)/100)
+		, seconds = parseInt((duration/1000)%60)
+		, minutes = parseInt((duration/(1000*60))%60)
+		, hours = parseInt((duration/(1000*60*60))%24);
+
+		if (hours === 0 && minutes === 0 && seconds === 0) {
+			return milliseconds + 'ms'
+		} else if (hours === 0 && minutes === 0) {
+			return minutes + 'm ' + seconds + 's '
+		} else if (hours === 0) {
+			return minutes + 'm ' + seconds + 's ' + milliseconds + 'ms '
+		}
+		return hours + 'h ' + minutes + 'm ' + seconds + 's ' + milliseconds + 'ms '
+	}
+	function formatValue(v) {
+		if (unit == 'ns') {
+			return msToTime(unit / 1e+6);
+		}
+		if (unit == 'b') {
+			var kib = 1024.0;
+			var mib = kib * 1024;
+			var gib = mib * 1024;
+			var tib = gib * 1024;
+			if (v < kib) {
+				return oneDecimal(v) + 'b'
+			}
+			if (v < mib) {
+				return oneDecimal(v / kib) + 'KiB'
+			}
+			if (v < gib) {
+				return oneDecimal(v / mib) + 'MiB'
+			}
+			if (v < tib) {
+				return oneDecimal(v / gib) + 'GiB'
+			}
+			if (v < (tib * 1024.0)) {
+				return oneDecimal(v / tib) + 'TiB'
+			}
+			return v + 'b'
+		} else {
+			return v + '';
+		}
+	}
 	new Dygraph(
 		document.getElementById("div_g"),
 		data,
@@ -427,8 +498,24 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					},
 					pixelsPerLabel: 220,
 					axisLabelWidth: 220,
+				},
+				y: {
+					axisLabelFormatter: function(value, gran, opts) {
+						return formatValue(value);
+					},
+					valueFormatter: function(value, opts, seriesName, dygraph, row, col) {
+						return formatValue(value);
+					},
+				},
+			},
+			highlightCallback: function(e, x, pts, row) {
+				var gutter = document.getElementById('gutter');
+				gutter.innerHTML = "<b>Data point:</b><br>"
+				gutter.innerHTML += formatValue(data[row][1]) + "<br>";
+				for (const key in metadata[row]) {
+					gutter.innerHTML += key + ': ' + metadata[row][key] + "<br>";
 				}
-			}
+			},
 		},
 	);
 });
@@ -444,6 +531,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	err = t.ExecuteTemplate(w, "T", map[string]any{
 		"Data":     data,
 		"Metadata": metadata,
+		"Unit":     unit,
 	})
 	if err != nil {
 		return errors.Wrap(err, "ExecuteTemplate")

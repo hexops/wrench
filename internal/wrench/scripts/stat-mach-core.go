@@ -229,7 +229,10 @@ func init() {
 			fmt.Fprintln(os.Stderr, "statBinarySizeBytesTexturedCubeReleaseFast", statBinarySizeBytesTexturedCubeReleaseFast)
 			fmt.Fprintln(os.Stderr, "statBinarySizeBytesTriangleReleaseFast", statBinarySizeBytesTriangleReleaseFast)
 
-			meta := map[string]any{"zig version": zigVersion, "repo": repoHEAD}
+			meta := map[string]any{
+				"zig version": zigVersion,
+				"repo":        repoHEAD,
+			}
 			return &api.ScriptResponse{
 				Stats: []api.Stat{
 					{
