@@ -168,7 +168,7 @@ func (s *Store) RecordStat(ctx context.Context, stat api.Stat) error {
 }
 
 func (s *Store) Stats(ctx context.Context, id string) ([]api.Stat, error) {
-	q := sqlf.Sprintf(`SELECT * FROM (SELECT timestamp, value, type, metadata FROM logs WHERE id=%v) ORDER BY timestamp`, id)
+	q := sqlf.Sprintf(`SELECT * FROM (SELECT timestamp, value, type, metadata FROM stats WHERE id=%v) ORDER BY timestamp`, id)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {
@@ -178,6 +178,7 @@ func (s *Store) Stats(ctx context.Context, id string) ([]api.Stat, error) {
 	var stats []api.Stat
 	for rows.Next() {
 		var stat api.Stat
+		stat.ID = id
 		var jsonBlob []byte
 		if err = rows.Scan(&stat.Time, &stat.Value, &stat.Type, &jsonBlob); err != nil {
 			return nil, errors.Wrap(err, "Scan")

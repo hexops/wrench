@@ -61,7 +61,7 @@ func (b *Bot) schedulerStart() error {
 			Every: 24 * time.Hour,
 			Job: api.Job{
 				ID:             "stat-mach-core",
-				Title:          "Calculate build stats, etc. for mach-core",
+				Title:          "mach-core: calculate build stats",
 				TargetRunnerID: "linux-amd64",
 				Payload: api.JobPayload{
 					Cmd: []string{"script", "stat-mach-core"},
