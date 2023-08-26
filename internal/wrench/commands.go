@@ -38,6 +38,27 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"stats", "show stats locations"})
+	b.discordCommandsEmbed["stats"] = func(args ...string) *discordgo.MessageEmbed {
+		statIDs, err := b.store.StatIDs(context.TODO())
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "Stats - error",
+				Description: err.Error(),
+			}
+		}
+
+		var buf bytes.Buffer
+		for _, id := range statIDs {
+			fmt.Fprintf(&buf, "* %s: %s/stats/%s\n", id, b.Config.ExternalURL, id)
+		}
+		return &discordgo.MessageEmbed{
+			Title:       "Stats",
+			URL:         b.Config.ExternalURL + "/stats",
+			Description: buf.String(),
+		}
+	}
+
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"runners", "show known runners"})
 	b.discordCommandsEmbed["runners"] = func(args ...string) *discordgo.MessageEmbed {
 		runners, err := b.store.Runners(context.TODO())

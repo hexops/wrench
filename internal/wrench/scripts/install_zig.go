@@ -40,7 +40,7 @@ func init() {
 				exeExt = ".exe"
 				stripPathComponents = 0
 			}
-			url := fmt.Sprintf("https://ziglang.org/builds/zig-%s-%s-%s.%s", zigOS(), zigArch(), wantZigVersion, extension)
+			url := fmt.Sprintf("https://pkg.machengine.org/zig/zig-%s-%s-%s.%s", zigOS(), zigArch(), wantZigVersion, extension)
 			archiveFilePath := "zig." + extension
 			_ = os.RemoveAll(archiveFilePath)
 			defer os.RemoveAll(archiveFilePath)
@@ -72,7 +72,7 @@ func init() {
 				return errors.Wrap(err, "EnsureOnPathPermanent")
 			}
 
-			// Extract the Go archive
+			// Extract the Zig archive
 			err = ExtractArchive(archiveFilePath, "zig", stripPathComponents)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "ExtractArchive")

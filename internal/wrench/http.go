@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	htmltemplate "html/template"
 	"io"
 	"log"
 	"net/http"
@@ -130,6 +131,7 @@ func (b *Bot) httpMuxDefault(handler func(prefix string, handle handlerFunc) htt
 			fmt.Fprintf(w, `<li><a href="%s/pull-requests">Pull requests</a></li>`, b.Config.ExternalURL)
 			fmt.Fprintf(w, `<li><a href="%s/runners">Runners & jobs</a></li>`, b.Config.ExternalURL)
 			fmt.Fprintf(w, `<li><a href="%s/logs">Job logs</a></li>`, b.Config.ExternalURL)
+			fmt.Fprintf(w, `<li><a href="%s/stats">Stats</a></li>`, b.Config.ExternalURL)
 			fmt.Fprintf(w, `<li><a href="%s/rebuild">Trigger a rebuild of wrench.machengine.org (admin-only)</a></li>`, b.Config.ExternalURL)
 		}
 		fmt.Fprintf(w, `</ul>`)
@@ -142,6 +144,7 @@ func (b *Bot) httpMuxDefault(handler func(prefix string, handle handlerFunc) htt
 	mux.Handle("/webhook/github", handler("webhook", b.httpServeWebHookGitHub))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
 	mux.Handle("/logs/", handler("logs", b.httpServeLogs))
+	mux.Handle("/stats/", handler("stats", b.httpServeStats))
 	mux.Handle("/runners/", handler("runners", b.httpServeRunners))
 	mux.Handle("/pull-requests/", handler("pull-requests", b.httpServePullRequests))
 	mux.Handle("/projects/", handler("projects", b.httpServeProjects))
@@ -354,6 +357,96 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	for _, log := range logs {
 		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
+	}
+	return nil
+}
+
+func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
+	_, id := path.Split(r.URL.Path)
+	if id == "" {
+		statIDs, err := b.store.StatIDs(r.Context())
+		if err != nil {
+			return errors.Wrap(err, "StatIDs")
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprintf(w, `<ul>`)
+		for _, id := range statIDs {
+			fmt.Fprintf(w, `<li><a href="%s/stats/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
+		}
+		fmt.Fprintf(w, `</ul>`)
+		return nil
+	}
+
+	stats, err := b.store.Stats(r.Context(), id)
+	if err != nil {
+		return errors.Wrap(err, "Stats")
+	}
+
+	var data [][]any
+	var metadata []map[string]any
+	for index, stat := range stats {
+		data = append(data, []any{
+			index,
+			stat.Value,
+		})
+		meta := stat.Metadata
+		meta["label"] = fmt.Sprintf("%v", meta)
+		if v, ok := meta["zig version"]; ok {
+			meta["label"] = v
+		}
+		meta["time"] = stat.Time.UTC().String()
+		metadata = append(metadata, meta)
+	}
+
+	t, err := htmltemplate.New("T").Parse(`
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+	<div id="div_g" style="width:100%; height:600px;"></div>
+	<p>Select a region to zoom in. Refresh the page to zoom out. Ctrl + drag mouse to pan.</p>
+
+	<link rel="stylesheet" href="https://dygraphs.com/dist/dygraph.css">
+	<script src="https://dygraphs.com/dist/dygraph.js"></script>
+
+<script>
+var data = {{.Data}};
+var metadata = {{.Metadata}};
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+	new Dygraph(
+		document.getElementById("div_g"),
+		data,
+		{
+			labels: ['Date','Value'],
+			axes: {
+				x: {
+					axisLabelFormatter: function(index, gran, opts) {
+						return metadata[Math.round(index)]["label"];
+					},
+					pixelsPerLabel: 220,
+					axisLabelWidth: 220,
+				}
+			}
+		},
+	);
+});
+</script>
+</body>
+</html>
+`)
+	if err != nil {
+		return errors.Wrap(err, "Template.Parse")
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	err = t.ExecuteTemplate(w, "T", map[string]any{
+		"Data":     data,
+		"Metadata": metadata,
+	})
+	if err != nil {
+		return errors.Wrap(err, "ExecuteTemplate")
 	}
 	return nil
 }
@@ -980,6 +1073,17 @@ func (b *Bot) httpServeRunnerJobUpdate(ctx context.Context, r *api.RunnerJobUpda
 			// if isNew {
 			// 	b.discord("I created an issue just now: %s", *issue.HTMLURL)
 			// }
+		}
+	}
+
+	if r.Job.State == api.JobStateSuccess && len(r.Job.Response.Stats) > 0 {
+		for _, stat := range r.Job.Response.Stats {
+			if stat.Time.IsZero() {
+				stat.Time = time.Now()
+			}
+			if err := b.store.RecordStat(ctx, stat); err != nil {
+				b.idLogf(r.Job.ID.LogID(), "error recording stat: %v", err)
+			}
 		}
 	}
 

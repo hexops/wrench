@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -40,6 +41,14 @@ func (s *Store) ensureSchema() error {
 			id TEXT NOT NULL,
 			message TEXT NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS stats (
+			statid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+			timestamp TIMESTAMP NOT NULL,
+			id TEXT NOT NULL,
+			value INTEGER NOT NULL,
+			type TEXT NOT NULL,
+			metadata BLOB NOT NULL
+		);
 		CREATE TABLE IF NOT EXISTS runners (
 			id TEXT PRIMARY KEY NOT NULL,
 			arch TEXT NOT NULL,
@@ -73,6 +82,8 @@ func (s *Store) ensureSchema() error {
 		);
 
 		CREATE INDEX IF NOT EXISTS idx_logs_id ON logs (id);
+
+		CREATE INDEX IF NOT EXISTS idx_stats_id ON stats (id);
 
 		CREATE INDEX IF NOT EXISTS idx_cache_cache_name ON cache (cache_name);
 		CREATE INDEX IF NOT EXISTS idx_cache_key ON cache (key);
@@ -122,6 +133,65 @@ func (s *Store) Logs(ctx context.Context, id string) ([]Log, error) {
 
 func (s *Store) LogIDs(ctx context.Context) ([]string, error) {
 	q := sqlf.Sprintf(`SELECT * FROM (SELECT DISTINCT id FROM logs) ORDER BY id`)
+
+	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueryContext")
+	}
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err = rows.Scan(&id); err != nil {
+			return nil, errors.Wrap(err, "Scan")
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+func (s *Store) RecordStat(ctx context.Context, stat api.Stat) error {
+	jsonBlob, err := json.Marshal(stat.Metadata)
+	if err != nil {
+		return errors.Wrap(err, "Marshal metadata")
+	}
+	q := sqlf.Sprintf(
+		"INSERT INTO stats(timestamp, id, value, type, metadata) VALUES(%v, %v, %v, %v, %v)",
+		stat.Time,
+		stat.ID,
+		stat.Value,
+		stat.Type,
+		jsonBlob,
+	)
+	_, err = s.db.ExecContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	return err
+}
+
+func (s *Store) Stats(ctx context.Context, id string) ([]api.Stat, error) {
+	q := sqlf.Sprintf(`SELECT * FROM (SELECT timestamp, value, type, metadata FROM logs WHERE id=%v) ORDER BY timestamp`, id)
+
+	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueryContext")
+	}
+
+	var stats []api.Stat
+	for rows.Next() {
+		var stat api.Stat
+		var jsonBlob []byte
+		if err = rows.Scan(&stat.Time, &stat.Value, &stat.Type, &jsonBlob); err != nil {
+			return nil, errors.Wrap(err, "Scan")
+		}
+		if err := json.Unmarshal(jsonBlob, &stat.Metadata); err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("Unmarshal %q", string(jsonBlob)))
+		}
+		stats = append(stats, stat)
+	}
+	return stats, rows.Err()
+}
+
+func (s *Store) StatIDs(ctx context.Context) ([]string, error) {
+	q := sqlf.Sprintf(`SELECT * FROM (SELECT DISTINCT id FROM stats) ORDER BY id`)
 
 	rows, err := s.db.QueryContext(ctx, q.Query(sqlf.SimpleBindVar), q.Args()...)
 	if err != nil {

@@ -30,11 +30,25 @@ type RunnerJobUpdate struct {
 	Response *ScriptResponse
 }
 
+const (
+	StatTypeNs    = "ns"
+	StatTypeBytes = "b"
+)
+
+type Stat struct {
+	ID       string
+	Type     string
+	Time     time.Time
+	Value    int64
+	Metadata map[string]any
+}
+
 type ScriptResponse struct {
 	PushedRepos  []string
 	UpsertIssues []UpsertIssue
 	CustomLogs   map[string]string
 	Metadata     map[string]string
+	Stats        []Stat
 }
 
 type UpsertIssue struct {
