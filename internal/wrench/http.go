@@ -427,7 +427,7 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 </head>
 <body>
 	<div id="div_g" style="width:100%; height:600px;"></div>
-	<p>Select a region to zoom in. Refresh the page to zoom out. Ctrl + drag mouse to pan.</p>
+	<p>Select a region to zoom in. Refresh the page to zoom out. Shift+click to pan.</p>
 	<div id="gutter"></div>
 
 	<link rel="stylesheet" href="https://dygraphs.com/dist/dygraph.css">
@@ -1024,8 +1024,7 @@ jobSearch:
 	for _, job := range readyJobs {
 		archMatch := job.TargetRunnerArch == "" || job.TargetRunnerArch == r.Arch
 		idMatch := job.TargetRunnerID == "" || job.TargetRunnerID == r.ID
-		wantForegroundJobs := runningForegroundJobs < 1
-		foregroundMatch := job.Payload.Background || wantForegroundJobs
+		foregroundMatch := job.Payload.Background || runningForegroundJobs == 0
 
 		if archMatch && idMatch && foregroundMatch {
 			needSecrets := job.Payload.SecretIDs

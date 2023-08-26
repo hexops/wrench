@@ -292,13 +292,13 @@ func init() {
 						Metadata: meta,
 					},
 					{
-						ID:       "mach-core-size-textured-cube-debug",
+						ID:       "mach-core-size-textured-cube-release-fast",
 						Type:     api.StatTypeBytes,
 						Value:    statBinarySizeBytesTexturedCubeReleaseFast,
 						Metadata: meta,
 					},
 					{
-						ID:       "mach-core-size-triangle-debug",
+						ID:       "mach-core-size-triangle-release-fast",
 						Type:     api.StatTypeBytes,
 						Value:    statBinarySizeBytesTriangleReleaseFast,
 						Metadata: meta,
