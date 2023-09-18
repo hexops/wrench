@@ -97,7 +97,6 @@ func init() {
 				return nil, err
 			}
 			durationZigBuild := time.Since(step)
-			step = time.Now()
 
 			wipeBuildCache := func() {
 				_ = os.RemoveAll(filepath.Join(repoDir, "zig-out"))
@@ -115,7 +114,6 @@ func init() {
 				return nil, err
 			}
 			durationZigBuild2 := time.Since(step)
-			step = time.Now()
 
 			fiTexturedCube, err := os.Stat(filepath.Join(repoDir, "zig-out/bin/textured-cube"+exeExt))
 			if err != nil {
@@ -127,7 +125,6 @@ func init() {
 			}
 			statBinarySizeBytesTexturedCube := fiTexturedCube.Size()
 			statBinarySizeBytesTriangle := fiTriangle.Size()
-			step = time.Now()
 
 			statNumExecutables := 0
 			infos, err := os.ReadDir(filepath.Join(repoDir, "zig-out/bin"))
@@ -146,13 +143,11 @@ func init() {
 				return nil, err
 			}
 			durationDirStatsPostBuild := time.Since(step)
-			step = time.Now()
 
 			statDawnSizeBytes, _, err := DirStats(filepath.Join(repoDir, "zig-cache/mach"))
 			if err != nil {
 				return nil, err
 			}
-			step = time.Now()
 
 			wipeBuildCache()
 			step = time.Now()
@@ -161,7 +156,6 @@ func init() {
 				return nil, err
 			}
 			durationZigBuildTexturedCube := time.Since(step)
-			step = time.Now()
 
 			wipeBuildCache()
 			step = time.Now()
@@ -170,7 +164,6 @@ func init() {
 				return nil, err
 			}
 			durationZigBuildTriangle := time.Since(step)
-			step = time.Now()
 
 			wipeBuildCache()
 			step = time.Now()
@@ -198,7 +191,6 @@ func init() {
 			}
 			statBinarySizeBytesTriangleReleaseFast := fiTriangle.Size()
 
-			step = time.Now()
 			repoHEAD, err := GitRevParse(os.Stderr, repoDir, "HEAD")
 			if err != nil {
 				return nil, errors.Wrap(err, "GitRevParse")
