@@ -432,7 +432,7 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 		meta := stat.Metadata
 		meta["label"] = fmt.Sprintf("%v", meta)
 		if v, ok := meta["zig version"]; ok {
-			meta["label"] = v
+			meta["label"] = v.(string)[strings.LastIndex(v.(string), "."):]
 		}
 		unit = stat.Type
 		meta["time"] = stat.Time.UTC().String()
@@ -445,13 +445,24 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 <head>
 </head>
 <body>
-	<div id="div_g" style="width:100%; height:600px;"></div>
+	<div id="div_g" style="width:100%; height:500px;"></div>
 	<p>Select a region to zoom in. Refresh the page to zoom out. Shift+click to pan.</p>
 	<div id="gutter"></div>
 
 	<link rel="stylesheet" href="https://dygraphs.com/dist/dygraph.css">
 	<script src="https://dygraphs.com/dist/dygraph.js"></script>
 
+<style>
+.dygraph-axis-label-x {
+	-webkit-transform: rotate(-30deg); 
+	-moz-transform: rotate(-30deg);
+	position: relative;
+	top: 1rem;
+}
+#div_g {
+	margin-bottom: 3rem;
+}
+</style>
 <script>
 var data = {{.Data}};
 var metadata = {{.Metadata}};
@@ -516,8 +527,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					axisLabelFormatter: function(index, gran, opts) {
 						return metadata[Math.round(index)]["label"];
 					},
-					pixelsPerLabel: 220,
-					axisLabelWidth: 220,
+					pixelsPerLabel: 50,
+					axisLabelWidth: 100,
 				},
 				y: {
 					axisLabelFormatter: function(value, gran, opts) {
