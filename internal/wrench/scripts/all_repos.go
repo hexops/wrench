@@ -64,6 +64,7 @@ type RepoCategory struct {
 var AllReposByCategory = []RepoCategory{
 	{Name: "Primary repositories", Repos: []Repo{
 		{Name: "hexops/mach", CI: Zig},
+		{Name: "hexops/mach-editor", CI: Zig},
 		{Name: "hexops/mach-core", CI: Zig},
 		{Name: "hexops/mach-core-starter-project", CI: Zig},
 		{Name: "hexops/mach-examples", CI: Zig},
@@ -81,6 +82,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach-model3d", CI: Zig},
 		{Name: "hexops/mach-sysjs", CI: Todo},
 		{Name: "hexops/mach-sysaudio", CI: Zig},
+		{Name: "hexops/mach-objc", CI: Zig},
+		{Name: "hexops/mach-objc-generator", CI: Zig},
 		{Name: "hexops/mach-opus", CI: Zig},
 		{Name: "hexops/mach-flac", CI: Zig},
 		{Name: "hexops/fastfilter", CI: Zig},
