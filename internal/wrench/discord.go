@@ -84,7 +84,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			"spam",
 		}
 		for _, name := range ignored {
-			if b.discordIsChannel(name, ref.ChannelID) {
+			if b.discordIsChannel(ref.ChannelID, name) {
 				isIgnored = true
 				break
 			}
@@ -247,7 +247,6 @@ func (b *Bot) discordIsChannel(channelID, name string) bool {
 	}
 
 	cachedName, ok = isChannelCache[channelID]
-	b.idLogf("discord-relay", "%v %v %v", channelID, name, isChannelCache)
 	if ok {
 		return cachedName == name
 	}
