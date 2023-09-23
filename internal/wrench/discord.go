@@ -75,9 +75,16 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		messageURL := "https://discord.com/channels/" + path.Join(fmt.Sprint(ref.GuildID), fmt.Sprint(ref.ChannelID), fmt.Sprint(ref.MessageID))
 
 		isIgnored := false
-		ignored := []string{"offtopic", "rocketshedding"}
+		ignored := []string{
+			"rocketshedding",
+			"offtopic",
+			"github",
+			"joins",
+			"system-messages",
+			"spam",
+		}
 		for _, name := range ignored {
-			if b.discordIsChannel("offtopic", ref.ChannelID) {
+			if b.discordIsChannel(name, ref.ChannelID) {
 				isIgnored = true
 				break
 			}
