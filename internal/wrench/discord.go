@@ -247,6 +247,7 @@ func (b *Bot) discordIsChannel(channelID, name string) bool {
 	}
 
 	cachedName, ok = isChannelCache[channelID]
+	b.idLogf("discord-relay", "%v %v %v", channelID, name, isChannelCache)
 	if ok {
 		return cachedName == name
 	}
