@@ -71,6 +71,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 
 	// Relay all activity to the #activity channel
 	if b.Config.ActivityChannel != "disabled" {
+		ref := m.Reference()
+		messageURL := "https://discord.com/channels/" + path.Join(fmt.Sprint(ref.GuildID), fmt.Sprint(ref.ChannelID), fmt.Sprint(ref.MessageID))
+
 		var embeds []*discordgo.MessageEmbed
 		embeds = append(embeds, &discordgo.MessageEmbed{
 			Color:       3134534,
@@ -78,7 +81,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 			Title:       "Relay",
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    fmt.Sprintf("@%s in %v", m.Author.Username, m.Reference().MessageID),
-				URL:     "https://discord.com/channels/" + path.Join(fmt.Sprint(m.GuildID), fmt.Sprint(m.ChannelID), fmt.Sprint(m.MessageReference.MessageID)),
+				URL:     messageURL,
 				IconURL: m.Author.AvatarURL("32"),
 			},
 		})
