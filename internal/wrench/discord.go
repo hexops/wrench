@@ -74,22 +74,33 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		ref := m.Reference()
 		messageURL := "https://discord.com/channels/" + path.Join(fmt.Sprint(ref.GuildID), fmt.Sprint(ref.ChannelID), fmt.Sprint(ref.MessageID))
 
-		var embeds []*discordgo.MessageEmbed
-		embeds = append(embeds, &discordgo.MessageEmbed{
-			Color:       3134534,
-			Description: fmt.Sprintf("%s\n\n%s", m.Content, messageURL),
-			Author: &discordgo.MessageEmbedAuthor{
-				Name:    fmt.Sprintf("@%s", m.Author.Username),
-				URL:     messageURL,
-				IconURL: m.Author.AvatarURL("32"),
-			},
-		})
-		if len(m.Embeds) > 0 {
-			embeds = append(embeds, m.Embeds...)
+		isIgnored := false
+		ignored := []string{"offtopic", "rocketshedding"}
+		for _, name := range ignored {
+			if b.discordIsChannel("offtopic", ref.ChannelID) {
+				isIgnored = true
+				break
+			}
 		}
-		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, embeds)
-		if err != nil {
-			b.idLogf("discord-relay", "unable to relay message: %v", err)
+
+		if !isIgnored {
+			var embeds []*discordgo.MessageEmbed
+			embeds = append(embeds, &discordgo.MessageEmbed{
+				Color:       3134534,
+				Description: fmt.Sprintf("%s\n\n%s", m.Content, messageURL),
+				Author: &discordgo.MessageEmbedAuthor{
+					Name:    fmt.Sprintf("@%s", m.Author.Username),
+					URL:     messageURL,
+					IconURL: m.Author.AvatarURL("32"),
+				},
+			})
+			if len(m.Embeds) > 0 {
+				embeds = append(embeds, m.Embeds...)
+			}
+			err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, embeds)
+			if err != nil {
+				b.idLogf("discord-relay", "unable to relay message: %v", err)
+			}
 		}
 	}
 
@@ -209,6 +220,30 @@ func (b *Bot) discordSendMessageToChannel(dstChannel string, message string) err
 	}
 	b.logf("discord: unable to find destination channel: %v", dstChannel)
 	return nil
+}
+
+var isChannelCache = map[string]string{}
+
+func (b *Bot) discordIsChannel(channelID, name string) bool {
+	cachedName, ok := isChannelCache[channelID]
+	if ok {
+		return cachedName == name
+	}
+
+	// Get channels for the guild
+	channels, err := b.discordSession.GuildChannels(b.Config.DiscordGuildID)
+	if err != nil {
+		return false
+	}
+	for _, c := range channels {
+		isChannelCache[c.ID] = c.Name
+	}
+
+	cachedName, ok = isChannelCache[channelID]
+	if ok {
+		return cachedName == name
+	}
+	return false
 }
 
 func (b *Bot) discordSendMessageToChannelEmbeds(dstChannel string, embeds []*discordgo.MessageEmbed) error {
