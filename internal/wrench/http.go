@@ -259,6 +259,7 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 	if numCommits == 0 {
 		return nil
 	}
+	_ = b.discordSendMessageToChannel("activity", out.String())
 	return b.discordSendMessageToChannel("github", out.String())
 }
 
