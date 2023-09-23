@@ -77,10 +77,9 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		var embeds []*discordgo.MessageEmbed
 		embeds = append(embeds, &discordgo.MessageEmbed{
 			Color:       3134534,
-			Description: "$DESCRIPTION",
-			Title:       "Relay",
+			Description: fmt.Sprintf("%s <%s>", messageURL, messageURL),
 			Author: &discordgo.MessageEmbedAuthor{
-				Name:    fmt.Sprintf("@%s in %v", m.Author.Username, m.Reference().MessageID),
+				Name:    fmt.Sprintf("@%s in %v <%v>", m.Author.Username, messageURL, messageURL),
 				URL:     messageURL,
 				IconURL: m.Author.AvatarURL("32"),
 			},
