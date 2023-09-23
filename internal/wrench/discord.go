@@ -3,6 +3,7 @@ package wrench
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -70,6 +71,20 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 
 	// Relay all activity to the #activity channel
 	if b.Config.ActivityChannel != "disabled" {
+		var embeds []*discordgo.MessageEmbed
+		embeds = append(embeds, &discordgo.MessageEmbed{
+			Color:       3134534,
+			Description: "$DESCRIPTION",
+			Title:       "Relay",
+			Author: &discordgo.MessageEmbedAuthor{
+				Name:    fmt.Sprintf("@%s in %v", m.Author.Username, m.Reference().MessageID),
+				URL:     "https://discord.com/channels/" + path.Join(fmt.Sprint(m.GuildID), fmt.Sprint(m.ChannelID), fmt.Sprint(m.MessageReference.MessageID)),
+				IconURL: m.Author.AvatarURL("32"),
+			},
+		})
+		if len(m.Embeds) > 0 {
+			embeds = append(embeds, m.Embeds...)
+		}
 		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, m.Embeds)
 		if err != nil {
 			b.idLogf("discord-relay", "unable to relay message: %v", err)
