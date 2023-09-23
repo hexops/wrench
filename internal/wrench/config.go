@@ -108,7 +108,7 @@ func LoadConfig(file string, out *Config) error {
 		out.DiscordChannel = "wrench"
 	}
 	if out.ActivityChannel == "" {
-		out.ActivityChannel = "spam" // TODO: rename to activity
+		out.ActivityChannel = "activity"
 	}
 	if out.WrenchDir == "" {
 		out.WrenchDir, err = filepath.Abs(filepath.Dir(file))
