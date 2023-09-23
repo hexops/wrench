@@ -88,7 +88,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		if len(m.Embeds) > 0 {
 			embeds = append(embeds, m.Embeds...)
 		}
-		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, m.Embeds)
+		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, embeds)
 		if err != nil {
 			b.idLogf("discord-relay", "unable to relay message: %v", err)
 		}
