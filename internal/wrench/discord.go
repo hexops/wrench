@@ -67,6 +67,16 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 	if m.Author.ID == s.State.User.ID {
 		return nil
 	}
+
+	// Relay all activity to the #activity channel
+	if b.Config.ActivityChannel != "disabled" {
+		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, m.Embeds)
+		if err != nil {
+			b.idLogf("discord-relay", "unable to relay message: %v", err)
+		}
+	}
+
+	// Handle !wrench comments
 	fields := strings.Fields(m.Content)
 	if len(fields) >= 2 && fields[0] == "!wrench" {
 		cmd := fields[1]

@@ -35,6 +35,9 @@ type Config struct {
 	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
 	DiscordChannel string `toml:"DiscordChannel,omitempty"`
 
+	// (optional) Discord channel name for Wrench to relay all Discord messages to. Defaults to "activity"
+	ActivityChannel string `toml:"ActivityChannel,omitempty"`
+
 	// (optional) Directory for caching LetsEncrypt certificates
 	LetsEncryptCacheDir string `toml:"LetsEncryptCacheDir,omitempty"`
 
@@ -103,6 +106,9 @@ func LoadConfig(file string, out *Config) error {
 	}
 	if out.DiscordChannel == "" {
 		out.DiscordChannel = "wrench"
+	}
+	if out.ActivityChannel == "" {
+		out.ActivityChannel = "spam" // TODO: rename to activity
 	}
 	if out.WrenchDir == "" {
 		out.WrenchDir, err = filepath.Abs(filepath.Dir(file))
