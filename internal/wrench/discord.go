@@ -3,7 +3,6 @@ package wrench
 import (
 	"bytes"
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -69,47 +68,47 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		return nil
 	}
 
-	// Relay all activity to the #activity channel
-	if b.Config.ActivityChannel != "disabled" {
-		ref := m.Reference()
-		messageURL := "https://discord.com/channels/" + path.Join(fmt.Sprint(ref.GuildID), fmt.Sprint(ref.ChannelID), fmt.Sprint(ref.MessageID))
+	// // Relay all activity to the #activity channel
+	// if b.Config.ActivityChannel != "disabled" {
+	// 	ref := m.Reference()
+	// 	messageURL := "https://discord.com/channels/" + path.Join(fmt.Sprint(ref.GuildID), fmt.Sprint(ref.ChannelID), fmt.Sprint(ref.MessageID))
 
-		isIgnored := false
-		ignored := []string{
-			"rocketshedding",
-			"offtopic",
-			"github",
-			"joins",
-			"system-messages",
-			"spam",
-		}
-		for _, name := range ignored {
-			if b.discordIsChannel(ref.ChannelID, name) {
-				isIgnored = true
-				break
-			}
-		}
+	// 	isIgnored := false
+	// 	ignored := []string{
+	// 		"rocketshedding",
+	// 		"offtopic",
+	// 		"github",
+	// 		"joins",
+	// 		"system-messages",
+	// 		"spam",
+	// 	}
+	// 	for _, name := range ignored {
+	// 		if b.discordIsChannel(ref.ChannelID, name) {
+	// 			isIgnored = true
+	// 			break
+	// 		}
+	// 	}
 
-		if !isIgnored {
-			var embeds []*discordgo.MessageEmbed
-			embeds = append(embeds, &discordgo.MessageEmbed{
-				Color:       3134534,
-				Description: fmt.Sprintf("%s\n\n%s", m.Content, messageURL),
-				Author: &discordgo.MessageEmbedAuthor{
-					Name:    fmt.Sprintf("@%s", m.Author.Username),
-					URL:     messageURL,
-					IconURL: m.Author.AvatarURL("32"),
-				},
-			})
-			if len(m.Embeds) > 0 {
-				embeds = append(embeds, m.Embeds...)
-			}
-			err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, embeds)
-			if err != nil {
-				b.idLogf("discord-relay", "unable to relay message: %v", err)
-			}
-		}
-	}
+	// 	if !isIgnored {
+	// 		var embeds []*discordgo.MessageEmbed
+	// 		embeds = append(embeds, &discordgo.MessageEmbed{
+	// 			Color:       3134534,
+	// 			Description: fmt.Sprintf("%s\n\n%s", m.Content, messageURL),
+	// 			Author: &discordgo.MessageEmbedAuthor{
+	// 				Name:    fmt.Sprintf("@%s", m.Author.Username),
+	// 				URL:     messageURL,
+	// 				IconURL: m.Author.AvatarURL("32"),
+	// 			},
+	// 		})
+	// 		if len(m.Embeds) > 0 {
+	// 			embeds = append(embeds, m.Embeds...)
+	// 		}
+	// 		err := b.discordSendMessageToChannelEmbeds(b.Config.ActivityChannel, embeds)
+	// 		if err != nil {
+	// 			b.idLogf("discord-relay", "unable to relay message: %v", err)
+	// 		}
+	// 	}
+	// }
 
 	// Handle !wrench comments
 	fields := strings.Fields(m.Content)
