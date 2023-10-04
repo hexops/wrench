@@ -25,7 +25,7 @@ func init() {
 				return contents, nil
 			}
 			err := FindAndReplace(".", []string{
-				"**/*.md",
+				"**/content/about/zig-version.md",
 				"**/*.yml",
 				"**/*.yaml",
 				"build.zig",
