@@ -64,21 +64,21 @@ func init() {
 			durationExtractZig := time.Since(step)
 			step = time.Now()
 
-			_, err = OutputArgs(os.Stderr, "zig", []string{"-h"})
+			err = ExecArgs("zig", []string{"-h"})(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
 			durationRunZigHelp := time.Since(step)
 			step = time.Now()
 
-			_, err = OutputArgs(os.Stderr, "zig", []string{"-h"})
+			err = ExecArgs("zig", []string{"-h"})(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
 			durationRunZigHelp2 := time.Since(step)
 			step = time.Now()
 
-			_, err = OutputArgs(os.Stderr, "git", []string{"clone", "https://github.com/hexops/mach-core", repoDir})
+			err = ExecArgs("git", []string{"clone", "https://github.com/hexops/mach-core", repoDir})(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -92,7 +92,7 @@ func init() {
 			durationDirStats := time.Since(step)
 			step = time.Now()
 
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +109,7 @@ func init() {
 			wipeBuildCache()
 
 			step = time.Now()
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -151,7 +151,7 @@ func init() {
 
 			wipeBuildCache()
 			step = time.Now()
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build", "textured-cube"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build", "textured-cube"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -159,7 +159,7 @@ func init() {
 
 			wipeBuildCache()
 			step = time.Now()
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build", "triangle"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build", "triangle"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -167,7 +167,7 @@ func init() {
 
 			wipeBuildCache()
 			step = time.Now()
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build", "textured-cube", "-Doptimize=ReleaseFast"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build", "textured-cube", "-Doptimize=ReleaseFast"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
@@ -180,7 +180,7 @@ func init() {
 
 			wipeBuildCache()
 			step = time.Now()
-			_, err = OutputArgs(os.Stderr, "zig", []string{"build", "triangle", "-Doptimize=ReleaseFast"}, WorkDir(repoDir))
+			err = ExecArgs("zig", []string{"build", "triangle", "-Doptimize=ReleaseFast"}, WorkDir(repoDir))(os.Stderr)
 			if err != nil {
 				return nil, err
 			}
