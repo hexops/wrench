@@ -78,58 +78,58 @@ func (b *Bot) schedulerStart() error {
 		// 		},
 		// 	},
 		// },
-		{
-			Every: 7 * 24 * time.Hour,
-			Job: api.Job{
-				ID:             "update-zig-version",
-				Title:          "update to latest Zig version",
-				TargetRunnerID: "linux-amd64",
-				Payload: api.JobPayload{
-					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
-					GitPushBranchName: "wrench/update-zig",
-					Background:        true, // lightweight enough
-					PRTemplate: api.PRTemplate{
-						Title: "all: update to latest Zig version",
-						Head:  "wrench/update-zig",
-						Base:  "main",
-						Body: `This change updates us to the latest Zig version.
+		// 		{
+		// 			Every: 7 * 24 * time.Hour,
+		// 			Job: api.Job{
+		// 				ID:             "update-zig-version",
+		// 				Title:          "update to latest Zig version",
+		// 				TargetRunnerID: "linux-amd64",
+		// 				Payload: api.JobPayload{
+		// 					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
+		// 					GitPushBranchName: "wrench/update-zig",
+		// 					Background:        true, // lightweight enough
+		// 					PRTemplate: api.PRTemplate{
+		// 						Title: "all: update to latest Zig version",
+		// 						Head:  "wrench/update-zig",
+		// 						Base:  "main",
+		// 						Body: `This change updates us to the latest Zig version.
 
-I'll keep updating this PR so it remains up-to-date until you want to merge it.
+		// I'll keep updating this PR so it remains up-to-date until you want to merge it.
 
-Here's the work I did to produce this: ${JOB_LOGS_URL}
+		// Here's the work I did to produce this: ${JOB_LOGS_URL}
 
-\- _Wrench the Machanist_
-						`,
-					},
-				},
-			},
-		},
-		{
-			Every: 24 * time.Hour,
-			Job: api.Job{
-				ID:             "update-deps",
-				Title:          "update build.zig.zon dependencies",
-				TargetRunnerID: "linux-amd64",
-				Payload: api.JobPayload{
-					Cmd:               []string{"script", "push-update-deps"},
-					GitPushBranchName: "wrench/update-deps",
-					Background:        true, // lightweight enough
-					PRTemplate: api.PRTemplate{
-						Title: "all: update build.zig.zon dependencies",
-						Head:  "wrench/update-deps",
-						Base:  "main",
-						Body: `This change updates build.zig.zon to the latest version of dependencies.
+		// \- _Wrench the Machanist_
+		// 						`,
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 		{
+		// 			Every: 24 * time.Hour,
+		// 			Job: api.Job{
+		// 				ID:             "update-deps",
+		// 				Title:          "update build.zig.zon dependencies",
+		// 				TargetRunnerID: "linux-amd64",
+		// 				Payload: api.JobPayload{
+		// 					Cmd:               []string{"script", "push-update-deps"},
+		// 					GitPushBranchName: "wrench/update-deps",
+		// 					Background:        true, // lightweight enough
+		// 					PRTemplate: api.PRTemplate{
+		// 						Title: "all: update build.zig.zon dependencies",
+		// 						Head:  "wrench/update-deps",
+		// 						Base:  "main",
+		// 						Body: `This change updates build.zig.zon to the latest version of dependencies.
 
-I'll keep updating this PR so it remains up-to-date until you want to merge it.
+		// I'll keep updating this PR so it remains up-to-date until you want to merge it.
 
-Here's the work I did to produce this: ${JOB_LOGS_URL}
+		// Here's the work I did to produce this: ${JOB_LOGS_URL}
 
-\- _Wrench the Machanist_
-						`,
-					},
-				},
-			},
-		},
+		// \- _Wrench the Machanist_
+		// 						`,
+		// 					},
+		// 				},
+		// 			},
+		// 		},
 		{
 			Every: 7 * 24 * time.Hour,
 			Job: api.Job{
