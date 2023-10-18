@@ -225,13 +225,15 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 
 	startable := lastJob == nil || (lastJob.State != api.JobStateReady &&
 		lastJob.State != api.JobStateStarting &&
-		lastJob.State != api.JobStateRunning)
-	shouldStart := startable
+		lastJob.State != api.JobStateRunning &&
+		lastJob.State != api.JobStateError)
+	lastJobErrored := lastJob != nil && lastJob.State == api.JobStateError
+	shouldStart := startable || lastJobErrored
 	if startable && schedule.Every == 0 {
 		shouldStart = false // Job can be started, but is not scheduled to start automatically.
 	}
 
-	if !shouldStart && force {
+	if force {
 		if startable {
 			lastJob.ScheduledStart = time.Time{}
 			if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
@@ -254,7 +256,7 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 
 	// Job is not running/scheduled, and is set to Always run OR is a ScheduledStart.
 	if !schedule.Always {
-		if lastJob == nil || lastJob.State == api.JobStateError {
+		if lastJob == nil || lastJobErrored {
 			schedule.Job.ScheduledStart = time.Now().Add(30 * time.Second)
 		} else {
 			schedule.Job.ScheduledStart = time.Now().Add(schedule.Every)
