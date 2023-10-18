@@ -228,8 +228,10 @@ func (b *Bot) discordSendMessageToChannel(dstChannel string, message string) err
 	return nil
 }
 
+//nolint:unused
 var isChannelCache = map[string]string{}
 
+//nolint:unused
 func (b *Bot) discordIsChannel(channelID, name string) bool {
 	cachedName, ok := isChannelCache[channelID]
 	if ok {
