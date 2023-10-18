@@ -237,7 +237,7 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 		}
 		return nil
 	}
-	if !start {
+	if !start && !force {
 		return nil
 	}
 
