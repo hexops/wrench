@@ -78,32 +78,32 @@ func (b *Bot) schedulerStart() error {
 		// 		},
 		// 	},
 		// },
-		// 		{
-		// 			Every: 7 * 24 * time.Hour,
-		// 			Job: api.Job{
-		// 				ID:             "update-zig-version",
-		// 				Title:          "update to latest Zig version",
-		// 				TargetRunnerID: "linux-amd64",
-		// 				Payload: api.JobPayload{
-		// 					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
-		// 					GitPushBranchName: "wrench/update-zig",
-		// 					Background:        true, // lightweight enough
-		// 					PRTemplate: api.PRTemplate{
-		// 						Title: "all: update to latest Zig version",
-		// 						Head:  "wrench/update-zig",
-		// 						Base:  "main",
-		// 						Body: `This change updates us to the latest Zig version.
+		{
+			Every: 0,
+			Job: api.Job{
+				ID:             "update-zig-version",
+				Title:          "update to latest Zig version",
+				TargetRunnerID: "linux-amd64",
+				Payload: api.JobPayload{
+					Cmd:               []string{"script", "mach-push-rewrite-zig-version"},
+					GitPushBranchName: "wrench/update-zig",
+					Background:        true, // lightweight enough
+					PRTemplate: api.PRTemplate{
+						Title: "all: update to latest Zig version",
+						Head:  "wrench/update-zig",
+						Base:  "main",
+						Body: `This change updates us to the latest Zig version.
 
-		// I'll keep updating this PR so it remains up-to-date until you want to merge it.
+I'll keep updating this PR so it remains up-to-date until you want to merge it.
 
-		// Here's the work I did to produce this: ${JOB_LOGS_URL}
+Here's the work I did to produce this: ${JOB_LOGS_URL}
 
-		// \- _Wrench the Machanist_
-		// 						`,
-		// 					},
-		// 				},
-		// 			},
-		// 		},
+\- _Wrench the Machanist_
+								`,
+					},
+				},
+			},
+		},
 		// 		{
 		// 			Every: 24 * time.Hour,
 		// 			Job: api.Job{
@@ -226,6 +226,9 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 	start := lastJob == nil || (lastJob.State != api.JobStateReady &&
 		lastJob.State != api.JobStateStarting &&
 		lastJob.State != api.JobStateRunning)
+	if start && schedule.Every == 0 {
+		start = false // Job can be started, but is not scheduled to start automatically.
+	}
 
 	if !start && force && lastJob != nil {
 		lastJob.ScheduledStart = time.Time{}
