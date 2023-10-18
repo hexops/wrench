@@ -316,7 +316,8 @@ func (b *Bot) registerCommands() {
 				Description: err.Error(),
 			}
 		}
-		if err := b.scheduleJobNow(ctx, api.JobID(args[0]), runners); err != nil {
+		jobID, err := b.scheduleJobNow(ctx, api.JobID(args[0]), runners)
+		if err != nil {
 			return &discordgo.MessageEmbed{
 				Title:       "schedule-now - error",
 				Description: err.Error(),
@@ -325,7 +326,7 @@ func (b *Bot) registerCommands() {
 
 		return &discordgo.MessageEmbed{
 			Title:       "Job schedule updated",
-			Description: fmt.Sprintf("Scheduled to run now: %s/runners", b.Config.ExternalURL),
+			Description: fmt.Sprintf("Scheduled to run now: %s/logs/job-%s", b.Config.ExternalURL, jobID),
 		}
 	}
 
