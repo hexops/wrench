@@ -77,7 +77,6 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach-glfw", CI: Zig},
 		{Name: "hexops/mach-ecs", CI: Zig},
 		{Name: "hexops/mach-dusk", CI: Zig},
-		{Name: "hexops/mach-earcut", CI: Zig},
 		{Name: "hexops/mach-gamemode", CI: Zig},
 		{Name: "hexops/mach-model3d", CI: Zig},
 		{Name: "hexops/mach-sysjs", CI: Todo},
