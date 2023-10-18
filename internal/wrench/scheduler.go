@@ -230,14 +230,23 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 		start = false // Job can be started, but is not scheduled to start automatically.
 	}
 
-	if !start && force && lastJob != nil {
-		lastJob.ScheduledStart = time.Time{}
-		if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
-			return errors.Wrap(err, "failed to update job")
+	if !start && force {
+		if lastJob != nil {
+			lastJob.ScheduledStart = time.Time{}
+			if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
+				return errors.Wrap(err, "failed to update job")
+			}
+		} else {
+			schedule.Job.ScheduledStart = time.Time{}
+			_, err = b.store.NewRunnerJob(ctx, schedule.Job)
+			if err != nil {
+				return errors.Wrap(err, "failed to create job")
+			}
+			b.idLogf(schedulerLogID, "job created: %v", schedule.Job.Title)
 		}
 		return nil
 	}
-	if !start && !force {
+	if !start {
 		return nil
 	}
 
