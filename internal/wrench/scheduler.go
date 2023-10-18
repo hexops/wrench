@@ -223,15 +223,16 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 		return "", errors.Wrap(err, "failed to query last job")
 	}
 
-	start := lastJob == nil || (lastJob.State != api.JobStateReady &&
+	startable := lastJob == nil || (lastJob.State != api.JobStateReady &&
 		lastJob.State != api.JobStateStarting &&
 		lastJob.State != api.JobStateRunning)
-	if start && schedule.Every == 0 {
-		start = false // Job can be started, but is not scheduled to start automatically.
+	shouldStart := startable
+	if startable && schedule.Every == 0 {
+		shouldStart = false // Job can be started, but is not scheduled to start automatically.
 	}
 
-	if !start && force {
-		if lastJob != nil {
+	if !shouldStart && force {
+		if startable {
 			lastJob.ScheduledStart = time.Time{}
 			if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
 				return "", errors.Wrap(err, "failed to update job")
@@ -247,7 +248,7 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 			return jobID, nil
 		}
 	}
-	if !start {
+	if !shouldStart {
 		return "", nil
 	}
 
