@@ -74,22 +74,14 @@ func init() {
 					}
 
 					repoURL := "github.com/" + orgName + "/" + repoName
-					cacheKey := orgName + "-" + repoName
-					cloneWorkDir := filepath.Join(wrenchUpdateCache, cacheKey)
-
-					if _, err := os.Stat(cloneWorkDir); os.IsNotExist(err) {
-						if err := GitClone(os.Stderr, cloneWorkDir, repoURL); err != nil {
-							return errors.Wrap(err, "GitClone")
-						}
-						if repoName == "mach-sysjs" {
-							if err := GitCheckout(os.Stderr, cloneWorkDir, "v0"); err != nil {
-								return errors.Wrap(err, "GitCheckout")
-							}
-						}
+					ref := "HEAD"
+					if repoName == "mach-sysjs" {
+						ref = "v0"
 					}
-					latestHEAD, err := GitRevParse(os.Stderr, cloneWorkDir, "HEAD")
+					remoteURL := GitRemoteURLWithAuth(cleanGitURL(repoURL))
+					latestHEAD, err := GitLsRemoteSingle(os.Stderr, remoteURL, ref)
 					if err != nil {
-						return errors.Wrap(err, "GitRevParse")
+						return errors.Wrap(err, "GitLsRemoteSingle")
 					}
 					if u.Host == "github.com" {
 						split[4] = latestHEAD + ".tar.gz"

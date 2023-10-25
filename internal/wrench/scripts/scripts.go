@@ -392,6 +392,16 @@ func GitBranches(w io.Writer, dir string) ([]string, error) {
 	return branches, nil
 }
 
+// e.g. git ls-remote https://github.com/hexops/mach HEAD
+// returns the HEAD commit SHA
+func GitLsRemoteSingle(w io.Writer, repository, pattern string) (string, error) {
+	out, err := OutputArgs(w, "git", []string{"ls-remote", repository, pattern})
+	if err != nil {
+		return "", errors.Wrap(err, "git ls-remote")
+	}
+	return strings.Fields(out)[0], nil
+}
+
 func GitLsTree(w io.Writer, ref, path, workDir string) ([]string, error) {
 	out, err := OutputArgs(w, "git", []string{"ls-tree", "--name-only", ref, "--", path}, WorkDir(workDir))
 	if err != nil {
