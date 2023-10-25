@@ -133,7 +133,7 @@ func calculatePkgHash(url string) (string, error) {
 			return "", errors.Wrap(err, "zig fetch "+url)
 		}
 		zigHash = strings.TrimSpace(zigHash)
-		err = os.WriteFile(hashFile, []byte(zigHash), 0700)
+		err = os.WriteFile(hashFile, []byte(zigHash), 0o700)
 		if err != nil {
 			return "", errors.Wrap(err, "writing "+hashFile)
 		}
