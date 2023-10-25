@@ -5,9 +5,18 @@ import (
 	"io"
 )
 
+const (
+	stateStart         = "start"
+	stateDot           = "dot"
+	stateValue         = "value"
+	stateNextValue     = "next-value"
+	stateTag           = "tag"
+	stateStringLiteral = "string-literal"
+)
+
 func Parse(contents string) (*Node, error) {
 	var (
-		nextState = "start"
+		nextState = stateStart
 		line      = 0
 		column    = 0
 		tree      *Node
@@ -33,17 +42,17 @@ func Parse(contents string) (*Node, error) {
 		}
 		// fmt.Printf("%v:%v: %s %s - %s\n", line, column, string(c), nextState, stackName)
 		switch nextState {
-		case "start":
+		case stateStart:
 			if err := expect('.', nextState); err != nil {
 				return nil, err
 			}
-			nextState = "tag or object"
-		case "tag or object":
+			nextState = stateDot
+		case stateDot:
 			if c == '{' {
 				if err := expect('{', nextState); err != nil {
 					return nil, err
 				}
-				nextState = "value"
+				nextState = stateValue
 				if tree == nil {
 					stack = append(stack, &Node{})
 					stackName = append(stackName, "root")
@@ -51,57 +60,57 @@ func Parse(contents string) (*Node, error) {
 				}
 			} else {
 				tagName += string(c)
-				nextState = "tag"
+				nextState = stateTag
 			}
-		case "value":
+		case stateValue:
 			if c == '"' {
 				if err := expect('"', nextState); err != nil {
 					return nil, err
 				}
-				nextState = "string literal"
+				nextState = stateStringLiteral
 			} else if c == '}' {
 				// object close
 				stack = stack[:len(stack)-1]
 				stackName = stackName[:len(stackName)-1]
-				nextState = "next value"
+				nextState = stateNextValue
 			} else {
 				if err := expect('.', nextState); err != nil {
 					return nil, err
 				}
-				nextState = "tag or object"
+				nextState = stateDot
 			}
-		case "next value":
+		case stateNextValue:
 			if c == '}' {
 				// object close
 				stack = stack[:len(stack)-1]
 				stackName = stackName[:len(stackName)-1]
-				nextState = "next value"
+				nextState = stateNextValue
 				continue
 			}
 			if err := expect(',', nextState); err != nil {
 				return nil, err
 			}
-			nextState = "value"
-		case "tag":
+			nextState = stateValue
+		case stateTag:
 			if c == '=' {
 				parent := stack[len(stack)-1]
 				parent.Tags = append(parent.Tags, Tag{Name: tagName, Node: Node{}})
 				stack = append(stack, &parent.Tags[len(parent.Tags)-1].Node)
 				stackName = append(stackName, tagName)
-				nextState = "value"
+				nextState = stateValue
 				tagName = ""
 				continue
 			} else {
 				tagName += string(c)
 			}
-		case "string literal":
+		case stateStringLiteral:
 			if c == '"' {
 				stack[len(stack)-1].StringLiteral = stringLit
 				stack = stack[:len(stack)-1]
 				stackName = stackName[:len(stackName)-1]
 				tagName = ""
 				stringLit = ""
-				nextState = "next value"
+				nextState = stateNextValue
 			} else {
 				stringLit += string(c)
 			}
