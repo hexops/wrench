@@ -272,11 +272,20 @@ func (n *Node) write(w io.Writer, indent, prefix string) error {
 	return nil
 }
 
-// func (n *Node) Child(tagName string) *Node {
-// 	for i, tag := range n.Tags {
-// 		if tag.Name == tagName {
-// 			return &n.Tags[i].Node
-// 		}
-// 	}
-// 	return nil
-// }
+func (n *Node) FirstStruct() *Node {
+	for _, child := range n.Children {
+		if len(child.Children) > 0 {
+			return child
+		}
+	}
+	return nil
+}
+
+func (n *Node) Child(dotName string) *Node {
+	for _, child := range n.Children {
+		if child.DotName == dotName {
+			return child.DotValue
+		}
+	}
+	return nil
+}

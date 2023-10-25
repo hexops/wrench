@@ -40,14 +40,21 @@ func init() {
 				if err != nil {
 					return errors.Wrap(err, "Parse "+match)
 				}
-				deps := tree.Child("dependencies")
+				rootStruct := tree.FirstStruct()
+				if rootStruct == nil {
+					return errors.Wrap(err, "Unable to find root .{} struct")
+				}
+				deps := rootStruct.Child("dependencies")
 				if deps == nil {
 					continue
 				}
-				for i, dep := range deps.Tags {
-					name := dep.Name
-					urlNode := dep.Node.Child("url")
-					hash := dep.Node.Child("hash")
+				for i, dep := range deps.Children {
+					if dep.DotName == "" {
+						continue
+					}
+					name := dep.DotName
+					urlNode := dep.DotValue.Child("url")
+					hash := dep.DotValue.Child("hash")
 
 					fmt.Println("check >", name, urlNode.StringLiteral)
 
@@ -97,7 +104,7 @@ func init() {
 						return errors.Wrap(err, "calculatePkgHash")
 					}
 					hash.StringLiteral = pkgHash
-					deps.Tags[i] = dep
+					deps.Children[i] = dep
 				}
 
 				// Write build.zig.zon
