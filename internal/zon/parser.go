@@ -16,6 +16,8 @@ const (
 	stateStringLiteral      = "string-literal"
 	stateStartComment       = "start-comment"
 	stateComment            = "comment"
+	stateStartWhitespace    = "start-whitespace"
+	stateWhitespace         = "whitespace"
 )
 
 func Parse(contents string) (*Node, error) {
@@ -70,6 +72,8 @@ func Parse(contents string) (*Node, error) {
 		switch nextState {
 		case stateStart:
 			if c == ' ' || c == '\n' {
+				prevState = stateStart
+				nextState = stateStartWhitespace
 			} else if c == '/' {
 				prevState = stateStart
 				nextState = stateStartComment
@@ -95,6 +99,31 @@ func Parse(contents string) (*Node, error) {
 				stackPop()
 				nextState = prevState
 			}
+		case stateStartWhitespace:
+			prev()
+			space := ""
+			if c == '\n' {
+				space = "\n"
+			}
+			parent := stack[len(stack)-1]
+			whitespaceNode := &Node{Whitespace: space}
+			parent.Children = append(parent.Children, whitespaceNode)
+			stackPush(whitespaceNode, "whitespace")
+			nextState = stateWhitespace
+		case stateWhitespace:
+			whitespaceNode := stack[len(stack)-1]
+			if c == ' ' {
+			} else if c == '\n' {
+				whitespaceNode.Whitespace += string(c)
+			} else {
+				stackPop()
+				if whitespaceNode.Whitespace == "" {
+					parent := stack[len(stack)-1]
+					parent.Children = parent.Children[:len(parent.Children)-1]
+				}
+				nextState = prevState
+				prev()
+			}
 		case stateDot:
 			if c == '{' {
 				if err := expect('{', nextState); err != nil {
@@ -109,6 +138,11 @@ func Parse(contents string) (*Node, error) {
 			}
 		case stateValue:
 			if c == ' ' || c == '\n' {
+				prevState = stateValue
+				nextState = stateStartWhitespace
+			} else if c == '/' {
+				prevState = stateValue
+				nextState = stateStartComment
 			} else if c == '"' {
 				prev()
 				nextState = stateStartStringLiteral
@@ -187,6 +221,7 @@ type Node struct {
 	DotName       string
 	DotValue      *Node
 	StringLiteral string
+	Whitespace    string
 	Comment       string
 	Children      []*Node
 }
@@ -207,26 +242,35 @@ func (n *Node) write(w io.Writer, indent, prefix string) error {
 	} else if n.StringLiteral != "" {
 		fmt.Fprintf(w, "%q", n.StringLiteral)
 		return nil
+	} else if n.Whitespace != "" {
+		fmt.Fprintf(w, "%s", n.Whitespace)
+		return nil
 	} else if n.Comment != "" {
 		fmt.Fprintf(w, "%s", n.Comment)
 		return nil
-	} else if n.Root && len(n.Children) > 0 {
-		for _, child := range n.Children {
-			_ = child.write(w, indent, prefix)
-		}
-		return nil
 	}
-	if len(n.Children) > 0 {
-		fmt.Fprintf(w, ".{\n")
-	} else {
+	pre := prefix
+	if !n.Root {
+		pre = prefix + indent
 		fmt.Fprintf(w, ".{")
 	}
 	for _, child := range n.Children {
-		fmt.Fprintf(w, prefix+indent)
-		_ = child.write(w, indent, prefix+indent)
-		fmt.Fprintf(w, ",\n")
+		if child.Whitespace != "" {
+			_ = child.write(w, indent, pre)
+		} else if child.Comment != "" {
+			fmt.Fprint(w, pre)
+			_ = child.write(w, indent, pre)
+		} else {
+			fmt.Fprint(w, pre)
+			_ = child.write(w, indent, pre)
+			if !n.Root {
+				fmt.Fprintf(w, ",")
+			}
+		}
 	}
-	fmt.Fprintf(w, prefix+"}")
+	if !n.Root {
+		fmt.Fprintf(w, prefix+"}")
+	}
 	return nil
 }
 

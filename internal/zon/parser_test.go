@@ -2,7 +2,6 @@ package zon
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"testing"
 
@@ -12,7 +11,6 @@ import (
 func TestParseComments(t *testing.T) {
 	tree, err := Parse(`
 // comment at the start
-
 // and
 
 // blank space!
@@ -24,8 +22,10 @@ func TestParseComments(t *testing.T) {
 	if err := tree.Write(&buf, "    ", ""); err != nil {
 		t.Fatal(err)
 	}
-	autogold.Expect(`// comment at the start
+	autogold.Expect(`
+// comment at the start
 // and
+
 // blank space!
 
 `).Equal(t, buf.String())
@@ -47,8 +47,11 @@ func TestParseStruct(t *testing.T) {
 	if err := tree.Write(&buf, "    ", ""); err != nil {
 		t.Fatal(err)
 	}
-	autogold.Expect(`// comment at the start
+	autogold.Expect(`
+// comment at the start
+
 // and
+
 // blank space!
 .{}
 `).Equal(t, buf.String())
@@ -72,8 +75,11 @@ func TestParseStructDotString(t *testing.T) {
 	if err := tree.Write(&buf, "    ", ""); err != nil {
 		t.Fatal(err)
 	}
-	autogold.Expect(`// comment at the start
+	autogold.Expect(`
+// comment at the start
+
 // and
+
 // blank space!
 .{
     .name = "foo",
@@ -94,6 +100,6 @@ func TestParse(t *testing.T) {
 	if err := tree.Write(&buf, "    ", ""); err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(buf.String())
+	// fmt.Println(buf.String())
 	autogold.ExpectFile(t, autogold.Raw(buf.String()))
 }

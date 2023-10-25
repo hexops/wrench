@@ -3,10 +3,17 @@
 // and
 
 // blank space!
+/// this is legal here
 .{
     .name = "glfw",
+
+    // .version comment
     .version = "0.0.0",
+
+    .foo = "bar",
+    .foobar = "baz",
     .dependencies = .{
+        // Dependencies for foo
         .xcode_frameworks = .{
             .url = "https://github.com/hexops/xcode-frameworks/archive/49838997245a740501bb34398995d08f7f2ce117.tar.gz",
             .hash = "1220d8776cfd98f5087ce2102593ba8c563bc8e445eee23242482a5947b6d8169009",
@@ -15,6 +22,8 @@
             .url = "https://pkg.machengine.org/vulkan-headers/fc495148a910ac7817ce0ec2d5948231806f2ac0.tar.gz",
             .hash = "12209aeba80369fa8638b82179b47e6742adb98a3a5b01bc518565504a922baad3e4",
         },
+
+        // Dependencies for bar
         .wayland_headers = .{
             .url = "https://pkg.machengine.org/wayland-headers/032cc655997230a3fa02e24b9dcf4936ea6f180f.tar.gz",
             .hash = "12200ca4e4528fee3d3da8b5bb0b590146e3983d7c355da481d2590b519052449ba2",
