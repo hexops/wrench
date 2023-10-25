@@ -12,11 +12,14 @@ const (
 	stateNextValue     = "next-value"
 	stateTag           = "tag"
 	stateStringLiteral = "string-literal"
+	stateStartComment  = "start-comment"
+	stateComment       = "comment"
 )
 
 func Parse(contents string) (*Node, error) {
 	var (
 		nextState = stateStart
+		prevState = stateStart
 		line      = 0
 		column    = 0
 		tree      *Node
@@ -24,29 +27,47 @@ func Parse(contents string) (*Node, error) {
 		stackName []string
 		tagName   string
 		stringLit string
+		runes     = []rune(contents)
 	)
-	for _, c := range contents {
+	for i := 0; i < len(runes); i++ {
+		c := runes[i]
 		column++
 		if c == '\n' {
 			line++
 			column = 0
 		}
-		if c == ' ' || c == '\n' {
-			continue
-		}
 		expect := func(expected rune, state string) error {
 			if c != expected {
-				return fmt.Errorf("%v:%v: expected %s ('%s'), found %s", line, column, state, string(expected), string(c))
+				return fmt.Errorf("%v:%v: expected %s (%q), found %q", line, column, state, string(expected), string(c))
 			}
 			return nil
 		}
 		// fmt.Printf("%v:%v: %s %s - %s\n", line, column, string(c), nextState, stackName)
 		switch nextState {
 		case stateStart:
-			if err := expect('.', nextState); err != nil {
+			if c == ' ' || c == '\n' {
+
+			} else if c == '/' {
+				prevState = stateStart
+				nextState = stateStartComment
+			} else {
+				if err := expect('.', nextState); err != nil {
+					return nil, err
+				}
+				nextState = stateDot
+			}
+		case stateStartComment:
+			if err := expect('/', nextState); err != nil {
 				return nil, err
 			}
-			nextState = stateDot
+			if err := expect('/', nextState); err != nil {
+				return nil, err
+			}
+			nextState = stateComment
+		case stateComment:
+			if c == '\n' {
+				nextState = prevState
+			}
 		case stateDot:
 			if c == '{' {
 				if err := expect('{', nextState); err != nil {
@@ -63,7 +84,9 @@ func Parse(contents string) (*Node, error) {
 				nextState = stateTag
 			}
 		case stateValue:
-			if c == '"' {
+			if c == ' ' || c == '\n' {
+
+			} else if c == '"' {
 				if err := expect('"', nextState); err != nil {
 					return nil, err
 				}
@@ -80,19 +103,24 @@ func Parse(contents string) (*Node, error) {
 				nextState = stateDot
 			}
 		case stateNextValue:
-			if c == '}' {
+			if c == ' ' || c == '\n' {
+
+			} else if c == '}' {
 				// object close
 				stack = stack[:len(stack)-1]
 				stackName = stackName[:len(stackName)-1]
 				nextState = stateNextValue
 				continue
+			} else {
+				if err := expect(',', nextState); err != nil {
+					return nil, err
+				}
+				nextState = stateValue
 			}
-			if err := expect(',', nextState); err != nil {
-				return nil, err
-			}
-			nextState = stateValue
 		case stateTag:
-			if c == '=' {
+			if c == ' ' || c == '\n' {
+
+			} else if c == '=' {
 				parent := stack[len(stack)-1]
 				parent.Tags = append(parent.Tags, Tag{Name: tagName, Node: Node{}})
 				stack = append(stack, &parent.Tags[len(parent.Tags)-1].Node)
