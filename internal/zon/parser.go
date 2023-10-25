@@ -6,14 +6,16 @@ import (
 )
 
 const (
-	stateStart         = "start"
-	stateDot           = "dot"
-	stateValue         = "value"
-	stateNextValue     = "next-value"
-	stateTag           = "tag"
-	stateStringLiteral = "string-literal"
-	stateStartComment  = "start-comment"
-	stateComment       = "comment"
+	stateStart              = "start"
+	stateDot                = "dot"
+	stateValue              = "value"
+	stateValueComplete      = "value-complete"
+	stateNextValue          = "next-value"
+	stateDotName            = "dot-name"
+	stateStartStringLiteral = "start-string-literal"
+	stateStringLiteral      = "string-literal"
+	stateStartComment       = "start-comment"
+	stateComment            = "comment"
 )
 
 func Parse(contents string) (*Node, error) {
@@ -22,19 +24,41 @@ func Parse(contents string) (*Node, error) {
 		prevState = stateStart
 		line      = 0
 		column    = 0
-		tree      *Node
 		stack     []*Node
 		stackName []string
 		tagName   string
-		stringLit string
 		runes     = []rune(contents)
 	)
+	stackPop := func() {
+		stack = stack[:len(stack)-1]
+		stackName = stackName[:len(stackName)-1]
+	}
+	stackPush := func(n *Node, name string) {
+		stack = append(stack, n)
+		stackName = append(stackName, name)
+	}
+	root := &Node{Root: true}
+	stackPush(root, "root")
 	for i := 0; i < len(runes); i++ {
-		c := runes[i]
-		column++
-		if c == '\n' {
-			line++
-			column = 0
+		i--
+		var c rune
+		next := func() {
+			i++
+			c = runes[i]
+			column++
+			if c == '\n' {
+				line++
+				column = 0
+			}
+		}
+		next()
+		prev := func() {
+			if c == '\n' {
+				line--
+			}
+			i--
+			c = runes[i]
+			column--
 		}
 		expect := func(expected rune, state string) error {
 			if c != expected {
@@ -42,11 +66,10 @@ func Parse(contents string) (*Node, error) {
 			}
 			return nil
 		}
-		// fmt.Printf("%v:%v: %s %s - %s\n", line, column, string(c), nextState, stackName)
+		// fmt.Printf("%v:%v: %q %s - %s\n", line, column, string(c), nextState, stackName)
 		switch nextState {
 		case stateStart:
 			if c == ' ' || c == '\n' {
-
 			} else if c == '/' {
 				prevState = stateStart
 				nextState = stateStartComment
@@ -60,12 +83,16 @@ func Parse(contents string) (*Node, error) {
 			if err := expect('/', nextState); err != nil {
 				return nil, err
 			}
-			if err := expect('/', nextState); err != nil {
-				return nil, err
-			}
+			parent := stack[len(stack)-1]
+			commentNode := &Node{Comment: "//"}
+			parent.Children = append(parent.Children, commentNode)
+			stackPush(commentNode, "comment")
 			nextState = stateComment
 		case stateComment:
+			commentNode := stack[len(stack)-1]
+			commentNode.Comment += string(c)
 			if c == '\n' {
+				stackPop()
 				nextState = prevState
 			}
 		case stateDot:
@@ -73,95 +100,95 @@ func Parse(contents string) (*Node, error) {
 				if err := expect('{', nextState); err != nil {
 					return nil, err
 				}
+				anonStruct := &Node{}
+				stackPush(anonStruct, "anon-struct")
 				nextState = stateValue
-				if tree == nil {
-					stack = append(stack, &Node{})
-					stackName = append(stackName, "root")
-					tree = stack[len(stack)-1]
-				}
 			} else {
 				tagName += string(c)
-				nextState = stateTag
+				nextState = stateDotName
 			}
 		case stateValue:
 			if c == ' ' || c == '\n' {
-
 			} else if c == '"' {
-				if err := expect('"', nextState); err != nil {
-					return nil, err
-				}
-				nextState = stateStringLiteral
+				prev()
+				nextState = stateStartStringLiteral
 			} else if c == '}' {
-				// object close
-				stack = stack[:len(stack)-1]
-				stackName = stackName[:len(stackName)-1]
-				nextState = stateNextValue
+				nextState = stateValueComplete
 			} else {
 				if err := expect('.', nextState); err != nil {
 					return nil, err
 				}
 				nextState = stateDot
 			}
+		case stateValueComplete:
+			prev()
+			complete := stack[len(stack)-1]
+			stackPop()
+			parent := stack[len(stack)-1]
+			if parent.DotName != "" {
+				parent.DotValue = complete
+				stackPop()
+			} else {
+				parent.Children = append(parent.Children, complete)
+			}
+			nextState = stateNextValue
 		case stateNextValue:
 			if c == ' ' || c == '\n' {
-
 			} else if c == '}' {
-				// object close
-				stack = stack[:len(stack)-1]
-				stackName = stackName[:len(stackName)-1]
-				nextState = stateNextValue
-				continue
+				nextState = stateValueComplete
 			} else {
 				if err := expect(',', nextState); err != nil {
 					return nil, err
 				}
 				nextState = stateValue
 			}
-		case stateTag:
+		case stateDotName:
 			if c == ' ' || c == '\n' {
-
 			} else if c == '=' {
 				parent := stack[len(stack)-1]
-				parent.Tags = append(parent.Tags, Tag{Name: tagName, Node: Node{}})
-				stack = append(stack, &parent.Tags[len(parent.Tags)-1].Node)
-				stackName = append(stackName, tagName)
+				dotValueNode := &Node{DotName: tagName}
+				parent.Children = append(parent.Children, dotValueNode)
+				stackPush(dotValueNode, "."+tagName)
 				nextState = stateValue
 				tagName = ""
 				continue
 			} else {
 				tagName += string(c)
 			}
+
+		case stateStartStringLiteral:
+			if err := expect('"', nextState); err != nil {
+				return nil, err
+			}
+			parent := stack[len(stack)-1]
+			stringNode := &Node{StringLiteral: ""}
+			parent.Children = append(parent.Children, stringNode)
+			stackPush(stringNode, "string-literal")
+			nextState = stateStringLiteral
 		case stateStringLiteral:
+			stringNode := stack[len(stack)-1]
 			if c == '"' {
-				stack[len(stack)-1].StringLiteral = stringLit
-				stack = stack[:len(stack)-1]
-				stackName = stackName[:len(stackName)-1]
-				tagName = ""
-				stringLit = ""
-				nextState = stateNextValue
+				nextState = stateValueComplete
 			} else {
-				stringLit += string(c)
+				stringNode.StringLiteral += string(c)
 			}
 		}
 	}
-	if len(stack) != 0 {
+	if len(stack) != 1 {
 		fmt.Println(len(stack), stackName)
-		panic("unexpected: stack not emptied")
+		return nil, fmt.Errorf("stack not emptied to just [root], assignment '=' without value?")
 	}
-	if tree == nil {
-		return &Node{}, nil
-	}
-	return tree, nil
-}
-
-type Tag struct {
-	Name string
-	Node Node
+	stackPop()
+	return root, nil
 }
 
 type Node struct {
-	Tags          []Tag
+	Root          bool
+	DotName       string
+	DotValue      *Node
 	StringLiteral string
+	Comment       string
+	Children      []*Node
 }
 
 func (n *Node) Write(w io.Writer, indent, prefix string) error {
@@ -173,26 +200,41 @@ func (n *Node) Write(w io.Writer, indent, prefix string) error {
 }
 
 func (n *Node) write(w io.Writer, indent, prefix string) error {
-	if n.StringLiteral != "" {
+	if n.DotName != "" {
+		fmt.Fprintf(w, ".%s = ", n.DotName)
+		_ = n.DotValue.write(w, indent, prefix)
+		return nil
+	} else if n.StringLiteral != "" {
 		fmt.Fprintf(w, "%q", n.StringLiteral)
 		return nil
+	} else if n.Comment != "" {
+		fmt.Fprintf(w, "%s", n.Comment)
+		return nil
+	} else if n.Root && len(n.Children) > 0 {
+		for _, child := range n.Children {
+			_ = child.write(w, indent, prefix)
+		}
+		return nil
 	}
-	fmt.Fprintf(w, ".{\n")
-	for _, tag := range n.Tags {
-		fmt.Fprintf(w, prefix+indent+".%s = ", tag.Name)
-		_ = tag.Node.write(w, indent, prefix+indent)
-		fmt.Fprintf(w, ",")
-		fmt.Fprintf(w, "\n")
+	if len(n.Children) > 0 {
+		fmt.Fprintf(w, ".{\n")
+	} else {
+		fmt.Fprintf(w, ".{")
+	}
+	for _, child := range n.Children {
+		fmt.Fprintf(w, prefix+indent)
+		_ = child.write(w, indent, prefix+indent)
+		fmt.Fprintf(w, ",\n")
 	}
 	fmt.Fprintf(w, prefix+"}")
 	return nil
 }
 
-func (n *Node) Child(tagName string) *Node {
-	for i, tag := range n.Tags {
-		if tag.Name == tagName {
-			return &n.Tags[i].Node
-		}
-	}
-	return nil
-}
+// func (n *Node) Child(tagName string) *Node {
+// 	for i, tag := range n.Tags {
+// 		if tag.Name == tagName {
+// 			return &n.Tags[i].Node
+// 		}
+// 	}
+// 	return nil
+// }
