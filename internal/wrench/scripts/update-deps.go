@@ -1,6 +1,7 @@
 package scripts
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/url"
 	"os"
@@ -91,27 +92,10 @@ func init() {
 					u.Path = strings.Join(split, "/")
 					urlNode.StringLiteral = u.String()
 
-					archiveFilePath := filepath.Join(wrenchUpdateCache, latestHEAD+".tar.gz")
-					if _, err := os.Stat(archiveFilePath); os.IsNotExist(err) {
-						err = DownloadFile(urlNode.StringLiteral, archiveFilePath)(os.Stderr)
-						if err != nil {
-							return errors.Wrap(err, "DownloadFile")
-						}
-					}
-					stripPathComponents := 1
-					tmpDir := "tmp"
-					_ = os.RemoveAll(tmpDir)
-					defer os.RemoveAll(tmpDir)
-					err = ExtractArchive(archiveFilePath, tmpDir, stripPathComponents)(os.Stderr)
+					pkgHash, err := calculatePkgHash(urlNode.StringLiteral)
 					if err != nil {
-						return errors.Wrap(err, "ExtractArchive")
+						return errors.Wrap(err, "calculatePkgHash")
 					}
-
-					pkgHash, err := zon.ComputePackageHash(tmpDir)
-					if err != nil {
-						return errors.Wrap(err, "ComputePackageHash")
-					}
-
 					hash.StringLiteral = pkgHash
 					deps.Tags[i] = dep
 				}
@@ -130,4 +114,34 @@ func init() {
 			return nil
 		},
 	})
+}
+
+func calculatePkgHash(url string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "UserHomeDir")
+	}
+	pkgHashDir := filepath.Join(homeDir, ".cache/wrench/pkg-hash")
+	if err := os.MkdirAll(pkgHashDir, os.ModePerm); err != nil {
+		return "", errors.Wrap(err, "MkdirAll")
+	}
+	urlSha := fmt.Sprintf("%x", sha256.Sum256([]byte(url)))
+	hashFile := filepath.Join(pkgHashDir, urlSha)
+	if _, err := os.Stat(hashFile); os.IsNotExist(err) {
+		zigHash, err := OutputArgs(os.Stderr, "zig", []string{"fetch", url})
+		if err != nil {
+			return "", errors.Wrap(err, "zig fetch "+url)
+		}
+		zigHash = strings.TrimSpace(zigHash)
+		err = os.WriteFile(hashFile, []byte(zigHash), 0700)
+		if err != nil {
+			return "", errors.Wrap(err, "writing "+hashFile)
+		}
+		return zigHash, nil
+	}
+	zigHash, err := os.ReadFile(hashFile)
+	if err != nil {
+		return "", errors.Wrap(err, "reading "+hashFile)
+	}
+	return string(zigHash), nil
 }
