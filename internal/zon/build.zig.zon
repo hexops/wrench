@@ -12,6 +12,11 @@
 
     .foo = "bar",
     .foobar = "baz",
+    .paths = .{
+        "path1",
+        "path2",
+        "path3",
+    },
     .dependencies = .{
         // Dependencies for foo
         .xcode_frameworks = .{

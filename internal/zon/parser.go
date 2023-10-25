@@ -194,9 +194,7 @@ func Parse(contents string) (*Node, error) {
 			if err := expect('"', nextState); err != nil {
 				return nil, err
 			}
-			parent := stack[len(stack)-1]
 			stringNode := &Node{StringLiteral: ""}
-			parent.Children = append(parent.Children, stringNode)
 			stackPush(stringNode, "string-literal")
 			nextState = stateStringLiteral
 		case stateStringLiteral:
