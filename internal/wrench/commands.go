@@ -330,6 +330,37 @@ func (b *Bot) registerCommands() {
 		}
 	}
 
+	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"cancel-job [id]", "cancel a job"})
+	b.discordCommandsEmbedSecure["cancel-job"] = func(args ...string) *discordgo.MessageEmbed {
+		if len(args) != 1 {
+			return &discordgo.MessageEmbed{
+				Title:       "cancel-job - error",
+				Description: "expected [id] (see !wrench schedule-list for scheduled jobs)",
+			}
+		}
+
+		ctx := context.Background()
+		runners, err := b.store.Runners(ctx)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "cancel-job - error",
+				Description: err.Error(),
+			}
+		}
+		jobID, err := b.cancelJob(ctx, api.JobID(args[0]), runners)
+		if err != nil {
+			return &discordgo.MessageEmbed{
+				Title:       "cancel-job - error",
+				Description: err.Error(),
+			}
+		}
+
+		return &discordgo.MessageEmbed{
+			Title:       "Job cancelled",
+			Description: fmt.Sprintf("Cancelled: %s/logs/job-%s", b.Config.ExternalURL, jobID),
+		}
+	}
+
 	b.discordCommandHelp = append(b.discordCommandHelp, [2]string{"script-all [command] [args]", "execute 'wrench script [cmd] [args]' on all runners"})
 	b.discordCommandsEmbedSecure["script-all"] = func(args ...string) *discordgo.MessageEmbed {
 		if len(args) < 1 {

@@ -271,6 +271,37 @@ func (b *Bot) scheduleJob(ctx context.Context, schedule ScheduledJob, runners []
 	return jobID, nil
 }
 
+func (b *Bot) cancelJob(ctx context.Context, scheduledJobID api.JobID, runners []api.Runner) (api.JobID, error) {
+	var schedule *ScheduledJob
+	for _, scheduled := range b.schedule {
+		if scheduled.Job.ID == scheduledJobID {
+			schedule = &scheduled
+			break
+		}
+	}
+	if schedule == nil {
+		return "", errors.New("scheduled job not found")
+	}
+
+	var filters []JobsFilter
+	if schedule.Job.TargetRunnerID != "" {
+		filters = append(filters, JobsFilter{TargetRunnerID: schedule.Job.TargetRunnerID})
+	}
+	lastJob, err := b.lastJobWithTitle(ctx, schedule.Job.Title, filters...)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to query last job")
+	}
+
+	b.idLogf("job-"+string(lastJob.ID), "error: job cancelled")
+	b.idLogf(schedulerLogID, "job cancelled: %v", schedule.Job.Title)
+	lastJob.State = api.JobStateError
+	lastJob.ScheduledStart = time.Time{}
+	if err := b.store.UpsertRunnerJob(ctx, *lastJob); err != nil {
+		return "", errors.Wrap(err, "failed to update job")
+	}
+	return lastJob.ID, nil
+}
+
 func (b *Bot) lastJobWithTitle(ctx context.Context, title string, filters ...JobsFilter) (*api.Job, error) {
 	lastJobs, err := b.store.Jobs(ctx, append([]JobsFilter{{Title: title}}, filters...)...)
 	if err != nil {
