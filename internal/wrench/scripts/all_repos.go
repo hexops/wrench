@@ -100,6 +100,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/xcode-frameworks", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/glfw", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/basisu", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
+		{Name: "hexops/spirv-tools", CI: Zig, Main: "main", HasUpdateVerifyScripts: true},
+		{Name: "hexops/spirv-cross", CI: Zig, Main: "main", HasUpdateVerifyScripts: true},
 		{Name: "hexops/dawn", CI: None},
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
