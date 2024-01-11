@@ -26,11 +26,11 @@ func init() {
 			}
 
 			step := time.Now()
-			zigVersion, err := QueryLatestZigVersion()
+			zigVersion, err := QueryZigVersion("mach-latest")
 			if err != nil {
-				return nil, errors.Wrap(err, "QueryLatestZigVersion")
+				return nil, errors.Wrap(err, "QueryZigVersion")
 			}
-			durationQueryLatestZigVersion := time.Since(step)
+			durationQueryZigVersion := time.Since(step)
 			step = time.Now()
 
 			// Download the Zig archive
@@ -196,7 +196,7 @@ func init() {
 				return nil, errors.Wrap(err, "GitRevParse")
 			}
 
-			fmt.Fprintln(os.Stderr, "durationQueryLatestZigVersion", durationQueryLatestZigVersion)
+			fmt.Fprintln(os.Stderr, "durationQueryZigVersion", durationQueryZigVersion)
 			fmt.Fprintln(os.Stderr, "durationDownloadZig", durationDownloadZig)
 			fmt.Fprintln(os.Stderr, "durationExtractZig", durationExtractZig)
 			fmt.Fprintln(os.Stderr, "durationRunZigHelp", durationRunZigHelp)

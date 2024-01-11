@@ -13,9 +13,9 @@ func init() {
 		Args:        nil,
 		Description: "wrench installs prerequisites (Go), rebuilds itself, and restarts the service",
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
-			wantZigVersion, err := QueryLatestZigVersion()
+			wantZigVersion, err := QueryZigVersion("mach-latest")
 			if err != nil {
-				return nil, errors.Wrap(err, "QueryLatestZigVersion")
+				return nil, errors.Wrap(err, "QueryZigVersion")
 			}
 
 			pushed := []string{}

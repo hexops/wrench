@@ -20,9 +20,9 @@ func init() {
 		Execute: func(args ...string) error {
 			force := len(args) == 1 && args[0] == "true"
 
-			wantZigVersion, err := QueryLatestZigVersion()
+			wantZigVersion, err := QueryZigVersion("mach-latest")
 			if err != nil {
-				return errors.Wrap(err, "QueryLatestZigVersion")
+				return errors.Wrap(err, "QueryZigVersion")
 			}
 
 			zigVersion, err := Output(os.Stderr, "zig version")
@@ -82,22 +82,26 @@ func init() {
 	})
 }
 
-func QueryLatestZigVersion() (string, error) {
-	resp, err := http.Get("https://ziglang.org/download/index.json")
+func QueryZigVersion(name string) (string, error) {
+	indexURL := "https://machengine.org/zig/index.json"
+	resp, err := http.Get(indexURL)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	var v *struct {
-		Master struct {
-			Version string
-		}
-	} = nil
+	type Version struct {
+		Version string
+	}
+	v := map[string]Version{}
 	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		return "", err
 	}
-	return v.Master.Version, nil
+	version, ok := v[name]
+	if !ok {
+		return "", fmt.Errorf("no Zig version %q found in %s", name, indexURL)
+	}
+	return version.Version, nil
 }
 
 func zigArch() string {
