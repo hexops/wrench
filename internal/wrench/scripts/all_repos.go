@@ -109,6 +109,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/directx-headers", CI: Zig},
 		{Name: "hexops/opus", Main: "master", CI: Zig},
 		{Name: "hexops/opusfile", Main: "master", CI: Zig},
+		{Name: "hexops/opusenc", Main: "master", CI: Zig},
 		{Name: "hexops/flac", Main: "master", CI: Zig},
 		{Name: "hexops/ogg", Main: "master", CI: Zig},
 	}},
