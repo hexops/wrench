@@ -23,6 +23,17 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 			handler("zig", b.httpPkgZig).ServeHTTP(w, r)
 			return
 		}
+		split := strings.Split(r.URL.Path, "/")
+		if len(split) == 3 {
+			// https://pkg.machengine.org/<project>/<file>
+			handler("pkg", b.httpPkgPkg).ServeHTTP(w, r)
+			return
+		}
+		if len(split) == 5 {
+			// https://pkg.machengine.org/<project>/artifact/<version>/<file>
+			handler("artifact", b.httpPkgArtifact).ServeHTTP(w, r)
+			return
+		}
 		handler("pkg", b.httpPkgPkg).ServeHTTP(w, r)
 	})
 	return mux
@@ -52,6 +63,13 @@ func (b *Bot) httpPkgRoot(w http.ResponseWriter, r *http.Request) error {
 	<p>The rewrite logic is as follows:</p>
 	<pre>
 <strong>https://github.com/hexops/$PROJECT/archive/$FILE</strong> -> <strong>https://pkg.machengine.org/$PROJECT/$FILE</strong>
+</pre>
+</div>
+<p>As well as binary release artifacts for some projects, built via our CI pipelines.</p>
+<div style="margin-left: 1rem;">
+	<p>The rewrite logic is as follows:</p>
+	<pre>
+<strong>https://github.com/hexops/$PROJECT/releases/download/$VERSION/$FILE</strong> -> <strong>https://pkg.machengine.org/$PROJECT/artifact/$VERSION/$FILE</strong>
 </pre>
 </div>
 
@@ -126,6 +144,8 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 
 // https://pkg.machengine.org/<project>/<file>
 // -> https://github.com/hexops/<project>/archive/<file>
+//
+// e.g. https://pkg.machengine.org/mach-ecs/83a3ed801008a976dd79e10068157b02c3b76a36.tar.gz
 func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	split := strings.Split(r.URL.Path, "/")
 	if len(split) != 3 {
@@ -137,6 +157,11 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	if project != path.Clean(project) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "illegal project name\n")
+		return nil
+	}
+	if fname != path.Clean(fname) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "illegal file name\n")
 		return nil
 	}
 	if !strings.HasSuffix(fname, ".tar.gz") {
@@ -176,6 +201,73 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	_ = os.MkdirAll(path.Join("cache/pkg/", project), os.ModePerm)
 	if err := scripts.DownloadFile(url, cachePath)(logWriter); err != nil {
 		b.idLogf("pkg", "error downloading file: %s url=%s", err, url)
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "unable to fetch\n")
+		return nil
+	}
+	return serveCacheHit()
+}
+
+// https://pkg.machengine.org/<project>/artifact/<version>/<file>
+// -> https://github.com/hexops/<project>/releases/download/<version>/<file>
+//
+// e.g. https://pkg.machengine.org/mach-dxcompiler/artifact/2024.02.10+4ccd240.1/aarch64-linux-gnu_ReleaseFast_lib.tar.zst
+func (b *Bot) httpPkgArtifact(w http.ResponseWriter, r *http.Request) error {
+	split := strings.Split(r.URL.Path, "/")
+	if len(split) != 5 {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "invalid path, found %v elements expected 5\n", len(split))
+		return nil
+	}
+	project, version, fname := split[1], split[3], split[4]
+	if project != path.Clean(project) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "illegal project name\n")
+		return nil
+	}
+	if version != path.Clean(version) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "illegal version\n")
+		return nil
+	}
+	if fname != path.Clean(fname) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "illegal file name\n")
+		return nil
+	}
+
+	cachePath := path.Join("cache/pkg-artifact/", project, version, fname)
+	serveCacheHit := func() error {
+		w.Header().Set("cache-control", "public, max-age=31536000, immutable")
+		f, err := os.Open(cachePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		fi, err := f.Stat()
+		if err != nil {
+			return err
+		}
+
+		b.idLogf("artifact", "serve %s", cachePath)
+		http.ServeContent(w, r, fname, fi.ModTime(), f)
+		return nil
+	}
+	if _, err := os.Stat(cachePath); err == nil {
+		return serveCacheHit()
+	}
+
+	// e.g. https://github.com/hexops/mach-dxcompiler/releases/download/2024.02.10+4ccd240.1/aarch64-linux-gnu_ReleaseFast_lib.tar.zst
+	u := &url.URL{
+		Scheme: "https",
+		Host:   "github.com",
+		Path:   path.Join("hexops", project, "releases/download", version, fname),
+	}
+	url := u.String()
+	logWriter := b.idWriter("pkg")
+	_ = os.MkdirAll(path.Join("cache/pkg-artifact/", project, version), os.ModePerm)
+	if err := scripts.DownloadFile(url, cachePath)(logWriter); err != nil {
+		b.idLogf("artifact", "error downloading file: %s url=%s", err, url)
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "unable to fetch\n")
 		return nil
