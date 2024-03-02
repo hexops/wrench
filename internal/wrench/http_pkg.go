@@ -85,6 +85,13 @@ func (b *Bot) httpPkgRoot(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+var (
+	zigVersionRegexp = regexp.MustCompile(`(\d\.?)+-[[:alnum:]]+.\d+\+[[:alnum:]]+`)
+
+	// From semver.org
+	semverRegexp = regexp.MustCompile(`^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
+)
+
 // https://pkg.machengine.org/zig/<file>
 // -> https://ziglang.org/builds/<file>
 func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
@@ -102,7 +109,6 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 	validate = strings.TrimSuffix(validate, ".tar.xz.minisig")
 	validate = strings.TrimSuffix(validate, ".zip")
 	validate = strings.TrimSuffix(validate, ".zip.minisig")
-	zigVersionRegexp := regexp.MustCompile(`(\d\.?)+-[[:alnum:]]+.\d+\+[[:alnum:]]+`)
 	if !zigVersionRegexp.MatchString(validate) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "invalid filename\n")
@@ -167,6 +173,14 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	if !strings.HasSuffix(fname, ".tar.gz") {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "illegal file extension\n")
+		return nil
+	}
+	validate := strings.TrimSuffix(fname, ".tar.gz")
+	isCommitHash := len(validate) == 40
+	isVersion := strings.HasPrefix(validate, "v") && semverRegexp.MatchString(strings.TrimPrefix(validate, "v"))
+	if !isCommitHash && !isVersion {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "filename must be <commit hash>.tar.gz or <semver>.tar.gz\n")
 		return nil
 	}
 
