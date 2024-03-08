@@ -65,9 +65,7 @@ var AllReposByCategory = []RepoCategory{
 	{Name: "Primary repositories", Repos: []Repo{
 		{Name: "hexops/mach", CI: Zig},
 		{Name: "hexops/mach-editor", CI: Zig},
-		{Name: "hexops/mach-core", CI: Zig},
 		{Name: "hexops/mach-core-starter-project", CI: Zig},
-		{Name: "hexops/mach-examples", CI: Zig},
 	}},
 	{Name: "Standalone packages", Repos: []Repo{
 		{Name: "hexops/mach-gpu", CI: Zig},
@@ -76,12 +74,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach-basisu", CI: Zig},
 		{Name: "hexops/mach-freetype", CI: Zig},
 		{Name: "hexops/mach-glfw", CI: Zig},
-		{Name: "hexops/mach-ecs", CI: Zig},
-		{Name: "hexops/mach-sysgpu", CI: Zig},
-		{Name: "hexops/mach-gamemode", CI: Zig},
 		{Name: "hexops/mach-model3d", CI: Zig},
 		{Name: "hexops/mach-sysjs", CI: Todo},
-		{Name: "hexops/mach-sysaudio", CI: Zig},
 		{Name: "hexops/mach-objc", CI: Zig},
 		{Name: "hexops/mach-objc-generator", CI: Zig},
 		{Name: "hexops/mach-opus", CI: Zig},
@@ -131,7 +125,7 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/zigmonthly.org", CI: Hugo},
 	}},
 	{Name: "Misc", Repos: []Repo{
-		{Name: "hexops/mach-core-example-assets", CI: Zig},
+		{Name: "hexops/mach-example-assets", CI: Zig},
 		{Name: "hexops/font-assets", CI: Zig},
 		{Name: "hexops/media", CI: None},
 	}},
