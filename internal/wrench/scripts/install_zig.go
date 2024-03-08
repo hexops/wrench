@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/hexops/wrench/internal/errors"
 )
@@ -20,7 +21,7 @@ func init() {
 		Execute: func(args ...string) error {
 			force := len(args) == 1 && args[0] == "true"
 
-			wantZigVersion, err := QueryZigVersion("mach-latest")
+			wantZigVersion, err := QueryZigVersion("latest")
 			if err != nil {
 				return errors.Wrap(err, "QueryZigVersion")
 			}
@@ -96,6 +97,16 @@ func QueryZigVersion(name string) (string, error) {
 	v := map[string]Version{}
 	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		return "", err
+	}
+	if name == "latest" {
+		// If we want generic latest it means either we should use e.g. "2024.3.0-mach-wip" if
+		// there is a work-in-progress nomination, otherwise fallback to "mach-latest" tag.
+		for name, version := range v {
+			if strings.HasSuffix(name, "-mach-wip") {
+				return version.Version, nil
+			}
+		}
+		name = "mach-latest"
 	}
 	version, ok := v[name]
 	if !ok {

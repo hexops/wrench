@@ -10,10 +10,14 @@ import (
 func init() {
 	Scripts = append(Scripts, Script{
 		Command:     "mach-push-rewrite-zig-version",
-		Args:        nil,
+		Args:        []string{"new version"},
 		Description: "wrench installs prerequisites (Go), rebuilds itself, and restarts the service",
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
-			wantZigVersion, err := QueryZigVersion("mach-latest")
+			if len(args) != 1 {
+				return nil, errors.New("expected [new version] argument (e.g. 'latest', 'mach-latest')")
+			}
+
+			wantZigVersion, err := QueryZigVersion(args[0])
 			if err != nil {
 				return nil, errors.Wrap(err, "QueryZigVersion")
 			}
