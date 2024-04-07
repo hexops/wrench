@@ -261,6 +261,7 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 		)
 		if len(out.String())+len(add) >= 4000 {
 			flush()
+			out.Reset()
 		}
 		fmt.Fprintf(&out, "%s", add)
 	}
