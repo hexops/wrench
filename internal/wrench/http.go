@@ -241,13 +241,17 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 		return nil
 	}
 	var out bytes.Buffer
+	flush := func() error {
+		// _ = b.discordSendMessageToChannel("activity", out.String())
+		return b.discordSendMessageToChannel("github", out.String())
+	}
 	numCommits := 0
 	for _, commit := range ev.Commits {
 		if commit.Author.GetLogin() == "wrench-bot" {
 			continue
 		}
 		numCommits++
-		fmt.Fprintf(&out, "[[%s](<%s>)] [%s](<%s>): %s (@%s)\n",
+		add := fmt.Sprintf("[[%s](<%s>)] [%s](<%s>): %s (@%s)\n",
 			*ev.Repo.FullName,
 			*ev.Repo.HTMLURL,
 			commit.GetID()[:7],
@@ -255,12 +259,15 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			ellipsis(commitTitle(commit.GetMessage()), 60),
 			commit.Author.GetLogin(),
 		)
+		if len(out.String())+len(add) >= 4000 {
+			flush()
+		}
+		fmt.Fprintf(&out, "%s", add)
 	}
 	if numCommits == 0 {
 		return nil
 	}
-	// _ = b.discordSendMessageToChannel("activity", out.String())
-	return b.discordSendMessageToChannel("github", out.String())
+	return flush()
 }
 
 func (b *Bot) discordGitHubPullRequestEvent(ev *github.PullRequestEvent) error {

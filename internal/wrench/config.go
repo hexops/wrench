@@ -35,7 +35,7 @@ type Config struct {
 	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
 	DiscordChannel string `toml:"DiscordChannel,omitempty"`
 
-	// (optional) Discord channel name for Wrench to relay all Discord messages to. Defaults to "activity"
+	// (optional) Discord channel name for Wrench to relay all Discord messages to. Defaults to "disabled"
 	ActivityChannel string `toml:"ActivityChannel,omitempty"`
 
 	// (optional) Directory for caching LetsEncrypt certificates
