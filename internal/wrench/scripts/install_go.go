@@ -17,7 +17,7 @@ func init() {
 		Args:        []string{"force"},
 		Description: "ensure that wrench's desired Go version is installed",
 		Execute: func(args ...string) error {
-			wantGoVersion := "1.20.3"
+			wantGoVersion := "1.22.2"
 
 			force := len(args) == 1 && args[0] == "true"
 			goVersion, err := Output(os.Stderr, "go version")
