@@ -259,8 +259,10 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			ellipsis(commitTitle(commit.GetMessage()), 60),
 			commit.Author.GetLogin(),
 		)
-		if len(out.String())+len(add) >= 4000 {
-			flush()
+		if len(out.String())+len(add) >= 2000 {
+			if err := flush(); err != nil {
+				return err
+			}
 			out.Reset()
 		}
 		fmt.Fprintf(&out, "%s", add)
