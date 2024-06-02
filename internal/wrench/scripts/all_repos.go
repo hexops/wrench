@@ -64,7 +64,6 @@ type RepoCategory struct {
 var AllReposByCategory = []RepoCategory{
 	{Name: "Primary repositories", Repos: []Repo{
 		{Name: "hexops/mach", CI: Zig},
-		{Name: "hexops/mach-core-starter-project", CI: Zig},
 	}},
 	{Name: "Standalone packages", Repos: []Repo{
 		{Name: "hexops/mach-gpu", CI: Zig},
