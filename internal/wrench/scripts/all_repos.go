@@ -74,7 +74,6 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach-freetype", CI: Zig},
 		{Name: "hexops/mach-glfw", CI: Zig},
 		{Name: "hexops/mach-objc", CI: Zig},
-		{Name: "hexops/mach-objc-generator", CI: Zig},
 		{Name: "hexops/mach-opus", CI: Zig},
 		{Name: "hexops/mach-flac", CI: Zig},
 		{Name: "hexops/fastfilter", CI: Zig},
