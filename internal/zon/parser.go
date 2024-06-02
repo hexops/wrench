@@ -14,6 +14,8 @@ const (
 	stateDotName            = "dot-name"
 	stateStartStringLiteral = "start-string-literal"
 	stateStringLiteral      = "string-literal"
+	stateStartBoolLiteral   = "start-bool-literal"
+	stateBoolLiteral        = "bool-literal"
 	stateStartComment       = "start-comment"
 	stateComment            = "comment"
 	stateStartWhitespace    = "start-whitespace"
@@ -146,6 +148,9 @@ func Parse(contents string) (*Node, error) {
 			} else if c == '"' {
 				prev()
 				nextState = stateStartStringLiteral
+			} else if c == 't' || c == 'f' {
+				prev()
+				nextState = stateStartBoolLiteral
 			} else if c == '}' {
 				nextState = stateValueComplete
 			} else {
@@ -204,6 +209,20 @@ func Parse(contents string) (*Node, error) {
 			} else {
 				stringNode.StringLiteral += string(c)
 			}
+
+		case stateStartBoolLiteral:
+			prev()
+			boolNode := &Node{BoolLiteral: ""}
+			stackPush(boolNode, "bool-literal")
+			nextState = stateBoolLiteral
+		case stateBoolLiteral:
+			boolNode := stack[len(stack)-1]
+			if c == ',' {
+				prev()
+				nextState = stateValueComplete
+			} else {
+				boolNode.BoolLiteral += string(c)
+			}
 		}
 	}
 	if len(stack) != 1 {
@@ -215,13 +234,13 @@ func Parse(contents string) (*Node, error) {
 }
 
 type Node struct {
-	Root          bool
-	DotName       string
-	DotValue      *Node
-	StringLiteral string
-	Whitespace    string
-	Comment       string
-	Children      []*Node
+	Root                       bool
+	DotName                    string
+	DotValue                   *Node
+	StringLiteral, BoolLiteral string
+	Whitespace                 string
+	Comment                    string
+	Children                   []*Node
 }
 
 func (n *Node) Write(w io.Writer, indent, prefix string) error {
@@ -239,6 +258,9 @@ func (n *Node) write(w io.Writer, indent, prefix string) error {
 		return nil
 	} else if n.StringLiteral != "" {
 		fmt.Fprintf(w, "%q", n.StringLiteral)
+		return nil
+	} else if n.BoolLiteral != "" {
+		fmt.Fprintf(w, "%s", n.BoolLiteral)
 		return nil
 	} else if n.Whitespace != "" {
 		fmt.Fprintf(w, "%s", n.Whitespace)
