@@ -61,7 +61,7 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 func (b *Bot) httpPkgZigRoot(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, "%s", `
+	fmt.Fprintf(w, `
 <h1 style="margin-bottom: 0.25rem;">Zig download mirror</h1>
 
 <div>
