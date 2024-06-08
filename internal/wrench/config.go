@@ -9,6 +9,14 @@ import (
 	"github.com/hexops/wrench/internal/wrench/api"
 )
 
+type ModeType string
+
+const (
+	ModeWrench ModeType = "wrench"
+	ModePkg    ModeType = "pkg"
+	ModeZig    ModeType = "zig"
+)
+
 type Config struct {
 	// ExternalURL where Wrench is hosted, if any.
 	ExternalURL string
@@ -21,22 +29,12 @@ type Config struct {
 	// Act as a Zig package proxy like pkg.machengine.org, instead of as a regular wrench server.
 	PkgProxy bool `toml:"PkgProxy,omitempty"`
 
-	// (optional) Discord bot token. See README.md for details on how to create this.
+	// Mode to operate in, one of:
 	//
-	// Disabled if an empty string.
-	DiscordBotToken string `toml:"DiscordBotToken,omitempty"`
-
-	// (required if DiscordBotToken is set) Discord guild/server ID to operate in.
-	//
-	// Find this via User Settings -> Advanced -> Enabled developer mode, then right-click on any
-	// server and Copy ID)
-	DiscordGuildID string `toml:"DiscordGuildID,omitempty"`
-
-	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
-	DiscordChannel string `toml:"DiscordChannel,omitempty"`
-
-	// (optional) Discord channel name for Wrench to relay all Discord messages to. Defaults to "disabled"
-	ActivityChannel string `toml:"ActivityChannel,omitempty"`
+	// * "wrench" -> https://wrench.machengine.org - custom CI system, etc.
+	// * "pkg" -> https://pkg.machengine.org - package mirror and Zig download mirror
+	// * "zig" -> Zig download mirror only (subset of pkg.machengine.org)
+	Mode string `toml:"Mode,omitempty"`
 
 	// (optional) Directory for caching LetsEncrypt certificates
 	LetsEncryptCacheDir string `toml:"LetsEncryptCacheDir,omitempty"`
@@ -44,17 +42,51 @@ type Config struct {
 	// (optional) Email to use for LetsEncrypt notifications
 	LetsEncryptEmail string `toml:"LetsEncryptEmail,omitempty"`
 
+	// Where Wrench should store its data, cofiguration, etc. Defaults to the directory containing
+	// this config file.
+	WrenchDir string `toml:"WrenchDir,omitempty"`
+
+	// All options below here are only used in "wrench" mode.
+
+	// (optional) Discord bot token. See README.md for details on how to create this.
+	//
+	// Disabled if an empty string.
+	//
+	// Only used in "wrench" mode.
+	DiscordBotToken string `toml:"DiscordBotToken,omitempty"`
+
+	// (required if DiscordBotToken is set) Discord guild/server ID to operate in.
+	//
+	// Find this via User Settings -> Advanced -> Enabled developer mode, then right-click on any
+	// server and Copy ID)
+	//
+	// Only used in "wrench" mode.
+	DiscordGuildID string `toml:"DiscordGuildID,omitempty"`
+
+	// (optional) Discord channel name for Wrench to send messages in. Defaults to "wrench"
+	//
+	// Only used in "wrench" mode.
+	DiscordChannel string `toml:"DiscordChannel,omitempty"`
+
+	// (optional) Discord channel name for Wrench to relay all Discord messages to. Defaults to "disabled"
+	//
+	// Only used in "wrench" mode.
+	ActivityChannel string `toml:"ActivityChannel,omitempty"`
+
 	// (optional) When specified, this is an arbitrary secret of your choosing which can be used to
 	// send GitHub webhook events from the github.com/hexops/wrench repository itself to Wrench. It
 	// will respond to these by recompiling and launching itself:
 	//
 	// The webhook URL should be: /webhook/github/self
 	//
+	// Only used in "wrench" mode.
 	GitHubWebHookSecret string `toml:"GitHubWebHookSecret,omitempty"`
 
 	// (optional) When specified Wrench can send PRs and assist with GitHub.
 	//
 	// Only applicable if running as the Wrench server.
+	//
+	// Only used in "wrench" mode.
 	GitHubAccessToken string `toml:"GitHubAccessToken,omitempty"`
 
 	// (optional) When specified wrench runners can push to Git using this configuration.
@@ -62,20 +94,32 @@ type Config struct {
 	// be distributed to all runners.
 	//
 	// Only applicable if running as the Wrench server.
+	//
+	// Only used in "wrench" mode.
 	GitPushUsername    string `toml:"GitPushUsername,omitempty"`
 	GitPushPassword    string `toml:"GitPushPassword,omitempty"`
 	GitConfigUserName  string `toml:"GitConfigUserName,omitempty"`
 	GitConfigUserEmail string `toml:"GitConfigUserEmail,omitempty"`
 
 	// (optional) Generic secret used to authenticate with this server. Any arbitrary string.
+	//
+	// Only used in "wrench" mode.
 	Secret string `toml:"Secret,omitempty"`
 
 	// (optional) Act as a runner, connecting to the root Wrench server specified in ExternalURL.
+	//
+	// Only used in "wrench" mode.
 	Runner string `toml:"Runner,omitempty"`
+}
 
-	// Where Wrench should store its data, cofiguration, etc. Defaults to the directory containing
-	// this config file.
-	WrenchDir string `toml:"WrenchDir,omitempty"`
+func (c *Config) ModeType() ModeType {
+	if c.Mode != "" {
+		return ModeType(c.Mode)
+	}
+	if c.PkgProxy {
+		return ModePkg
+	}
+	return ModeWrench
 }
 
 func (c *Config) LogFilePath() string {

@@ -45,6 +45,9 @@ func (b *Bot) loadConfig() error {
 			return errors.New("expected Config or ConfigFile to be specified")
 		}
 		b.Config = &Config{}
+		if absPath, err := filepath.Abs(b.ConfigFile); err == nil {
+			b.logf("loading config file: %s", absPath)
+		}
 		return LoadConfig(b.ConfigFile, b.Config)
 	}
 	return nil
@@ -120,7 +123,7 @@ func (b *Bot) run(s service.Service) error {
 	}
 
 	if b.Config.Runner == "" {
-		if !b.Config.PkgProxy {
+		if b.Config.ModeType() == ModeWrench {
 			b.store, err = OpenStore(filepath.Join(b.Config.WrenchDir, "wrench.db") + "?_pragma=busy_timeout%3d10000")
 			if err != nil {
 				return errors.Wrap(err, "OpenStore")
@@ -135,7 +138,7 @@ func (b *Bot) run(s service.Service) error {
 		if err := b.httpStart(); err != nil {
 			return errors.Wrap(err, "http")
 		}
-		if !b.Config.PkgProxy {
+		if b.Config.ModeType() == ModeWrench {
 			if err := b.schedulerStart(); err != nil {
 				return errors.Wrap(err, "scheduler")
 			}

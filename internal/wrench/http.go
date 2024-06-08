@@ -46,11 +46,17 @@ func (b *Bot) httpStart() error {
 	}
 
 	var mux http.Handler
-	if b.Config.PkgProxy {
-		b.logf("http: PkgProxy mode enabled")
+	if b.Config.ModeType() == ModePkg {
+		b.logf("http: pkg mirror mode enabled")
 		mux = b.httpMuxPkgProxy(handler)
-	} else {
+	} else if b.Config.ModeType() == ModeZig {
+		b.logf("http: zig mirror mode enabled")
+		mux = b.httpMuxPkgProxy(handler)
+	} else if b.Config.ModeType() == ModeWrench {
+		b.logf("http: wrench mode enabled")
 		mux = b.httpMuxDefault(handler)
+	} else {
+		b.logf("invalid config mode=%q", b.Config.ModeType())
 	}
 
 	b.logf("http: listening on %v - %v", b.Config.Address, b.Config.ExternalURL)

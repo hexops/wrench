@@ -83,3 +83,40 @@ This will give you a URL you can visit to add the bot to your server.
 2. Download release binary, rename to `.exe`
 3. Place at `C:/wrench.exe` or some other location. Put on PATH if desired.
 4. In admin terminal run `wrench.exe setup`
+
+## Run your own ziglang.org/download mirror
+
+If you want to mirror https://ziglang.org/download on-demand, similar to what https://pkg.machengine.org does,
+you may do so using e.g. this `config.toml` with `Mode = "zig"` which disables all other Wrench functionality so it only mirrors Zig downloads:
+
+```toml
+# Note: data will be written in a directory relative to this config file.
+Mode = "zig"
+
+# HTTP configuration
+ExternalURL = "http://foobar.com"
+Address = ":80"
+
+# HTTPS configuration (optional, uses LetsEncrypt)
+#ExternalURL = "https://foobar.com"
+#Address = ":443"
+#LetsEncryptEmail = "foo@bar.com"
+```
+
+Wrench will save data relative to that config file, so generally you should put that `config.toml` into e.g. a `wrench/` directory somewhere.
+
+Running `wrench svc run` will start the server. Then you can fetch e.g.:
+
+* http://localhost/
+* http://localhost/zig/zig-linux-x86_64-0.13.0.tar.xz
+* http://localhost/zig/index.json - a strict superset of https://ziglang.org/download/index.json
+
+Downloads like http://localhost/zig/zig-linux-x86_64-0.13.0.tar.xz will be fetched on-demand from ziglang.org and then cached on the local filesystem forever after that.
+
+http://localhost/zig/index.json is like https://ziglang.org/download/index.json with some small differences:
+
+* It is fetched from ziglang.org once every 15 minutes and cached in-memory.
+* Entries from https://machengine.org/zig/index.json are added so the index.json _additionally_ contains Mach [nominated Zig versions](https://machengine.org/about/nominated-zig/)
+* `tarball` fields are rewritten to point to the configured `ExternalURL`
+
+If you want to run Wrench as a system service, have it auto-start after reboot, etc. then you can e.g. put the config file in `/root/wrench/config.toml`, run `wrench svc install` as root to install the systemd service, use `wrench svc start` to start the service, and `wrench svc status` to see the status and log file locations.
