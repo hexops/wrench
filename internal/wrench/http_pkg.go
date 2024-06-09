@@ -3,6 +3,7 @@ package wrench
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -55,6 +56,18 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 		}
 		handler("pkg", b.httpPkgPkg).ServeHTTP(w, r)
 	})
+
+	// Every minute attempt to warm the cache with Zig versions we do not have. Note that this
+	// is internally cached heavily (doesn't make requests to ziglang.org except every 15m) due to
+	// index file caching.
+	go func() {
+		for {
+			if err := b.httpPkgZigWarmCache(); err != nil {
+				b.logf("failed to warm zig download cache: %s", err)
+			}
+			time.Sleep(1 * time.Minute)
+		}
+	}()
 	return mux
 }
 
@@ -128,7 +141,7 @@ func (b *Bot) httpPkgRoot(w http.ResponseWriter, r *http.Request) error {
 }
 
 var (
-	zigVersionRegexp = regexp.MustCompile(`^zig-(\w+-)*\d+\.\d+\.\d+(-dev\.\d+\+[[:alnum:]]+)?$`)
+	zigVersionRegexp = regexp.MustCompile(`(\d+\.\d+\.\d+(-dev\.\d+\+[[:alnum:]]+)?)`)
 
 	// From semver.org
 	semverRegexp = regexp.MustCompile(`^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`)
@@ -137,33 +150,79 @@ var (
 // https://pkg.machengine.org/zig/<file>
 // -> https://ziglang.org/builds/<file>
 func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
+	// example URLs:
+	//
+	// https://pkg.machengine.org/zig/0.13.0/zig-0.13.0.tar.xz
+	// https://pkg.machengine.org/zig/zig-0.14.0-dev.2+0884a4341.tar.xz
+	// https://pkg.machengine.org/zig/index.json
 	split := strings.Split(r.URL.Path, "/")
-	if len(split) == 0 {
+	if len(split) == 3 {
+		// https://pkg.machengine.org/zig/zig-0.14.0-dev.2+0884a4341.tar.xz
+		// ["" "zig" "zig-0.14.0-dev.2+0884a4341.tar.xz"]
+	} else if len(split) == 4 {
+		// https://pkg.machengine.org/zig/0.13.0/zig-0.13.0.tar.xz
+		// ["" "zig" "0.13.0" "zig-0.13.0.tar.xz"]
+		if !semverRegexp.MatchString(split[2]) {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "invalid /zig/<version>/file path - version is not semver\n")
+			return nil
+		}
+	} else {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "invalid path\n")
 		return nil
 	}
+
 	fname := split[len(split)-1]
 	if fname == "index.json" {
 		return b.httpPkgZigIndex(w, r)
 	}
 
-	// Validate this is an allowed file
-	validate := fname
-	validate = strings.TrimSuffix(validate, ".tar.xz")
-	validate = strings.TrimSuffix(validate, ".tar.xz.minisig")
-	validate = strings.TrimSuffix(validate, ".zip")
-	validate = strings.TrimSuffix(validate, ".zip.minisig")
-	if !zigVersionRegexp.MatchString(validate) {
+	// ensure the filename is not malicious in some way
+	// valid filenames look like e.g.:
+	//
+	// zig-0.13.0.tar.xz
+	// zig-0.14.0-dev.2+0884a4341.tar.xz
+	// zig-bootstrap-0.14.0-dev.2+0884a4341.tar.xz
+	// zig-macos-x86_64-0.14.0-dev.2+0884a4341.tar.xz
+	// zig-windows-aarch64-0.14.0-dev.2+0884a4341.zip
+	if fname != path.Clean(fname) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid filename\n")
+		fmt.Fprintf(w, "invalid path: %q != %q\n", fname, path.Clean(fname))
+		return nil
+	}
+	if path.Ext(fname) == "" {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "invalid extension\n")
 		return nil
 	}
 
-	path := path.Join("cache/zig/", fname)
+	// Ensure we can parse the Zig version string from the filename
+	version := zigVersionRegexp.FindString(fname)
+	if version == "" {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "invalid Zig version: %q\n", version)
+		return nil
+	}
+
+	indexFile, err := b.httpPkgZigIndexCached()
+	if err != nil {
+		return errors.Wrap(err, "httpPkgZigIndexCached")
+	}
+	var index map[string]map[string]any
+	if err := json.Unmarshal(indexFile, &index); err != nil {
+		return errors.Wrap(err, "unmarshalling index.json")
+	}
+	versionKind, err := b.zigVersionKind(version, index)
+	if err != nil {
+		return errors.Wrap(err, "unmarshalling index.json")
+	}
+
+	dirPath := path.Join("cache/zig/", versionKind, version)
+	filePath := path.Join(dirPath, fname)
 	serveCacheHit := func() error {
 		w.Header().Set("cache-control", "public, max-age=31536000, immutable")
-		f, err := os.Open(path)
+		f, err := os.Open(filePath)
 		if err != nil {
 			return err
 		}
@@ -173,24 +232,217 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		b.idLogf("zig", "serve %s", path)
+		b.idLogf("zig", "serve %s", filePath)
 		http.ServeContent(w, r, fname, fi.ModTime(), f)
 		return nil
 	}
-	if _, err := os.Stat(path); err == nil {
+	if _, err := os.Stat(filePath); err == nil {
 		return serveCacheHit()
 	}
 
-	url := "https://ziglang.org/builds/" + fname
-	logWriter := b.idWriter("zig")
-	_ = os.MkdirAll("cache/zig/", os.ModePerm)
-	if err := scripts.DownloadFile(url, path)(logWriter); err != nil {
-		b.idLogf("zig", "error downloading file: %s url=%s", err, url)
+	if err := b.httpPkgEnsureZigDownloadCached(version, versionKind, fname); err != nil {
+		if !strings.Contains(err.Error(), "ignored") {
+			b.idLogf("zig", "error downloading file: %s", err)
+		}
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "unable to fetch\n")
 		return nil
 	}
+
+	go func() {
+		b.httpPkgEnsureZigVersionCached(version, versionKind)
+	}()
 	return serveCacheHit()
+}
+
+func (b *Bot) zigVersionKind(version string, index map[string]map[string]any) (string, error) {
+	if !strings.Contains(version, "-dev") {
+		return "stable", nil
+	}
+	for indexVersion := range index {
+		if !strings.Contains(indexVersion, "mach") {
+			continue
+		}
+		// indexVersion is a mach-nominated version, e.g. "mach-latest", "2024.5.0-mach"
+		info := index[indexVersion]
+		nominatedZigVersion := info["version"].(string)
+		if version == nominatedZigVersion {
+			return "mach", nil
+		}
+	}
+	return "dev", nil
+}
+
+func (b *Bot) httpPkgZigWarmCache() error {
+	// Grab the latest index.json that we are aware of (cached in-memory for 15m)
+	indexFile, err := b.httpPkgZigIndexCached()
+	if err != nil {
+		return errors.Wrap(err, "httpPkgZigIndexCached")
+	}
+	var index map[string]map[string]any
+	if err := json.Unmarshal(indexFile, &index); err != nil {
+		return errors.Wrap(err, "unmarshalling index.json")
+	}
+	for indexVersion, v := range index {
+		ignored := map[string]struct{}{
+			// Versions that nobody cares about pre-caching.
+			"0.1.1":      struct{}{},
+			"0.2.0":      struct{}{},
+			"0.3.0":      struct{}{},
+			"0.4.0":      struct{}{},
+			"0.5.0":      struct{}{},
+			"0.6.0":      struct{}{},
+			"0.7.0":      struct{}{},
+			"0.7.1":      struct{}{},
+			"0.8.0":      struct{}{},
+			"0.8.1":      struct{}{},
+			"0.9.0":      struct{}{},
+			"0.9.1":      struct{}{},
+			"0.10.0":     struct{}{},
+			"0.10.1":     struct{}{},
+			"0.3.0-mach": struct{}{},
+
+			// Do not warm the cache with master Zig versions, as these would fill the disk quickly.
+			"master": struct{}{},
+		}
+		if _, ignore := ignored[indexVersion]; ignore {
+			continue
+		}
+
+		version := indexVersion
+		if aliasVersion, ok := v["version"]; ok {
+			version = aliasVersion.(string)
+		}
+		versionKind, err := b.zigVersionKind(version, index)
+		if err != nil {
+			return errors.Wrap(err, "unmarshalling index.json")
+		}
+
+		b.httpPkgEnsureZigVersionCached(version, versionKind)
+	}
+	return nil
+}
+
+func (b *Bot) httpPkgEnsureZigVersionCached(version, versionKind string) {
+	for _, tmpl := range []string{
+		"zig-$VERSION.tar.xz",
+		"zig-bootstrap-$VERSION.tar.xz",
+		"zig-windows-x86_64-$VERSION.zip",
+		"zig-windows-x86-$VERSION.zip",
+		"zig-windows-aarch64-$VERSION.zip",
+		"zig-macos-aarch64-$VERSION.tar.xz",
+		"zig-macos-x86_64-$VERSION.tar.xz",
+		"zig-linux-x86_64-$VERSION.tar.xz",
+		"zig-linux-x86-$VERSION.tar.xz",
+		"zig-linux-aarch64-$VERSION.tar.xz",
+		"zig-linux-armv7a-$VERSION.tar.xz",
+		"zig-linux-riscv64-$VERSION.tar.xz",
+		"zig-linux-powerpc64le-$VERSION.tar.xz",
+	} {
+		for _, sub := range []string{"", ".minisig"} {
+			fname := strings.Replace(tmpl+sub, "$VERSION", version, 1)
+			if err := b.httpPkgEnsureZigDownloadCached(version, versionKind, fname); err != nil {
+				if !strings.Contains(err.Error(), "ignored") {
+					b.idLogf("zig", "error downloading file: %s", err)
+
+				}
+				continue
+			}
+		}
+	}
+}
+
+var (
+	cachedResponsesMu sync.Mutex
+	cachedResponses   = map[string]error{}
+)
+
+func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string) error {
+	dirPath := path.Join("cache/zig/", versionKind, version)
+	filePath := path.Join(dirPath, fname)
+	if _, err := os.Stat(filePath); err == nil {
+		return nil
+	}
+
+	url := ""
+	if versionKind == "mach" {
+		url = "https://pkg.machengine.org" + path.Join("/zig/", fname)
+	} else if versionKind == "stable" {
+		url = "https://ziglang.org" + path.Join("/download/", version, fname)
+	} else {
+		url = "https://ziglang.org" + path.Join("/builds/", fname)
+	}
+
+	// URLs that we know do not exist
+	ignored := map[string]struct{}{}
+	// minisig files for these two versions no longer exist anywhere.
+	for _, version := range []string{"0.12.0-dev.2063+804cee3b9", "0.12.0-dev.3180+83e578a18"} {
+		for _, tmpl := range []string{
+			"zig-$VERSION.tar.xz",
+			"zig-bootstrap-$VERSION.tar.xz",
+			"zig-windows-x86_64-$VERSION.zip",
+			"zig-windows-x86-$VERSION.zip",
+			"zig-windows-aarch64-$VERSION.zip",
+			"zig-macos-aarch64-$VERSION.tar.xz",
+			"zig-macos-x86_64-$VERSION.tar.xz",
+			"zig-linux-x86_64-$VERSION.tar.xz",
+			"zig-linux-x86-$VERSION.tar.xz",
+			"zig-linux-aarch64-$VERSION.tar.xz",
+			"zig-linux-armv7a-$VERSION.tar.xz",
+			"zig-linux-riscv64-$VERSION.tar.xz",
+			"zig-linux-powerpc64le-$VERSION.tar.xz",
+		} {
+			for _, sub := range []string{".minisig"} {
+				fname := strings.Replace(tmpl+sub, "$VERSION", version, 1)
+				ignored["https://pkg.machengine.org/zig/"+fname] = struct{}{}
+			}
+		}
+	}
+
+	if _, ignore := ignored[url]; ignore {
+		return errors.New("ignored")
+	}
+
+	logWriter := b.idWriter("zig")
+
+	cachedResponsesMu.Lock()
+	defer cachedResponsesMu.Unlock()
+
+	if cachedError, ok := cachedResponses[url]; ok {
+		fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError)
+		return cachedError
+	}
+	fmt.Fprintf(logWriter, "fetch: %s > %s\n", url, filePath)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return errors.Wrap(err, "Get")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
+		// 404 not found, 403 forbidden, etc.
+		err := fmt.Errorf("bad response status: %s", resp.Status)
+		cachedResponses[url] = err
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad response status: %s", resp.Status)
+	}
+
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return errors.Wrap(err, "MkdirAll "+dirPath)
+	}
+	out, err := os.Create(filePath)
+	if err != nil {
+		return errors.Wrap(err, "Create "+filePath)
+	}
+	defer out.Close()
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "Copy")
+	}
+	return nil
 }
 
 // https://pkg.machengine.org/<project>/<file>
@@ -334,25 +586,32 @@ func (b *Bot) httpPkgArtifact(w http.ResponseWriter, r *http.Request) error {
 	return serveCacheHit()
 }
 
-var (
-	httpPkgZigIndexMu        sync.RWMutex
-	httpPkgZigIndexFetchedAt time.Time
-	httpPkgZigIndexCached    []byte
-)
-
 // https://pkg.machengine.org/zig/index.json - a strict superset of https://ziglang.org/builds/index.json
 // updated every 15 minutes.
 //
 // Serves a memory-cached version of https://ziglang.org/builds/index.json (updated every 15 minutes)
 // with any keys not present in that file from https://machengine.org/zig/index.json added at the end.
 func (b *Bot) httpPkgZigIndex(w http.ResponseWriter, r *http.Request) error {
+	cachedFile, err := b.httpPkgZigIndexCached()
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	fmt.Fprintf(w, "%s", cachedFile)
+	return nil
+}
+
+var (
+	httpPkgZigIndexMu        sync.RWMutex
+	httpPkgZigIndexFetchedAt time.Time
+	httpPkgZigIndexCached    []byte
+)
+
+func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 	httpPkgZigIndexMu.RLock()
 	if time.Since(httpPkgZigIndexFetchedAt) < 15*time.Minute {
 		defer httpPkgZigIndexMu.RUnlock()
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		fmt.Fprintf(w, "%s", httpPkgZigIndexCached)
-		return nil
+		return httpPkgZigIndexCached, nil
 	}
 
 	// Cache needs updating
@@ -362,32 +621,30 @@ func (b *Bot) httpPkgZigIndex(w http.ResponseWriter, r *http.Request) error {
 
 	if time.Since(httpPkgZigIndexFetchedAt) < 15*time.Minute {
 		// Someone else beat us to the update.
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		fmt.Fprintf(w, "%s", httpPkgZigIndexCached)
-		return nil
+		return httpPkgZigIndexCached, nil
 	}
 
 	// Fetch the latest upstream Zig index.json
 	resp, err := http.Get("https://ziglang.org/download/index.json")
 	if err != nil {
-		return errors.Wrap(err, "fetching upstream https://ziglang.org/download/index.json")
+		return nil, errors.Wrap(err, "fetching upstream https://ziglang.org/download/index.json")
 	}
 	defer resp.Body.Close()
 	latestIndex := orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
 	if err := json.NewDecoder(resp.Body).Decode(&latestIndex); err != nil {
-		return errors.Wrap(err, "parsing upstream https://ziglang.org/builds/index.json")
+		return nil, errors.Wrap(err, "parsing upstream https://ziglang.org/builds/index.json")
 	}
 
 	// Fetch the Mach index.json which contains Mach nominated versions, but is otherwise not as
 	// up-to-date as ziglang.org's version.
 	resp, err = http.Get("https://machengine.org/zig/index.json")
 	if err != nil {
-		return errors.Wrap(err, "fetching mach https://machengine.org/zig/index.json")
+		return nil, errors.Wrap(err, "fetching mach https://machengine.org/zig/index.json")
 	}
 	defer resp.Body.Close()
 	machIndex := orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
 	if err := json.NewDecoder(resp.Body).Decode(&machIndex); err != nil {
-		return errors.Wrap(err, "parsing mach https://machengine.org/zig/index.json")
+		return nil, errors.Wrap(err, "parsing mach https://machengine.org/zig/index.json")
 	}
 
 	// "master", "0.13.0", etc.
@@ -440,11 +697,9 @@ func (b *Bot) httpPkgZigIndex(w http.ResponseWriter, r *http.Request) error {
 
 	httpPkgZigIndexCached, err = json.MarshalIndent(latestIndex, "", "  ")
 	if err != nil {
-		return errors.Wrap(err, "marshalling index.json")
+		return nil, errors.Wrap(err, "marshalling index.json")
 	}
 	httpPkgZigIndexFetchedAt = time.Now()
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	fmt.Fprintf(w, "%s", httpPkgZigIndexCached)
-	return nil
+	return httpPkgZigIndexCached, nil
 }

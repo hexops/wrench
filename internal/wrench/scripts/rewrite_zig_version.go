@@ -19,7 +19,6 @@ func init() {
 			newVersion := args[0]
 
 			zigVersionRegexp := regexp.MustCompile(`(\d\.?)+-[[:alnum:]]+.\d+\+[[:alnum:]]+`)
-
 			replacer := func(name string, contents []byte) ([]byte, error) {
 				contents = zigVersionRegexp.ReplaceAllLiteral(contents, []byte(newVersion))
 				return contents, nil
