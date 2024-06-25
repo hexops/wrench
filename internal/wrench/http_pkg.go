@@ -416,7 +416,9 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	}
 	fmt.Fprintf(logWriter, "fetch: %s > %s\n", url, filePath)
 
-	resp, err := httpGet(url, 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	resp, err := httpGet(ctx, url)
 	if err != nil {
 		return errors.Wrap(err, "Get")
 	}
@@ -634,7 +636,9 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 	}
 
 	// Fetch the latest upstream Zig index.json
-	resp, err := httpGet("https://ziglang.org/download/index.json", 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	resp, err := httpGet(ctx, "https://ziglang.org/download/index.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching upstream https://ziglang.org/download/index.json")
 	}
@@ -646,7 +650,9 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 
 	// Fetch the Mach index.json which contains Mach nominated versions, but is otherwise not as
 	// up-to-date as ziglang.org's version.
-	resp, err = httpGet("https://machengine.org/zig/index.json", 60*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	resp, err = httpGet(ctx, "https://machengine.org/zig/index.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching mach https://machengine.org/zig/index.json")
 	}
@@ -714,9 +720,7 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 }
 
 // Like http.Get, but actually respects a timeout instead of leaking a goroutine to forever run.
-func httpGet(url string, timeout time.Duration) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func httpGet(ctx context.Context, url string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
