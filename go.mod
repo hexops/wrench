@@ -7,7 +7,6 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.4.0
 	github.com/bwmarrin/discordgo v0.26.1
 	github.com/dustin/go-humanize v1.0.0
-	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v48 v48.2.0
 	github.com/hexops/autogold/v2 v2.1.0
 	github.com/hexops/cmder v1.0.1
@@ -16,7 +15,9 @@ require (
 	github.com/keegancsmith/sqlf v1.1.1
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7
+	github.com/natefinch/atomic v1.0.1
 	github.com/nxadm/tail v1.4.8
+	github.com/wk8/go-ordered-map/v2 v2.1.8
 	golang.org/x/crypto v0.4.0
 	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
 	golang.org/x/oauth2 v0.3.0
@@ -53,7 +54,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20220927061507-ef77025ab5aa // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
