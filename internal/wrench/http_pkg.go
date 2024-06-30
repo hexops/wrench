@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/hexops/wrench/internal/errors"
 	"github.com/hexops/wrench/internal/wrench/scripts"
+	"github.com/natefinch/atomic"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
@@ -444,14 +444,9 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		return errors.Wrap(err, "MkdirAll "+dirPath)
 	}
-	out, err := os.Create(filePath)
+	err = atomic.WriteFile(filePath, resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "Create "+filePath)
-	}
-	defer out.Close()
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "Copy")
+		return errors.Wrap(err, "Write "+filePath)
 	}
 	return nil
 }
