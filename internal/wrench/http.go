@@ -117,7 +117,7 @@ func (b *Bot) httpMuxDefault(handler func(prefix string, handle handlerFunc) htt
 		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 50rem;">`)
 		{
 			fmt.Fprintf(w, `<img width="250px" align="left" src="%s">`, logo)
-			fmt.Fprintf(w, `<div style="padding-left: 2rem;"><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain our projects. You can read about me in <em><a href="https://devlog.hexops.com/2023/how-wrench-helps-build-mach/">"Wrench helps automate and maintain Mach (the Zig game engine)"</a></em> or view my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
+			fmt.Fprintf(w, `<div style="padding-left: 2rem;"><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain our projects. View my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
 		}
 		fmt.Fprintf(w, `</div>`)
 
