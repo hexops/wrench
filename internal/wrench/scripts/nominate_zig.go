@@ -79,7 +79,7 @@ func init() {
 					}
 					newVersion.Set(key, value)
 					if key == "stdDocs" {
-						newVersion.Set("machDocs", "https://machengine.org/about/nominated-zig")
+						newVersion.Set("machDocs", "https://machengine.org/docs/nominated-zig")
 						newVersion.Set("machNominated", time.Now().Format("2006-01-02"))
 					}
 				}

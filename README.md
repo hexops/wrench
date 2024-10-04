@@ -116,7 +116,7 @@ Downloads like http://localhost/zig/zig-linux-x86_64-0.13.0.tar.xz will be fetch
 http://localhost/zig/index.json is like https://ziglang.org/download/index.json with some small differences:
 
 * It is fetched from ziglang.org once every 15 minutes and cached in-memory.
-* Entries from https://machengine.org/zig/index.json are added so the index.json _additionally_ contains Mach [nominated Zig versions](https://machengine.org/about/nominated-zig/)
+* Entries from https://machengine.org/zig/index.json are added so the index.json _additionally_ contains Mach [nominated Zig versions](https://machengine.org/docs/nominated-zig/)
 * `tarball` fields are rewritten to point to the configured `ExternalURL`
 
 If you want to run Wrench as a system service, have it auto-start after reboot, etc. then you can e.g. put the config file in `/root/wrench/config.toml`, run `wrench svc install` as root to install the systemd service, use `wrench svc start` to start the service, and `wrench svc status` to see the status and log file locations.
