@@ -367,8 +367,10 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	}
 
 	url := ""
-	if versionKind == "mach" {
+	if versionKind == "mach" && !b.Config.PkgProxyDisableMachMirror {
 		url = "https://pkg.machengine.org" + path.Join("/zig/", fname)
+	} else if versionKind == "mach" && b.Config.PkgProxyDisableMachMirror {
+		url = "https://ziglang.org" + path.Join("/builds/", fname)
 	} else if versionKind == "stable" {
 		url = "https://ziglang.org" + path.Join("/download/", version, fname)
 	} else {
@@ -643,18 +645,22 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 		return nil, errors.Wrap(err, "parsing upstream https://ziglang.org/builds/index.json")
 	}
 
-	// Fetch the Mach index.json which contains Mach nominated versions, but is otherwise not as
-	// up-to-date as ziglang.org's version.
-	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	resp, err = httpGet(ctx, "https://machengine.org/zig/index.json")
-	if err != nil {
-		return nil, errors.Wrap(err, "fetching mach https://machengine.org/zig/index.json")
-	}
-	defer resp.Body.Close()
-	machIndex := orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
-	if err := json.NewDecoder(resp.Body).Decode(&machIndex); err != nil {
-		return nil, errors.Wrap(err, "parsing mach https://machengine.org/zig/index.json")
+	var machIndex *orderedmap.OrderedMap[string, *orderedmap.OrderedMap[string, any]]
+	{
+		// Fetch the Mach index.json which contains Mach nominated versions, but is otherwise not as
+		// up-to-date as ziglang.org's version.
+		ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		resp, err = httpGet(ctx, "https://machengine.org/zig/index.json")
+		if err != nil {
+			b.logf("failed to fetch https://machengine.org/zig/index.json: %s (simply moving on with only the official index.json)", err)
+		} else {
+			defer resp.Body.Close()
+			machIndex = orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
+			if err := json.NewDecoder(resp.Body).Decode(&machIndex); err != nil {
+				b.logf("parsing mach https://machengine.org/zig/index.json: %s (simply moving on with only the official index.json)", err)
+			}
+		}
 	}
 
 	// "master", "0.13.0", etc.
@@ -680,29 +686,31 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 		}
 	}
 
-	// "master", "0.13.0", etc.
-	for version := machIndex.Oldest(); version != nil; version = version.Next() {
-		if _, present := latestIndex.Get(version.Key); present {
-			// Always use the upstream index.json in the event of a collision
-			continue
-		}
-
-		// "src", "x86_64-macos", etc.
-		for versionField := version.Value.Oldest(); versionField != nil; versionField = versionField.Next() {
-			// "version", "date", "src", "x86_64-macos", etc.
-			download, ok := versionField.Value.(map[string]any)
-			if ok {
-				newDownload := map[string]any{}
-				for key, value := range download {
-					newDownload[key] = value
-					if key == "tarball" {
-						newDownload["tarball"] = strings.Replace(value.(string), "https://pkg.machengine.org/zig/", b.Config.ExternalURL+"/zig/", 1)
-					}
-				}
-				version.Value.Set(versionField.Key, newDownload)
+	if machIndex != nil {
+		// "master", "0.13.0", etc.
+		for version := machIndex.Oldest(); version != nil; version = version.Next() {
+			if _, present := latestIndex.Get(version.Key); present {
+				// Always use the upstream index.json in the event of a collision
+				continue
 			}
+
+			// "src", "x86_64-macos", etc.
+			for versionField := version.Value.Oldest(); versionField != nil; versionField = versionField.Next() {
+				// "version", "date", "src", "x86_64-macos", etc.
+				download, ok := versionField.Value.(map[string]any)
+				if ok {
+					newDownload := map[string]any{}
+					for key, value := range download {
+						newDownload[key] = value
+						if key == "tarball" {
+							newDownload["tarball"] = strings.Replace(value.(string), "https://pkg.machengine.org/zig/", b.Config.ExternalURL+"/zig/", 1)
+						}
+					}
+					version.Value.Set(versionField.Key, newDownload)
+				}
+			}
+			latestIndex.Set(version.Key, version.Value)
 		}
-		latestIndex.Set(version.Key, version.Value)
 	}
 
 	httpPkgZigIndexCached, err = json.MarshalIndent(latestIndex, "", "  ")

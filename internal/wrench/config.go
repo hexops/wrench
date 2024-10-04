@@ -29,6 +29,12 @@ type Config struct {
 	// Act as a Zig package proxy like pkg.machengine.org, instead of as a regular wrench server.
 	PkgProxy bool `toml:"PkgProxy,omitempty"`
 
+	// When PkgProxy=true, disable any HTTP requests to pkg.machengine.org
+	//
+	// Note: setting this means your mirror may not be able to get Mach nominated
+	// versions, because ziglang.org purges them after some time.
+	PkgProxyDisableMachMirror bool `toml:"PkgProxyDisableMachMirror,omitempty"`
+
 	// Mode to operate in, one of:
 	//
 	// * "wrench" -> https://wrench.machengine.org - custom CI system, etc.
