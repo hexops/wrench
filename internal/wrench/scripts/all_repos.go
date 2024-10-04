@@ -66,11 +66,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/mach", CI: Zig},
 	}},
 	{Name: "Standalone packages", Repos: []Repo{
-		{Name: "hexops/mach-gpu", CI: Zig},
-		{Name: "hexops/mach-gpu-dawn", CI: Zig},
 		{Name: "hexops/mach-dxcompiler", CI: Zig},
 		{Name: "hexops/mach-freetype", CI: Zig},
-		{Name: "hexops/mach-glfw", CI: Zig},
 		{Name: "hexops/mach-objc", CI: Zig},
 		{Name: "hexops/mach-opus", CI: Zig},
 		{Name: "hexops/mach-flac", CI: Zig},
@@ -86,10 +83,8 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/opengl-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/linux-audio-headers", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/xcode-frameworks", CI: Zig, HasUpdateVerifyScripts: true},
-		{Name: "hexops/glfw", CI: Zig, Main: "master", HasUpdateVerifyScripts: true},
 		{Name: "hexops/spirv-tools", CI: Zig, Main: "main", HasUpdateVerifyScripts: true},
 		{Name: "hexops/spirv-cross", CI: Zig, Main: "main", HasUpdateVerifyScripts: true},
-		{Name: "hexops/dawn", CI: None},
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
 		{Name: "hexops/direct3d-headers", CI: Zig},
@@ -102,10 +97,6 @@ var AllReposByCategory = []RepoCategory{
 	}},
 	{Name: "Mach language bindings", Repos: []Repo{
 		{Name: "hexops/mach-rs", CI: Todo},
-	}},
-	{Name: "Other examples", Repos: []Repo{
-		{Name: "hexops/mach-glfw-vulkan-example", CI: Zig},
-		{Name: "hexops/mach-glfw-opengl-example", CI: Zig},
 	}},
 	{Name: "Go projects", Repos: []Repo{
 		{Name: "hexops/zgo", CI: Todo},
