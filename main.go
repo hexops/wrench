@@ -24,6 +24,7 @@ The commands are:
 	runners    (remote) list registered runners
 	secret     (remote) manage secrets
 	git        manage local git repositories
+	version    print the wrench version
 
 Use "wrench <command> -h" for more information about a command.
 `
