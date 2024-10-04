@@ -405,7 +405,25 @@ type JobsFilter struct {
 	Limit                       int
 }
 
+var lastPurge time.Time
+
+func (s *Store) purgeOldData(ctx context.Context) error {
+	if !lastPurge.IsZero() && time.Since(lastPurge) < 24*time.Hour {
+		return nil
+	}
+	lastPurge = time.Now()
+	_, err := s.db.ExecContext(ctx, `
+		DELETE FROM runner_jobs WHERE created_at < datetime('now', '-30 days');
+		DELETE FROM logs WHERE timestamp < datetime('now', '-30 days');
+	`)
+	return err
+}
+
 func (s *Store) Jobs(ctx context.Context, filters ...JobsFilter) ([]api.Job, error) {
+	if err := s.purgeOldData(ctx); err != nil {
+		return nil, errors.Wrap(err, "purgeOldData")
+	}
+
 	var conds []*sqlf.Query
 	limit := sqlf.Sprintf("")
 	for _, where := range filters {
