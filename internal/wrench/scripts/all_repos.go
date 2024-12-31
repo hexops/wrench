@@ -87,7 +87,6 @@ var AllReposByCategory = []RepoCategory{
 		{Name: "hexops/spirv-cross", CI: Zig, Main: "main", HasUpdateVerifyScripts: true},
 		{Name: "hexops/DirectXShaderCompiler", CI: None, Main: "master"},
 		{Name: "hexops/vulkan-zig-generated", CI: Zig, HasUpdateVerifyScripts: true},
-		{Name: "hexops/direct3d-headers", CI: Zig},
 		{Name: "hexops/directx-headers", CI: Zig},
 		{Name: "hexops/opus", Main: "master", CI: Zig},
 		{Name: "hexops/opusfile", Main: "master", CI: Zig},
