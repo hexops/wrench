@@ -83,7 +83,7 @@
 
         // Dependencies used by examples only
         .zigimg = .{
-            .url = "https://github.com/slimsag/zigimg/archive/19a49a7e44fb4b1c22341dfbd6566019de742055.tar.gz",
+            .url = "https://github.com/emidoots/zigimg/archive/19a49a7e44fb4b1c22341dfbd6566019de742055.tar.gz",
             .hash = "1220ebfa8587cfd644995fc08e218dbb3ebd7344fb8e129ff02bc5a6d52a2325370d",
             .lazy = true,
         },

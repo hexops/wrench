@@ -61,9 +61,9 @@ func transformGistURL(urlString string) (*url.URL, error) {
 	}
 	if u.Host == "gist.github.com" {
 		// transform URL:
-		// https://gist.github.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d
+		// https://gist.github.com/emidoots/ac2f04a101680631ba3b2c99f8180d2d
 		// ->
-		// https://gist.githubusercontent.com/slimsag/ac2f04a101680631ba3b2c99f8180d2d/raw
+		// https://gist.githubusercontent.com/emidoots/ac2f04a101680631ba3b2c99f8180d2d/raw
 		u.Host = "gist.githubusercontent.com"
 		u.Path += "/raw"
 		return u, nil

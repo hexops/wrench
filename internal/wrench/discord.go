@@ -151,7 +151,7 @@ func (b *Bot) discordOnMessageCreate(s *discordgo.Session, m *discordgo.MessageC
 		}
 		if handler, ok := b.discordCommandsEmbedSecure[cmd]; ok {
 			blocked := true
-			for _, allowed := range []string{"slimsag"} {
+			for _, allowed := range []string{"emidoots"} {
 				if m.Author.Username == allowed {
 					blocked = false
 					break
