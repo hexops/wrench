@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -429,6 +430,24 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		// 404 not found, 403 forbidden, etc.
 		err := fmt.Errorf("bad response status: %s", resp.Status)
+
+		// file not available from upstream (but we expect it to be reachable)
+		// does not consider how to handle 429s from upstream
+		if (resp.StatusCode == 404 || resp.StatusCode >= 500) && versionKind == "stable" {
+			versionParts := strings.Split(version, ".")
+
+			// fail silently, this is probably fine
+			if i, e := strconv.ParseInt(versionParts[1], 10, 64); e == nil {
+				// versions below 0.5.0 are allowed to be unavailable
+				if !(versionParts[0] == "0" && i <= 5) {
+					// don't cache error, we expect it to be reachable later
+					fmt.Fprintf(logWriter, "error not cached: unexpected %v response for files with release %s", resp.StatusCode, version)
+					return err
+				}
+
+			}
+		}
+
 		cachedResponsesMu.Lock()
 		cachedResponses[url] = err
 		cachedResponsesMu.Unlock()
