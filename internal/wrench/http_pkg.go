@@ -420,7 +420,9 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	cachedResponsesMu.Unlock()
 	if isCachedError {
 		if cachedError.expire >= time.Now().Unix() {
+			cachedResponsesMu.Lock()
 			delete(cachedResponses, url)
+			cachedResponsesMu.Unlock()
 			fmt.Fprintf(logWriter, "deleted cached error for %s (cached error %s)\n", url, cachedError.err)
 		} else {
 			fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError.err)
