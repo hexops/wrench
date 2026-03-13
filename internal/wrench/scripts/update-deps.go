@@ -83,9 +83,10 @@ func init() {
 					if err != nil {
 						return errors.Wrap(err, "GitLsRemoteSingle")
 					}
-					if u.Host == "github.com" {
+					switch u.Host {
+					case "github.com":
 						split[4] = latestHEAD + ".tar.gz"
-					} else if u.Host == "pkg.machengine.org" {
+					case "pkg.machengine.org":
 						split[2] = latestHEAD + ".tar.gz"
 					}
 					u.Path = strings.Join(split, "/")
@@ -105,10 +106,10 @@ func init() {
 					return errors.Wrap(err, "Create")
 				}
 				if err := tree.Write(f, "    ", ""); err != nil {
-					f.Close()
+					_ = f.Close()
 					return errors.Wrap(err, "Write")
 				}
-				f.Close()
+				_ = f.Close()
 			}
 			return nil
 		},

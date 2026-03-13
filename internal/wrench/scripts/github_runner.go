@@ -29,7 +29,7 @@ func init() {
 				url := fmt.Sprintf("https://github.com/actions/runner/releases/download/v2.299.1/actions-runner-%s-%s-2.299.1.%s", githubOS(), githubArch(), extension)
 				archiveFilePath := "github-runner." + extension
 				_ = os.RemoveAll(archiveFilePath)
-				defer os.RemoveAll(archiveFilePath)
+				defer os.RemoveAll(archiveFilePath) //nolint:errcheck
 				err = DownloadFile(url, archiveFilePath)(os.Stderr)
 				if err != nil {
 					return errors.Wrap(err, "DownloadFile")

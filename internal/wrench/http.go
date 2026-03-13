@@ -180,7 +180,7 @@ func (b *Bot) httpServeWebHookGitHub(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return errors.Wrap(err, "ValidatePayload")
 	}
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
 
 	event, err := github.ParseWebHook(github.WebHookType(r), payload)
 	if err != nil {
@@ -994,7 +994,7 @@ func botHttpAPI[Request any, Response any](b *Bot, handler func(context.Context,
 			return errors.New("POST is required for this endpoint")
 		}
 
-		defer r.Body.Close()
+		defer r.Body.Close() //nolint:errcheck
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			if err != io.EOF {

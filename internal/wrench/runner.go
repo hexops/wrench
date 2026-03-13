@@ -251,7 +251,7 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 }
 
 func uppercaseUnderscore(s string) string {
-	s = strings.Replace(s, "/", "_", -1)
-	s = strings.Replace(s, "-", "_", -1)
+	s = strings.ReplaceAll(s, "/", "_")
+	s = strings.ReplaceAll(s, "-", "_")
 	return strings.ToUpper(s)
 }

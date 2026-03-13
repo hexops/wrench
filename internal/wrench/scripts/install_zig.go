@@ -44,7 +44,7 @@ func init() {
 			url := fmt.Sprintf("https://pkg.machengine.org/zig/zig-%s-%s-%s.%s", zigOS(), zigArch(), wantZigVersion, extension)
 			archiveFilePath := "zig." + extension
 			_ = os.RemoveAll(archiveFilePath)
-			defer os.RemoveAll(archiveFilePath)
+			defer os.RemoveAll(archiveFilePath) //nolint:errcheck
 			err = DownloadFile(url, archiveFilePath)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "DownloadFile")

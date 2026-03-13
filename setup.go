@@ -51,7 +51,7 @@ Examples:
 
 		u, err := user.Current()
 		if err == nil {
-			result = strings.Replace(result, "$HOME", u.HomeDir, -1)
+			result = strings.ReplaceAll(result, "$HOME", u.HomeDir)
 		}
 		return result, true
 	}

@@ -175,7 +175,7 @@ func (b *Bot) stop() error {
 	if !b.started {
 		return nil
 	}
-	b.logFile.Close()
+	_ = b.logFile.Close()
 	if b.Config.Runner == "" {
 		if err := b.githubStop(); err != nil {
 			return errors.Wrap(err, "github")
@@ -203,12 +203,14 @@ func ServiceStatus(svc service.Service) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if status == service.StatusUnknown {
+	switch status {
+	case service.StatusUnknown:
 		return "unknown", nil
-	} else if status == service.StatusRunning {
+	case service.StatusRunning:
 		return "running", nil
-	} else if status == service.StatusStopped {
+	case service.StatusStopped:
 		return "stopped", nil
+	default:
+		panic(fmt.Sprintf("unexpected status: %v", status))
 	}
-	panic(fmt.Sprintf("unexpected status: %v", status))
 }

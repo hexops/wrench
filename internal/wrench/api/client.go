@@ -40,7 +40,7 @@ func clientDo[Request any, Response any](c *Client, ctx context.Context, r *Requ
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("unexpected response code: %v %v", resp.StatusCode, string(body))

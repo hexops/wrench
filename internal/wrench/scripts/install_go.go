@@ -41,7 +41,7 @@ func init() {
 			url := fmt.Sprintf("https://go.dev/dl/go%s.%s-%s.%s", wantGoVersion, runtime.GOOS, runtime.GOARCH, extension)
 			archiveFilePath := "golang." + extension
 			_ = os.RemoveAll(archiveFilePath)
-			defer os.RemoveAll(archiveFilePath)
+			defer os.RemoveAll(archiveFilePath) //nolint:errcheck
 			err = DownloadFile(url, archiveFilePath)(os.Stderr)
 			if err != nil {
 				return errors.Wrap(err, "DownloadFile")

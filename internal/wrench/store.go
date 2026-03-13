@@ -27,7 +27,7 @@ func OpenStore(path string) (*Store, error) {
 	}
 	s := &Store{db: db}
 	if err := s.ensureSchema(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, errors.Wrap(err, "ensureSchema")
 	}
 	return s, nil

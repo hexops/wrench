@@ -73,13 +73,14 @@ func Parse(contents string) (*Node, error) {
 		// fmt.Printf("%v:%v: %q %s - %s\n", line, column, string(c), nextState, stackName)
 		switch nextState {
 		case stateStart:
-			if c == ' ' || c == '\n' {
+			switch c {
+			case ' ', '\n':
 				prevState = stateStart
 				nextState = stateStartWhitespace
-			} else if c == '/' {
+			case '/':
 				prevState = stateStart
 				nextState = stateStartComment
-			} else {
+			default:
 				if err := expect('.', nextState); err != nil {
 					return nil, err
 				}
@@ -114,10 +115,11 @@ func Parse(contents string) (*Node, error) {
 			nextState = stateWhitespace
 		case stateWhitespace:
 			whitespaceNode := stack[len(stack)-1]
-			if c == ' ' {
-			} else if c == '\n' {
+			switch c {
+			case ' ':
+			case '\n':
 				whitespaceNode.Whitespace += string(c)
-			} else {
+			default:
 				stackPop()
 				if whitespaceNode.Whitespace == "" {
 					parent := stack[len(stack)-1]
@@ -139,21 +141,22 @@ func Parse(contents string) (*Node, error) {
 				nextState = stateDotName
 			}
 		case stateValue:
-			if c == ' ' || c == '\n' {
+			switch c {
+			case ' ', '\n':
 				prevState = stateValue
 				nextState = stateStartWhitespace
-			} else if c == '/' {
+			case '/':
 				prevState = stateValue
 				nextState = stateStartComment
-			} else if c == '"' {
+			case '"':
 				prev()
 				nextState = stateStartStringLiteral
-			} else if c == 't' || c == 'f' {
+			case 't', 'f':
 				prev()
 				nextState = stateStartBoolLiteral
-			} else if c == '}' {
+			case '}':
 				nextState = stateValueComplete
-			} else {
+			default:
 				if err := expect('.', nextState); err != nil {
 					return nil, err
 				}
@@ -247,49 +250,49 @@ func (n *Node) Write(w io.Writer, indent, prefix string) error {
 	if err := n.write(w, indent, prefix); err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "\n")
+	_, _ = fmt.Fprintf(w, "\n")
 	return nil
 }
 
 func (n *Node) write(w io.Writer, indent, prefix string) error {
 	if n.DotName != "" {
-		fmt.Fprintf(w, ".%s = ", n.DotName)
+		_, _ = fmt.Fprintf(w, ".%s = ", n.DotName)
 		_ = n.DotValue.write(w, indent, prefix)
 		return nil
 	} else if n.StringLiteral != "" {
-		fmt.Fprintf(w, "%q", n.StringLiteral)
+		_, _ = fmt.Fprintf(w, "%q", n.StringLiteral)
 		return nil
 	} else if n.BoolLiteral != "" {
-		fmt.Fprintf(w, "%s", n.BoolLiteral)
+		_, _ = fmt.Fprintf(w, "%s", n.BoolLiteral)
 		return nil
 	} else if n.Whitespace != "" {
-		fmt.Fprintf(w, "%s", n.Whitespace)
+		_, _ = fmt.Fprintf(w, "%s", n.Whitespace)
 		return nil
 	} else if n.Comment != "" {
-		fmt.Fprintf(w, "%s", n.Comment)
+		_, _ = fmt.Fprintf(w, "%s", n.Comment)
 		return nil
 	}
 	pre := prefix
 	if !n.Root {
 		pre = prefix + indent
-		fmt.Fprintf(w, ".{")
+		_, _ = fmt.Fprintf(w, ".{")
 	}
 	for _, child := range n.Children {
 		if child.Whitespace != "" {
 			_ = child.write(w, indent, pre)
 		} else if child.Comment != "" {
-			fmt.Fprint(w, pre)
+			_, _ = fmt.Fprint(w, pre)
 			_ = child.write(w, indent, pre)
 		} else {
-			fmt.Fprint(w, pre)
+			_, _ = fmt.Fprint(w, pre)
 			_ = child.write(w, indent, pre)
 			if !n.Root {
-				fmt.Fprintf(w, ",")
+				_, _ = fmt.Fprintf(w, ",")
 			}
 		}
 	}
 	if !n.Root {
-		fmt.Fprintf(w, "%s}", prefix)
+		_, _ = fmt.Fprintf(w, "%s}", prefix)
 	}
 	return nil
 }
