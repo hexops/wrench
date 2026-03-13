@@ -196,7 +196,7 @@ func (b *Bot) discordHelp() *discordgo.MessageEmbed {
 	var buf bytes.Buffer
 	for _, pair := range b.discordCommandHelp {
 		cmd, help := pair[0], pair[1]
-		fmt.Fprintf(&buf, "* !wrench %s - %s\n", cmd, help)
+		_, _ = fmt.Fprintf(&buf, "* !wrench %s - %s\n", cmd, help)
 	}
 	return &discordgo.MessageEmbed{
 		Title:       "Available commands",

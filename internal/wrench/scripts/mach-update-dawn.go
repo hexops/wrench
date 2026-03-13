@@ -65,7 +65,7 @@ func init() {
 
 			// Update our "upstream" branch to point to latest upstream@main version.
 			if err := GitRemoteAdd(os.Stderr, workDir, "upstream", "https://dawn.googlesource.com/dawn"); err != nil {
-				fmt.Fprintf(os.Stderr, "ignoring: GitRemoteAdd: %s", err)
+				_, _ = fmt.Fprintf(os.Stderr, "ignoring: GitRemoteAdd: %s", err)
 			}
 			if err := GitFetch(os.Stderr, workDir, "upstream"); err != nil {
 				return errors.Wrap(err, "GitFetch")
@@ -132,10 +132,10 @@ func init() {
 				{"mac", "arm64"},
 				{"linux", "x64"},
 			}
-			os.RemoveAll(filepath.Join(workDir, "out/"))
+			_ = os.RemoveAll(filepath.Join(workDir, "out/"))
 			for _, pair := range pairs {
 				dawnOS, dawnArch := pair[0], pair[1]
-				fmt.Fprintf(os.Stderr, "generating for %s/%s\n", dawnOS, dawnArch)
+				_, _ = fmt.Fprintf(os.Stderr, "generating for %s/%s\n", dawnOS, dawnArch)
 				if dawnOS == "linux" {
 					if err := Exec(
 						"python3 build/linux/sysroot_scripts/install-sysroot.py --arch=amd64",
@@ -259,11 +259,11 @@ dawn_use_x11=true
 		return errors.New("OS not supported: " + dawnOS)
 	}
 
-	fmt.Fprintf(os.Stderr, "$ mkdir -p %s\n", filepath.Join(workDir, "out/Debug"))
+	_, _ = fmt.Fprintf(os.Stderr, "$ mkdir -p %s\n", filepath.Join(workDir, "out/Debug"))
 	if err := os.MkdirAll(filepath.Join(workDir, "out/Debug"), os.ModePerm); err != nil {
 		return errors.Wrap(err, "MkdirAll")
 	}
-	fmt.Fprintf(os.Stderr, "WriteFile: %s\n", filepath.Join(workDir, "out/Debug/args.gn"))
+	_, _ = fmt.Fprintf(os.Stderr, "WriteFile: %s\n", filepath.Join(workDir, "out/Debug/args.gn"))
 	if err := os.WriteFile(filepath.Join(workDir, "out/Debug/args.gn"), []byte(ninjaArgs), 0o655); err != nil {
 		return errors.Wrap(err, "WriteFile")
 	}
@@ -271,7 +271,7 @@ dawn_use_x11=true
 }
 
 func dawnWriteVSToolchainHacks(workDir string) error {
-	fmt.Fprintf(os.Stderr, "$ mkdir -p %s\n", filepath.Join(workDir, "build/toolchain/win/"))
+	_, _ = fmt.Fprintf(os.Stderr, "$ mkdir -p %s\n", filepath.Join(workDir, "build/toolchain/win/"))
 	if err := os.MkdirAll(filepath.Join(workDir, "build/toolchain/win/"), os.ModePerm); err != nil {
 		return errors.Wrap(err, "MkdirAll")
 	}
@@ -283,7 +283,7 @@ print('vs_version = ""')
 print('wdk_dir = ""')
 print('runtime_dirs = ""')
 `
-	fmt.Fprintf(os.Stderr, "WriteFile: %s\n", filepath.Join(workDir, "build/vs_toolchain.py"))
+	_, _ = fmt.Fprintf(os.Stderr, "WriteFile: %s\n", filepath.Join(workDir, "build/vs_toolchain.py"))
 	if err := os.WriteFile(filepath.Join(workDir, "build/vs_toolchain.py"), []byte(vsToolchainPy), 0o655); err != nil {
 		return errors.Wrap(err, "WriteFile")
 	}
@@ -295,7 +295,7 @@ print('libpath_lldlink_flags = ""')
 print('vc_lib_path = "tmp"')
 print('vc_lib_um_path = "tmp"')
 `
-	fmt.Fprintf(os.Stderr, "WriteFile: %s\n", path.Join(workDir, "build/toolchain/win/setup_toolchain.py"))
+	_, _ = fmt.Fprintf(os.Stderr, "WriteFile: %s\n", path.Join(workDir, "build/toolchain/win/setup_toolchain.py"))
 	if err := os.WriteFile(filepath.Join(workDir, "build/toolchain/win/setup_toolchain.py"), []byte(setupToolchainPy), 0o655); err != nil {
 		return errors.Wrap(err, "WriteFile")
 	}

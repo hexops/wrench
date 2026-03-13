@@ -66,7 +66,7 @@ func NewCmd(w io.Writer, name string, args []string, opt ...CmdOption) *exec.Cmd
 			prefix = fmt.Sprintf("%s %s ", prefix, envKeyValue)
 		}
 	}
-	fmt.Fprintf(w, "$ %s%s\n", prefix, strings.Join(append([]string{name}, args...), " "))
+	_, _ = fmt.Fprintf(w, "$ %s%s\n", prefix, strings.Join(append([]string{name}, args...), " "))
 	return cmd
 }
 
@@ -116,7 +116,7 @@ type Cmd func(w io.Writer) error
 func (cmd Cmd) IgnoreError() Cmd {
 	return func(w io.Writer) error {
 		if err := cmd(w); err != nil {
-			fmt.Fprintf(w, "ignoring error: %s\n", err)
+			_, _ = fmt.Fprintf(w, "ignoring error: %s\n", err)
 		}
 		return nil
 	}
@@ -135,7 +135,7 @@ func Sequence(cmds ...Cmd) Cmd {
 
 func CopyFile(src, dst string) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "cp %s %s\n", src, dst)
+		_, _ = fmt.Fprintf(w, "cp %s %s\n", src, dst)
 
 		fi, err := os.Stat(src)
 		if err != nil {
@@ -152,7 +152,7 @@ func CopyFile(src, dst string) Cmd {
 
 func DownloadFile(url string, filepath string) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "DownloadFile: %s > %s\n", url, filepath)
+		_, _ = fmt.Fprintf(w, "DownloadFile: %s > %s\n", url, filepath)
 
 		resp, err := http.Get(url)
 		if err != nil {
@@ -179,7 +179,7 @@ func DownloadFile(url string, filepath string) Cmd {
 
 func ExtractArchive(archiveFilePath, dst string, stripPathComponents int) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
+		_, _ = fmt.Fprintf(w, "ExtractArchive: %s > %s\n", archiveFilePath, dst)
 		ctx := context.Background()
 		handler := func(ctx context.Context, fi archiver.File) error {
 			dstPath := filepath.Join(dst, stripComponents(fi.NameInArchive, stripPathComponents))
@@ -257,7 +257,7 @@ func stripComponents(path string, n int) string {
 
 func AppendToFile(file, format string, v ...any) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "AppendToFile: %s >> %s\n", fmt.Sprintf(format, v...), file)
+		_, _ = fmt.Fprintf(w, "AppendToFile: %s >> %s\n", fmt.Sprintf(format, v...), file)
 		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return errors.Wrap(err, "OpenFile")
@@ -463,7 +463,7 @@ func cleanGitURL(remoteURL string) string {
 
 func FindAndReplace(dir string, globs []string, replacer func(name string, contents []byte) ([]byte, error)) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "FindAndReplace: dir=%s globs=%s\n", dir, globs)
+		_, _ = fmt.Fprintf(w, "FindAndReplace: dir=%s globs=%s\n", dir, globs)
 		for _, glob := range globs {
 			fsys := os.DirFS(dir)
 			matches, err := doublestar.Glob(fsys, glob)
@@ -495,7 +495,7 @@ func FindAndReplace(dir string, globs []string, replacer func(name string, conte
 
 func FindAndDelete(dir string, globs []string, delete func(name string) (bool, error)) Cmd {
 	return func(w io.Writer) error {
-		fmt.Fprintf(w, "FindAndDelete: dir=%s globs=%s\n", dir, globs)
+		_, _ = fmt.Fprintf(w, "FindAndDelete: dir=%s globs=%s\n", dir, globs)
 		for _, glob := range globs {
 			fsys := os.DirFS(dir)
 			matches, err := doublestar.Glob(fsys, glob)
@@ -509,7 +509,7 @@ func FindAndDelete(dir string, globs []string, delete func(name string) (bool, e
 					return err
 				}
 				if shouldDelete {
-					fmt.Fprintf(w, "$ rm -rf %s\n", match)
+					_, _ = fmt.Fprintf(w, "$ rm -rf %s\n", match)
 					if err := os.RemoveAll(match); err != nil {
 						return errors.Wrap(err, "RemoveAll")
 					}

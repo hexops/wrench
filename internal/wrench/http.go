@@ -39,7 +39,7 @@ func (b *Bot) httpStart() error {
 			err := handle(w, r)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "error: %s", err.Error())
+				_, _ = fmt.Fprintf(w, "error: %s", err.Error())
 				b.logf("http: %s: %v", prefix, err)
 			}
 		})
@@ -112,40 +112,40 @@ func (b *Bot) httpMuxDefault(handler func(prefix string, handle handlerFunc) htt
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 		logo := "https://raw.githubusercontent.com/hexops/media/b71e82ae9ea20c22a2eb3ab95d8ba48684635620/mach/wrench_rocket.svg"
-		fmt.Fprintf(w, `<div style="padding: 1rem;">`)
-		fmt.Fprintf(w, `<h1>[bot] wrench: let's fix this!</h1>`)
-		fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 50rem;">`)
+		_, _ = fmt.Fprintf(w, `<div style="padding: 1rem;">`)
+		_, _ = fmt.Fprintf(w, `<h1>[bot] wrench: let's fix this!</h1>`)
+		_, _ = fmt.Fprintf(w, `<div style="display: flex; align-items: center; width: 50rem;">`)
 		{
-			fmt.Fprintf(w, `<img width="250px" align="left" src="%s">`, logo)
-			fmt.Fprintf(w, `<div style="padding-left: 2rem;"><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain our projects. View my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
+			_, _ = fmt.Fprintf(w, `<img width="250px" align="left" src="%s">`, logo)
+			_, _ = fmt.Fprintf(w, `<div style="padding-left: 2rem;"><em><strong>Wrench</strong> here!</em> I'm the mascot of <a href="https://machengine.org">Mach engine</a>, and I help automate and maintain our projects. View my code <a href="https://github.com/hexops/wrench">on GitHub</a>!</div>`)
 		}
-		fmt.Fprintf(w, `</div>`)
+		_, _ = fmt.Fprintf(w, `</div>`)
 
-		fmt.Fprintf(w, `<h1>Where you can find me</h1>`)
-		fmt.Fprintf(w, `<ul>`)
+		_, _ = fmt.Fprintf(w, `<h1>Where you can find me</h1>`)
+		_, _ = fmt.Fprintf(w, `<ul>`)
 		{
-			fmt.Fprintf(w, `<li>On this website</li>`)
-			fmt.Fprintf(w, `<li>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a></li>`)
-			fmt.Fprintf(w, `<li>Making contributions <a href="https://github.com/wrench-bot">on GitHub</a> such as <a href="https://github.com/hexops/mach/pull/760">updating the version of Zig we use</a>, <a href="https://github.com/hexops/mach/pull/697">keeping our version of Dawn/WebGPU up-to-date</a>, and more.</li>`)
+			_, _ = fmt.Fprintf(w, `<li>On this website</li>`)
+			_, _ = fmt.Fprintf(w, `<li>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a></li>`)
+			_, _ = fmt.Fprintf(w, `<li>Making contributions <a href="https://github.com/wrench-bot">on GitHub</a> such as <a href="https://github.com/hexops/mach/pull/760">updating the version of Zig we use</a>, <a href="https://github.com/hexops/mach/pull/697">keeping our version of Dawn/WebGPU up-to-date</a>, and more.</li>`)
 		}
-		fmt.Fprintf(w, `</ul>`)
+		_, _ = fmt.Fprintf(w, `</ul>`)
 
-		fmt.Fprintf(w, `<h1>Explore</h1>`)
-		fmt.Fprintf(w, `<ul>`)
+		_, _ = fmt.Fprintf(w, `<h1>Explore</h1>`)
+		_, _ = fmt.Fprintf(w, `<ul>`)
 		{
-			fmt.Fprintf(w, `<li><a href="%s/projects">Projects overview</a></li>`, b.Config.ExternalURL)
-			fmt.Fprintf(w, `<li><a href="%s/pull-requests">Pull requests</a></li>`, b.Config.ExternalURL)
-			fmt.Fprintf(w, `<li><a href="%s/runners">Runners & jobs</a></li>`, b.Config.ExternalURL)
-			fmt.Fprintf(w, `<li><a href="%s/logs">Job logs</a></li>`, b.Config.ExternalURL)
-			fmt.Fprintf(w, `<li><a href="%s/stats">Stats</a></li>`, b.Config.ExternalURL)
-			fmt.Fprintf(w, `<li><a href="%s/rebuild">Trigger a rebuild of wrench.machengine.org (admin-only)</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/projects">Projects overview</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/pull-requests">Pull requests</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/runners">Runners & jobs</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/logs">Job logs</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/stats">Stats</a></li>`, b.Config.ExternalURL)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/rebuild">Trigger a rebuild of wrench.machengine.org (admin-only)</a></li>`, b.Config.ExternalURL)
 		}
-		fmt.Fprintf(w, `</ul>`)
+		_, _ = fmt.Fprintf(w, `</ul>`)
 
-		fmt.Fprintf(w, `<h2>Discord integration</h2>`)
-		fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <code>#wrench</code> to see what I'm up to!</p>`)
-		fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
-		fmt.Fprintf(w, `</div>`)
+		_, _ = fmt.Fprintf(w, `<h2>Discord integration</h2>`)
+		_, _ = fmt.Fprintf(w, `<p>In the <a href="https://discord.gg/XNG3NZgCqp">Mach discord</a> join <code>#wrench</code> to see what I'm up to!</p>`)
+		_, _ = fmt.Fprintf(w, `<p>Type <code>!wrench</code> in the <code>#spam</code> channel or when direct messaging me for help.</p>`)
+		_, _ = fmt.Fprintf(w, `</div>`)
 	})
 	mux.Handle("/webhook/github", handler("webhook", b.httpServeWebHookGitHub))
 	mux.Handle("/rebuild", handler("rebuild", b.httpBasicAuthMiddleware(b.httpServeRebuild)))
@@ -271,7 +271,7 @@ func (b *Bot) discordGitHubPushEvent(ev *github.PushEvent) error {
 			}
 			out.Reset()
 		}
-		fmt.Fprintf(&out, "%s", add)
+		_, _ = fmt.Fprintf(&out, "%s", add)
 	}
 	if numCommits == 0 {
 		return nil
@@ -359,11 +359,11 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 			return errors.Wrap(err, "LogIDs")
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, `<ul>`)
+		_, _ = fmt.Fprintf(w, `<ul>`)
 		for _, id := range logIDs {
-			fmt.Fprintf(w, `<li><a href="%s/logs/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/logs/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
 		}
-		fmt.Fprintf(w, `</ul>`)
+		_, _ = fmt.Fprintf(w, `</ul>`)
 		return nil
 	}
 
@@ -373,7 +373,7 @@ func (b *Bot) httpServeLogs(w http.ResponseWriter, r *http.Request) error {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	for _, log := range logs {
-		fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
+		_, _ = fmt.Fprintf(w, "%v %v\n", log.Time.UTC().Format(time.RFC3339), log.Message)
 	}
 	return nil
 }
@@ -386,11 +386,11 @@ func (b *Bot) httpServeStats(w http.ResponseWriter, r *http.Request) error {
 			return errors.Wrap(err, "StatIDs")
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, `<ul>`)
+		_, _ = fmt.Fprintf(w, `<ul>`)
 		for _, id := range statIDs {
-			fmt.Fprintf(w, `<li><a href="%s/stats/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
+			_, _ = fmt.Fprintf(w, `<li><a href="%s/stats/%s">%s</a></li>`, b.Config.ExternalURL, id, id)
 		}
-		fmt.Fprintf(w, `</ul>`)
+		_, _ = fmt.Fprintf(w, `</ul>`)
 		return nil
 	}
 
@@ -606,8 +606,8 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, "<h2>Runner %s:%s</h2>", runner.ID, runner.Arch)
-		fmt.Fprintf(w, `<ul>`)
+		_, _ = fmt.Fprintf(w, "<h2>Runner %s:%s</h2>", runner.ID, runner.Arch)
+		_, _ = fmt.Fprintf(w, `<ul>`)
 		for _, pair := range [][2]string{
 			{"Registered", runner.RegisteredAt.UTC().Format(time.RFC3339)},
 			{"Last seen", humanizeTimeRecent(runner.LastSeenAt)},
@@ -616,9 +616,9 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 			{"Wrench date", runner.Env.WrenchDate},
 			{"Wrench Go version", runner.Env.WrenchGoVersion},
 		} {
-			fmt.Fprintf(w, `<li><strong>%s</strong>: %s</li>`, pair[0], pair[1])
+			_, _ = fmt.Fprintf(w, `<li><strong>%s</strong>: %s</li>`, pair[0], pair[1])
 		}
-		fmt.Fprintf(w, `</ul>`)
+		_, _ = fmt.Fprintf(w, `</ul>`)
 		return nil
 	}
 
@@ -645,7 +645,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, "<h2>Runners</h2>")
+	_, _ = fmt.Fprintf(w, "<h2>Runners</h2>")
 	{
 		var values [][]string
 		for _, runner := range runners {
@@ -667,7 +667,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		table(w, []string{"id", "arch", "registered", "last seen", "version", "built"}, values)
 	}
 
-	fmt.Fprintf(w, "<h2>Jobs</h2>")
+	_, _ = fmt.Fprintf(w, "<h2>Jobs</h2>")
 	{
 		var values [][]string
 		for _, job := range jobs {
@@ -685,7 +685,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 		tableStyle(w)
 		table(w, []string{"id", "state", "title", "target runner ID", "target runner arch", "scheduled start", "last updated", "created"}, values)
 	}
-	fmt.Fprintf(w, "<h2>Finished jobs</h2>")
+	_, _ = fmt.Fprintf(w, "<h2>Finished jobs</h2>")
 	{
 		var values [][]string
 		for _, job := range finishedJobs {
@@ -708,7 +708,7 @@ func (b *Bot) httpServeRunners(w http.ResponseWriter, r *http.Request) error {
 
 func (b *Bot) httpServePullRequests(w http.ResponseWriter, r *http.Request) error {
 	prList := func(label, state string, draft, filterDraft bool) error {
-		fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
+		_, _ = fmt.Fprintf(w, "<h2>Pull requests (%s)</h2>", label)
 		var values [][]string
 		renderPRs := func(wrench bool) error {
 			for _, repo := range scripts.AllRepos {
@@ -782,7 +782,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, `
+	_, _ = fmt.Fprintf(w, `
 <style>
 .row {
 	display: flex;
@@ -816,12 +816,12 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 	detail := r.URL.Query().Has("detail")
 	if !detail {
-		fmt.Fprintf(w, `<div class="row">`)
+		_, _ = fmt.Fprintf(w, `<div class="row">`)
 	}
 	for _, category := range scripts.AllReposByCategory {
 		if detail {
-			fmt.Fprintf(w, `<div class="row"><span>%s</span></div>`, category.Name)
-			fmt.Fprintf(w, `<div class="row">`)
+			_, _ = fmt.Fprintf(w, `<div class="row"><span>%s</span></div>`, category.Name)
+			_, _ = fmt.Fprintf(w, `<div class="row">`)
 		}
 		for _, repo := range category.Repos {
 			repoPair := repo.Name
@@ -889,7 +889,7 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 			if detail {
 				displayHidden = ""
 			}
-			fmt.Fprintf(w, `<div style="background: %s;">
+			_, _ = fmt.Fprintf(w, `<div style="background: %s;">
 	<span style="font-size: `+fontSize+`;">%s %s</span>
 	<ul style="%s">
 		<li>%s open</li>
@@ -908,11 +908,11 @@ func (b *Bot) httpServeProjects(w http.ResponseWriter, r *http.Request) error {
 
 		}
 		if detail {
-			fmt.Fprintf(w, `</div>`)
+			_, _ = fmt.Fprintf(w, `</div>`)
 		}
 	}
 	if !detail {
-		fmt.Fprintf(w, `</div>`)
+		_, _ = fmt.Fprintf(w, `</div>`)
 	}
 	return nil
 }
@@ -932,7 +932,7 @@ func humanizeTimeRecent(t time.Time) string {
 }
 
 func tableStyle(w io.Writer) {
-	fmt.Fprintf(w, `
+	_, _ = fmt.Fprintf(w, `
 <style>
 table {
     border: solid 1px #DDEEEE;
@@ -953,21 +953,21 @@ table tbody td {
 }
 
 func table(w io.Writer, rows []string, values [][]string) {
-	fmt.Fprintf(w, `<table>`)
-	fmt.Fprintf(w, `<thead><tr>`)
+	_, _ = fmt.Fprintf(w, `<table>`)
+	_, _ = fmt.Fprintf(w, `<thead><tr>`)
 	for _, label := range rows {
-		fmt.Fprintf(w, "<th>%s</th>", label)
+		_, _ = fmt.Fprintf(w, "<th>%s</th>", label)
 	}
-	fmt.Fprintf(w, `</tr></thead>`)
-	fmt.Fprintf(w, `<tbody>`)
+	_, _ = fmt.Fprintf(w, `</tr></thead>`)
+	_, _ = fmt.Fprintf(w, `<tbody>`)
 	for _, row := range values {
-		fmt.Fprintf(w, `<tr>`)
+		_, _ = fmt.Fprintf(w, `<tr>`)
 		for _, value := range row {
-			fmt.Fprintf(w, `<td>%s</td>`, value)
+			_, _ = fmt.Fprintf(w, `<td>%s</td>`, value)
 		}
-		fmt.Fprintf(w, `</tr>`)
+		_, _ = fmt.Fprintf(w, `</tr>`)
 	}
-	fmt.Fprintf(w, `</tbody></table>`)
+	_, _ = fmt.Fprintf(w, `</tbody></table>`)
 }
 
 func (b *Bot) httpBasicAuthMiddleware(handler handlerFunc) handlerFunc {

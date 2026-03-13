@@ -139,14 +139,14 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 		Payload: startJob.Payload,
 		State:   api.JobStateRunning,
 	}
-	fmt.Fprintf(&activeLog, "running job: id=%v title=%v\n", active.ID, active.Title)
+	_, _ = fmt.Fprintf(&activeLog, "running job: id=%v title=%v\n", active.ID, active.Title)
 	activeMu.Unlock()
 
 	go func() {
 		if active.Payload.Ping {
 			activeMu.Lock()
 			active.State = api.JobStateSuccess
-			fmt.Fprintf(&activeLog, "PING SUCCESS (job id=%v)\n", active.ID)
+			_, _ = fmt.Fprintf(&activeLog, "PING SUCCESS (job id=%v)\n", active.ID)
 			activeMu.Unlock()
 			return
 		}
@@ -193,21 +193,21 @@ func (b *Bot) runnerStartJob(ctx context.Context, startJob *api.RunnerJobStart, 
 			} else {
 				activeScriptResponse = response
 				if len(activeScriptResponse.PushedRepos) > 0 {
-					fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activeScriptResponse.PushedRepos)
+					_, _ = fmt.Fprintf(&activeLog, "job pushed to repos: %v\n", activeScriptResponse.PushedRepos)
 				}
 				if len(activeScriptResponse.UpsertIssues) > 0 {
-					fmt.Fprintf(&activeLog, "job upserted issues to repos: %v\n", activeScriptResponse.UpsertIssues)
+					_, _ = fmt.Fprintf(&activeLog, "job upserted issues to repos: %v\n", activeScriptResponse.UpsertIssues)
 				}
 			}
 		}
 
 		if err != nil {
 			active.State = api.JobStateError
-			fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
+			_, _ = fmt.Fprintf(&activeLog, "ERROR: %v (job id=%v)\n", err, active.ID)
 			return
 		}
 		active.State = api.JobStateSuccess
-		fmt.Fprintf(&activeLog, "SUCCESS (job id=%v)\n", active.ID)
+		_, _ = fmt.Fprintf(&activeLog, "SUCCESS (job id=%v)\n", active.ID)
 	}()
 
 	go func() {

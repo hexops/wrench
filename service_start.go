@@ -39,7 +39,7 @@ Examples:
 		Aliases: []string{},
 		Handler: handler,
 		UsageFunc: func() {
-			fmt.Fprintf(flag.CommandLine.Output(), "Usage of 'wrench service %s':\n", flagSet.Name())
+			_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of 'wrench service %s':\n", flagSet.Name())
 			flagSet.PrintDefaults()
 			fmt.Printf("%s", usage)
 		},

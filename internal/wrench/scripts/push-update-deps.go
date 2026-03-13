@@ -15,7 +15,7 @@ func init() {
 		ExecuteResponse: func(args ...string) (*api.ScriptResponse, error) {
 			pushed := []string{}
 			workDir := "push-update-deps-work"
-			defer os.RemoveAll(workDir)
+			defer os.RemoveAll(workDir) //nolint:errcheck
 			for _, repo := range AllRepos {
 				if repo.CI != Zig {
 					continue

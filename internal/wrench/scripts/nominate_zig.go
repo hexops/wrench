@@ -115,8 +115,8 @@ func init() {
 					return fmt.Errorf("index.json missing version entry: %q", targetVersionString)
 				}
 				index.Set(tagVersionString, targetVersion)
-				index.MoveToFront(tagVersionString)
-				index.MoveToFront("mach-latest")
+				_ = index.MoveToFront(tagVersionString)
+				_ = index.MoveToFront("mach-latest")
 			}
 
 			// Save our updated index.json file
@@ -136,7 +136,7 @@ func init() {
 					return errors.Wrap(err, "MkdirAll")
 				}
 
-				fmt.Fprintln(os.Stderr, "Fetching nominated Zig version for every OS/Arch, so pkg.machengine.org is updated")
+				_, _ = fmt.Fprintln(os.Stderr, "Fetching nominated Zig version for every OS/Arch, so pkg.machengine.org is updated")
 				for _, url := range fetches {
 					fileName := base64.StdEncoding.EncodeToString([]byte(url))
 					err = DownloadFile(url, filepath.Join(tmpDir, fileName))(os.Stderr)

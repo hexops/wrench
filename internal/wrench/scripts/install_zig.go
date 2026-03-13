@@ -28,7 +28,7 @@ func init() {
 
 			zigVersion, err := Output(os.Stderr, "zig version")
 			if err == nil && zigVersion == wantZigVersion && !force {
-				fmt.Fprintf(os.Stderr, "%s already installed", wantZigVersion)
+				_, _ = fmt.Fprintf(os.Stderr, "%s already installed", wantZigVersion)
 				return nil
 			}
 
@@ -63,9 +63,9 @@ func init() {
 				return errors.Wrap(err, "Abs")
 			}
 			if pathToZig != zigBinaryLocation {
-				fmt.Fprintln(os.Stderr, "warning: existing Zig installation may conflict:", pathToZig)
+				_, _ = fmt.Fprintln(os.Stderr, "warning: existing Zig installation may conflict:", pathToZig)
 			}
-			fmt.Fprintln(os.Stderr, "installing to:", zigBinaryLocation)
+			_, _ = fmt.Fprintln(os.Stderr, "installing to:", zigBinaryLocation)
 
 			// Update system-wide env vars.
 			err = EnsureOnPathPermanent(filepath.Dir(zigBinaryLocation))

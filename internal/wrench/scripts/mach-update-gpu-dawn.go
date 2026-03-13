@@ -78,7 +78,7 @@ func init() {
 					unixStampStr := strings.Split(strings.TrimPrefix(branch, "origin/generated-"), ".")[1]
 					unixStamp, err := strconv.ParseInt(unixStampStr, 10, 64)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "ignoring branch (could not parse unix timestamp at end): %s\n", branch)
+						_, _ = fmt.Fprintf(os.Stderr, "ignoring branch (could not parse unix timestamp at end): %s\n", branch)
 						continue
 					}
 
@@ -86,7 +86,7 @@ func init() {
 				} else {
 					t, err = time.Parse("2006-01-02", strings.TrimPrefix(branch, "origin/generated-"))
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "ignoring branch (could not parse date): %s\n", branch)
+						_, _ = fmt.Fprintf(os.Stderr, "ignoring branch (could not parse date): %s\n", branch)
 						continue
 					}
 				}

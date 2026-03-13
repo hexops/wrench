@@ -61,8 +61,8 @@ func (b *Bot) idLogf(id, format string, v ...any) {
 	msg := fmt.Sprintf(format, v...)
 	timeNow := time.Now().Format(time.RFC3339)
 	for _, line := range strings.Split(msg, "\n") {
-		fmt.Fprintf(b.logFile, "%s %s: %s\n", timeNow, id, line)
-		fmt.Fprintf(os.Stderr, "%s %s: %s\n", timeNow, id, line)
+		_, _ = fmt.Fprintf(b.logFile, "%s %s: %s\n", timeNow, id, line)
+		_, _ = fmt.Fprintf(os.Stderr, "%s %s: %s\n", timeNow, id, line)
 	}
 	// May be called before DB is initialized.
 	if b.store != nil {

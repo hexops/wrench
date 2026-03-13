@@ -29,7 +29,7 @@ func (b *Bot) registerCommands() {
 			if strings.HasPrefix(id, "job-") {
 				continue
 			}
-			fmt.Fprintf(&buf, "* %s: %s/logs/%s\n", id, b.Config.ExternalURL, id)
+			_, _ = fmt.Fprintf(&buf, "* %s: %s/logs/%s\n", id, b.Config.ExternalURL, id)
 		}
 		return &discordgo.MessageEmbed{
 			Title:       "Logs",
@@ -50,7 +50,7 @@ func (b *Bot) registerCommands() {
 
 		var buf bytes.Buffer
 		for _, id := range statIDs {
-			fmt.Fprintf(&buf, "* %s: %s/stats/%s\n", id, b.Config.ExternalURL, id)
+			_, _ = fmt.Fprintf(&buf, "* %s: %s/stats/%s\n", id, b.Config.ExternalURL, id)
 		}
 		return &discordgo.MessageEmbed{
 			Title:       "Stats",
@@ -71,10 +71,10 @@ func (b *Bot) registerCommands() {
 
 		var buf bytes.Buffer
 		if len(runners) == 0 {
-			fmt.Fprintf(&buf, "no runners found\n")
+			_, _ = fmt.Fprintf(&buf, "no runners found\n")
 		}
 		for _, runner := range runners {
-			fmt.Fprintf(&buf, "* **'%v' (%v)** (last seen %v ago)\n", runner.ID, runner.Arch, time.Since(runner.LastSeenAt).Round(time.Second))
+			_, _ = fmt.Fprintf(&buf, "* **'%v' (%v)** (last seen %v ago)\n", runner.ID, runner.Arch, time.Since(runner.LastSeenAt).Round(time.Second))
 		}
 		return &discordgo.MessageEmbed{
 			Title:       "Runners",
@@ -110,18 +110,18 @@ func (b *Bot) registerCommands() {
 				continue
 			}
 
-			fmt.Fprintf(&buf, "**%v**:\n", repoPair)
+			_, _ = fmt.Fprintf(&buf, "**%v**:\n", repoPair)
 			for _, pr := range pullRequests {
 				if *pr.State != "open" {
 					continue
 				}
 				count++
-				fmt.Fprintf(&buf, "* ['%v'](%s) (by _%v_)\n", *pr.Title, *pr.HTMLURL, *pr.User.Login)
+				_, _ = fmt.Fprintf(&buf, "* ['%v'](%s) (by _%v_)\n", *pr.Title, *pr.HTMLURL, *pr.User.Login)
 			}
-			fmt.Fprintf(&buf, "\n")
+			_, _ = fmt.Fprintf(&buf, "\n")
 		}
 		if count == 0 {
-			fmt.Fprintf(&buf, "no pull requests found\n")
+			_, _ = fmt.Fprintf(&buf, "no pull requests found\n")
 		}
 
 		return &discordgo.MessageEmbed{
@@ -288,10 +288,10 @@ func (b *Bot) registerCommands() {
 	b.discordCommandsEmbedSecure["schedule-list"] = func(args ...string) *discordgo.MessageEmbed {
 		var buf bytes.Buffer
 		for _, scheduled := range b.schedule {
-			fmt.Fprintf(&buf, "* '%s' - %s\n", scheduled.Job.ID, scheduled.Job.Title)
+			_, _ = fmt.Fprintf(&buf, "* '%s' - %s\n", scheduled.Job.ID, scheduled.Job.Title)
 		}
 		if len(b.schedule) == 0 {
-			fmt.Fprintf(&buf, "no scheduled jobs\n")
+			_, _ = fmt.Fprintf(&buf, "no scheduled jobs\n")
 		}
 		return &discordgo.MessageEmbed{
 			Title:       "Scheduled jobs",
@@ -381,7 +381,7 @@ func (b *Bot) registerCommands() {
 			}
 		}
 		var out bytes.Buffer
-		fmt.Fprintf(&out, "Jobs created:\n")
+		_, _ = fmt.Fprintf(&out, "Jobs created:\n")
 		for _, runner := range runners {
 			jobTitle := fmt.Sprintf("script %s %s", commandName, commandArgs)
 			job, err := b.store.NewRunnerJob(ctx, api.Job{
@@ -402,7 +402,7 @@ func (b *Bot) registerCommands() {
 			b.idLogf(job.LogID(), "job created: %v", jobTitle)
 			b.idLogf(job.LogID(), "running: wrench script %s %s", commandName, commandArgs)
 
-			fmt.Fprintf(&out, "* %v:%v [%v](%v/logs/job-%v)\n", runner.ID, runner.Arch, job, b.Config.ExternalURL, job)
+			_, _ = fmt.Fprintf(&out, "* %v:%v [%v](%v/logs/job-%v)\n", runner.ID, runner.Arch, job, b.Config.ExternalURL, job)
 			if err != nil {
 				return &discordgo.MessageEmbed{
 					Title:       "script - error",

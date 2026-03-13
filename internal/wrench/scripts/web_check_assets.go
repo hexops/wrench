@@ -61,7 +61,7 @@ func init() {
 			var buf bytes.Buffer
 			var issues []api.UpsertIssue
 			if len(notAllowed) > 0 {
-				fmt.Fprintf(&buf, "[Wrench](https://wrench.machengine.org) here! I found these URLs linking assets on %s that are not allowed:\n\n", website)
+				_, _ = fmt.Fprintf(&buf, "[Wrench](https://wrench.machengine.org) here! I found these URLs linking assets on %s that are not allowed:\n\n", website)
 				hosts := map[string]struct{}{}
 				for _, pair := range notAllowed {
 					onPageURL, urlString := pair[0], pair[1]
@@ -69,10 +69,10 @@ func init() {
 					host := u.Scheme + "://" + u.Host
 					if _, ok := hosts[host]; !ok {
 						hosts[host] = struct{}{}
-						fmt.Fprintf(&buf, "* `%s` (on [this page](%s))\n", host, onPageURL)
+						_, _ = fmt.Fprintf(&buf, "* `%s` (on [this page](%s))\n", host, onPageURL)
 					}
 				}
-				fmt.Fprintf(&buf, "\nThe allowlist can be found [here](https://github.com/hexops/wrench/blob/main/internal/wrench/scripts/web_check_assets.go).")
+				_, _ = fmt.Fprintf(&buf, "\nThe allowlist can be found [here](https://github.com/hexops/wrench/blob/main/internal/wrench/scripts/web_check_assets.go).")
 
 				issues = append(issues, api.UpsertIssue{
 					RepoPair: "hexops/mach",

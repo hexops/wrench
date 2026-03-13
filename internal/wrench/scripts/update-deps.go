@@ -23,7 +23,7 @@ func init() {
 			if err := os.MkdirAll(wrenchUpdateCache, os.ModePerm); err != nil {
 				return err
 			}
-			defer os.RemoveAll(wrenchUpdateCache)
+			defer os.RemoveAll(wrenchUpdateCache) //nolint:errcheck
 
 			fsys := os.DirFS(".")
 			matches, err := doublestar.Glob(fsys, "**/build.zig.zon")

@@ -37,7 +37,7 @@ func init() {
 
 				// Remove existing install dir if it exists.
 				_ = os.RemoveAll("github-runner")
-				fmt.Fprintln(os.Stderr, "installing to: github-runner/")
+				_, _ = fmt.Fprintln(os.Stderr, "installing to: github-runner/")
 
 				// Extract the archive
 				err = ExtractArchive(archiveFilePath, "github-runner", 0)(os.Stderr)

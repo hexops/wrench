@@ -29,14 +29,14 @@ func init() {
 			if err != nil {
 				return errors.Wrap(err, "Get")
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 
 			// Write gist to a tmp file
 			tmpFile, err := os.CreateTemp("", "wrench-test")
 			if err != nil {
 				return errors.Wrap(err, "TempFile")
 			}
-			defer os.Remove(tmpFile.Name())
+			defer os.Remove(tmpFile.Name()) //nolint:errcheck
 			if _, err := io.Copy(tmpFile, resp.Body); err != nil {
 				return errors.Wrap(err, "Copy")
 			}

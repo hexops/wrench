@@ -22,7 +22,7 @@ func init() {
 			force := len(args) == 1 && args[0] == "true"
 			goVersion, err := Output(os.Stderr, "go version")
 			if err == nil && strings.Contains(goVersion, wantGoVersion) && !force {
-				fmt.Fprintf(os.Stderr, "%s already installed", wantGoVersion)
+				_, _ = fmt.Fprintf(os.Stderr, "%s already installed", wantGoVersion)
 				return nil
 			}
 
@@ -55,9 +55,9 @@ func init() {
 				return errors.Wrap(err, "Abs")
 			}
 			if pathToGo != goBinaryLocation {
-				fmt.Fprintln(os.Stderr, "warning: existing Go installation may conflict:", pathToGo)
+				_, _ = fmt.Fprintln(os.Stderr, "warning: existing Go installation may conflict:", pathToGo)
 			}
-			fmt.Fprintln(os.Stderr, "installing to:", goBinaryLocation)
+			_, _ = fmt.Fprintln(os.Stderr, "installing to:", goBinaryLocation)
 
 			// Update system-wide env vars.
 			err = EnsureOnPathPermanent(filepath.Dir(goBinaryLocation))

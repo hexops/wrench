@@ -76,7 +76,7 @@ func (b *Bot) httpMuxPkgProxy(handler func(prefix string, handle handlerFunc) ht
 func (b *Bot) httpPkgZigRoot(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, `
+	_, _ = fmt.Fprintf(w, `
 <h1 style="margin-bottom: 0.25rem;">Zig download mirror</h1>
 
 <div>
@@ -98,7 +98,7 @@ func (b *Bot) httpPkgZigRoot(w http.ResponseWriter, r *http.Request) error {
 }
 func (b *Bot) httpPkgRoot(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "%s", `
+	_, _ = fmt.Fprintf(w, "%s", `
 <h1 style="margin-bottom: 0.25rem;">pkg.machengine.org</h1>
 <strong style="font-weight: 16px; margin-top: 0; margin-left: 1rem;"><em>The <a href="https://machengine.org">Mach</a> package download server</em></strong>
 
@@ -166,12 +166,12 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 		// ["" "zig" "0.13.0" "zig-0.13.0.tar.xz"]
 		if !semverRegexp.MatchString(split[2]) {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "invalid /zig/<version>/file path - version is not semver\n")
+			_, _ = fmt.Fprintf(w, "invalid /zig/<version>/file path - version is not semver\n")
 			return nil
 		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid path\n")
+		_, _ = fmt.Fprintf(w, "invalid path\n")
 		return nil
 	}
 
@@ -190,12 +190,12 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 	// zig-windows-aarch64-0.14.0-dev.2+0884a4341.zip
 	if fname != path.Clean(fname) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid path: %q != %q\n", fname, path.Clean(fname))
+		_, _ = fmt.Fprintf(w, "invalid path: %q != %q\n", fname, path.Clean(fname))
 		return nil
 	}
 	if path.Ext(fname) == "" {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid extension\n")
+		_, _ = fmt.Fprintf(w, "invalid extension\n")
 		return nil
 	}
 
@@ -203,7 +203,7 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 	version := zigVersionRegexp.FindString(fname)
 	if version == "" {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid Zig version: %q\n", version)
+		_, _ = fmt.Fprintf(w, "invalid Zig version: %q\n", version)
 		return nil
 	}
 
@@ -247,7 +247,7 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 			b.idLogf("zig", "error downloading file: %s", err)
 		}
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "unable to fetch\n")
+		_, _ = fmt.Fprintf(w, "unable to fetch\n")
 		return nil
 	}
 
@@ -423,13 +423,13 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 			cachedResponsesMu.Lock()
 			delete(cachedResponses, url)
 			cachedResponsesMu.Unlock()
-			fmt.Fprintf(logWriter, "deleted cached error for %s (cached error %s)\n", url, cachedError.err)
+			_, _ = fmt.Fprintf(logWriter, "deleted cached error for %s (cached error %s)\n", url, cachedError.err)
 		} else {
-			fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError.err)
+			_, _ = fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError.err)
 			return cachedError.err
 		}
 	}
-	fmt.Fprintf(logWriter, "fetch: %s > %s\n", url, filePath)
+	_, _ = fmt.Fprintf(logWriter, "fetch: %s > %s\n", url, filePath)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -437,7 +437,7 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	if err != nil {
 		return errors.Wrap(err, "Get")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		// 404 not found, 403 forbidden, etc.
@@ -489,23 +489,23 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	split := strings.Split(r.URL.Path, "/")
 	if len(split) != 3 {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid path\n")
+		_, _ = fmt.Fprintf(w, "invalid path\n")
 		return nil
 	}
 	project, fname := split[1], split[2]
 	if project != path.Clean(project) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal project name\n")
+		_, _ = fmt.Fprintf(w, "illegal project name\n")
 		return nil
 	}
 	if fname != path.Clean(fname) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal file name\n")
+		_, _ = fmt.Fprintf(w, "illegal file name\n")
 		return nil
 	}
 	if !strings.HasSuffix(fname, ".tar.gz") {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal file extension\n")
+		_, _ = fmt.Fprintf(w, "illegal file extension\n")
 		return nil
 	}
 	validate := strings.TrimSuffix(fname, ".tar.gz")
@@ -513,7 +513,7 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	isVersion := strings.HasPrefix(validate, "v") && semverRegexp.MatchString(strings.TrimPrefix(validate, "v"))
 	if !isCommitHash && !isVersion {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "filename must be <commit hash>.tar.gz or <semver>.tar.gz\n")
+		_, _ = fmt.Fprintf(w, "filename must be <commit hash>.tar.gz or <semver>.tar.gz\n")
 		return nil
 	}
 
@@ -549,7 +549,7 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 	if err := scripts.DownloadFile(url, cachePath)(logWriter); err != nil {
 		b.idLogf("pkg", "error downloading file: %s url=%s", err, url)
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "unable to fetch\n")
+		_, _ = fmt.Fprintf(w, "unable to fetch\n")
 		return nil
 	}
 	return serveCacheHit()
@@ -563,23 +563,23 @@ func (b *Bot) httpPkgArtifact(w http.ResponseWriter, r *http.Request) error {
 	split := strings.Split(r.URL.Path, "/")
 	if len(split) != 5 {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "invalid path, found %v elements expected 5\n", len(split))
+		_, _ = fmt.Fprintf(w, "invalid path, found %v elements expected 5\n", len(split))
 		return nil
 	}
 	project, version, fname := split[1], split[3], split[4]
 	if project != path.Clean(project) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal project name\n")
+		_, _ = fmt.Fprintf(w, "illegal project name\n")
 		return nil
 	}
 	if version != path.Clean(version) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal version\n")
+		_, _ = fmt.Fprintf(w, "illegal version\n")
 		return nil
 	}
 	if fname != path.Clean(fname) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "illegal file name\n")
+		_, _ = fmt.Fprintf(w, "illegal file name\n")
 		return nil
 	}
 
@@ -616,7 +616,7 @@ func (b *Bot) httpPkgArtifact(w http.ResponseWriter, r *http.Request) error {
 	if err := scripts.DownloadFile(url, cachePath)(logWriter); err != nil {
 		b.idLogf("artifact", "error downloading file: %s url=%s", err, url)
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "unable to fetch\n")
+		_, _ = fmt.Fprintf(w, "unable to fetch\n")
 		return nil
 	}
 	return serveCacheHit()
@@ -633,7 +633,7 @@ func (b *Bot) httpPkgZigIndex(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	fmt.Fprintf(w, "%s", cachedFile)
+	_, _ = fmt.Fprintf(w, "%s", cachedFile)
 	return nil
 }
 
@@ -667,7 +667,7 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "fetching upstream https://ziglang.org/download/index.json")
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 	latestIndex := orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
 	if err := json.NewDecoder(resp.Body).Decode(&latestIndex); err != nil {
 		return nil, errors.Wrap(err, "parsing upstream https://ziglang.org/builds/index.json")
@@ -683,7 +683,7 @@ func (b *Bot) httpPkgZigIndexCached() ([]byte, error) {
 		if err != nil {
 			b.logf("failed to fetch https://machengine.org/zig/index.json: %s (simply moving on with only the official index.json)", err)
 		} else {
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 			machIndex = orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
 			if err := json.NewDecoder(resp.Body).Decode(&machIndex); err != nil {
 				b.logf("parsing mach https://machengine.org/zig/index.json: %s (simply moving on with only the official index.json)", err)
