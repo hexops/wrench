@@ -28,7 +28,7 @@ func init() {
 
 			zigVersion, err := Output(os.Stderr, "zig version")
 			if err == nil && zigVersion == wantZigVersion && !force {
-				fmt.Fprintf(os.Stderr, wantZigVersion+" already installed")
+				fmt.Fprintf(os.Stderr, "%s already installed", wantZigVersion)
 				return nil
 			}
 

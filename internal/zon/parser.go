@@ -289,7 +289,7 @@ func (n *Node) write(w io.Writer, indent, prefix string) error {
 		}
 	}
 	if !n.Root {
-		fmt.Fprintf(w, prefix+"}")
+		fmt.Fprintf(w, "%s}", prefix)
 	}
 	return nil
 }

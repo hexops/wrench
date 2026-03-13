@@ -343,7 +343,7 @@ func (b *Bot) runRebuild() error {
 		scripts.Exec("wrench script rebuild-only", scripts.WorkDir(b.Config.WrenchDir)),
 	)(w)
 	if err != nil {
-		b.discord("Oops, looks like I can't build myself? Logs: " + b.Config.ExternalURL + "/logs/restart-self")
+		b.discord("Oops, looks like I can't build myself? Logs: %s/logs/restart-self", b.Config.ExternalURL)
 		b.idLogf(logID, "build failure!")
 		return nil
 	}
