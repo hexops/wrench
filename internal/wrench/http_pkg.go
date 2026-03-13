@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -353,9 +354,14 @@ func (b *Bot) httpPkgEnsureZigVersionCached(version, versionKind string) {
 	}
 }
 
+type cachedResponse struct {
+	err    error
+	expire int64 // seconds
+}
+
 var (
 	cachedResponsesMu sync.Mutex
-	cachedResponses   = map[string]error{}
+	cachedResponses   = map[string]cachedResponse{}
 	fsParallelismLock sync.Mutex
 )
 
@@ -413,8 +419,15 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	cachedError, isCachedError := cachedResponses[url]
 	cachedResponsesMu.Unlock()
 	if isCachedError {
-		fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError)
-		return cachedError
+		if cachedError.expire >= time.Now().Unix() {
+			cachedResponsesMu.Lock()
+			delete(cachedResponses, url)
+			cachedResponsesMu.Unlock()
+			fmt.Fprintf(logWriter, "deleted cached error for %s (cached error %s)\n", url, cachedError.err)
+		} else {
+			fmt.Fprintf(logWriter, "not fetching: %s (cached error %s)\n", url, cachedError.err)
+			return cachedError.err
+		}
 	}
 	fmt.Fprintf(logWriter, "fetch: %s > %s\n", url, filePath)
 
@@ -429,8 +442,31 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
 		// 404 not found, 403 forbidden, etc.
 		err := fmt.Errorf("bad response status: %s", resp.Status)
+
+		// no expiry by default, cache forever
+		var expiry = int64(0)
+
+		// file not available from upstream (but we expect it to be reachable)
+		// does not consider how to handle 429s from upstream
+		if (resp.StatusCode == 404 || resp.StatusCode >= 500) && versionKind == "stable" {
+			versionParts := strings.Split(version, ".")
+
+			// fail silently, this is probably fine
+			if i, e := strconv.ParseInt(versionParts[1], 10, 64); e == nil {
+				// versions below 0.5.0 are allowed to be unavailable
+				if !(versionParts[0] == "0" && i <= 5) {
+					// cache for 5 mins, we expect it to be reachable later
+					expiry = time.Now().Unix() + (60 * 5)
+					fmt.Fprintf(logWriter, "error cached with expiry: unexpected %v response for files with release %s", resp.StatusCode, version)
+				}
+			}
+		}
+
 		cachedResponsesMu.Lock()
-		cachedResponses[url] = err
+		cachedResponses[url] = cachedResponse{
+			err:    err,
+			expire: expiry,
+		}
 		cachedResponsesMu.Unlock()
 		return err
 	}
