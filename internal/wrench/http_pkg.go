@@ -443,22 +443,14 @@ func (b *Bot) httpPkgEnsureZigDownloadCached(version, versionKind, fname string)
 		// 404 not found, 403 forbidden, etc.
 		err := fmt.Errorf("bad response status: %s", resp.Status)
 
-		// no expiry by default, cache forever
-		var expiry = int64(0)
+		// We cache fetch errors for 120s, to avoid overwhelming the origin server.
+		var expiry = time.Now().Unix() + 120
 
-		// file not available from upstream (but we expect it to be reachable)
-		// does not consider how to handle 429s from upstream
-		if (resp.StatusCode == 404 || resp.StatusCode >= 500) && versionKind == "stable" {
-			versionParts := strings.Split(version, ".")
-
-			// fail silently, this is probably fine
-			if i, e := strconv.ParseInt(versionParts[1], 10, 64); e == nil {
-				// versions below 0.5.0 are allowed to be unavailable
-				if !(versionParts[0] == "0" && i <= 5) {
-					// cache for 5 mins, we expect it to be reachable later
-					expiry = time.Now().Unix() + (60 * 5)
-					fmt.Fprintf(logWriter, "error cached with expiry: unexpected %v response for files with release %s", resp.StatusCode, version)
-				}
+		// versions below 0.5.0 are allowed to be unavailable (cache error forever)
+		versionParts := strings.Split(version, ".")
+		if i, e := strconv.ParseInt(versionParts[1], 10, 64); e == nil {
+			if versionParts[0] == "0" && i < 5 {
+				expiry = 0
 			}
 		}
 
