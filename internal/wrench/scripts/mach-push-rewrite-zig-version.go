@@ -20,7 +20,7 @@ func init() {
 
 			pushed := []string{}
 			workDir := "zig-rewrite-work"
-			defer os.RemoveAll(workDir)
+			defer os.RemoveAll(workDir) //nolint:errcheck
 			for _, repo := range AllRepos {
 				if repo.Name != "hexops/machengine.org" && repo.CI != Zig {
 					continue

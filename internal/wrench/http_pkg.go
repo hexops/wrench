@@ -228,7 +228,7 @@ func (b *Bot) httpPkgZig(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //nolint:errcheck
 		fi, err := f.Stat()
 		if err != nil {
 			return err
@@ -524,7 +524,7 @@ func (b *Bot) httpPkgPkg(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //nolint:errcheck
 		fi, err := f.Stat()
 		if err != nil {
 			return err
@@ -590,7 +590,7 @@ func (b *Bot) httpPkgArtifact(w http.ResponseWriter, r *http.Request) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer f.Close() //nolint:errcheck
 		fi, err := f.Stat()
 		if err != nil {
 			return err

@@ -175,10 +175,11 @@ func Parse(contents string) (*Node, error) {
 			}
 			nextState = stateNextValue
 		case stateNextValue:
-			if c == ' ' || c == '\n' {
-			} else if c == '}' {
+			switch c {
+			case ' ', '\n':
+			case '}':
 				nextState = stateValueComplete
-			} else {
+			default:
 				if err := expect(',', nextState); err != nil {
 					return nil, err
 				}

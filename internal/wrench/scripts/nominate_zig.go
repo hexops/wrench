@@ -35,7 +35,7 @@ func init() {
 			if err != nil {
 				return errors.Wrap(err, "fetching upstream index.json")
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 			latestIndex := orderedmap.New[string, *orderedmap.OrderedMap[string, any]]()
 			if err := json.NewDecoder(resp.Body).Decode(&latestIndex); err != nil {
 				return errors.Wrap(err, "parsing upstream index.json")
@@ -84,7 +84,7 @@ func init() {
 					}
 				}
 				index.Set(newVersionString, newVersion)
-				index.MoveToFront(newVersionString)
+				_ = index.MoveToFront(newVersionString)
 			case "finalize":
 				// We are finalizing the nomination of a new version.
 				if len(args) != 2 || !strings.HasSuffix(args[1], "-wip") {
@@ -98,9 +98,9 @@ func init() {
 					return fmt.Errorf("index.json missing version entry: %q", wipVersionString)
 				}
 				index.Set(newVersionString, wipVersion)
-				index.MoveToFront(newVersionString)
+				_ = index.MoveToFront(newVersionString)
 				index.Set("mach-latest", wipVersion)
-				index.MoveToFront("mach-latest")
+				_ = index.MoveToFront("mach-latest")
 				index.Delete(wipVersionString)
 			case "tag":
 				// We are tagging a new version.

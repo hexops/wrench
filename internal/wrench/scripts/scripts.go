@@ -158,7 +158,7 @@ func DownloadFile(url string, filepath string) Cmd {
 		if err != nil {
 			return errors.Wrap(err, "Get")
 		}
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint:errcheck
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("bad response status: %s", resp.Status)
@@ -168,7 +168,7 @@ func DownloadFile(url string, filepath string) Cmd {
 		if err != nil {
 			return errors.Wrap(err, "Create")
 		}
-		defer out.Close()
+		defer out.Close() //nolint:errcheck
 		_, err = io.Copy(out, resp.Body)
 		if err != nil {
 			return errors.Wrap(err, "Copy")
@@ -192,7 +192,7 @@ func ExtractArchive(archiveFilePath, dst string, stripPathComponents int) Cmd {
 			if err != nil {
 				return errors.Wrap(err, "Open")
 			}
-			defer src.Close()
+			defer src.Close() //nolint:errcheck
 			dst, err := os.Create(dstPath)
 			if err != nil {
 				return errors.Wrap(err, "Create")
@@ -208,7 +208,7 @@ func ExtractArchive(archiveFilePath, dst string, stripPathComponents int) Cmd {
 		if err != nil {
 			return errors.Wrap(err, "Open(archiveFilePath)")
 		}
-		defer archiveFile.Close()
+		defer archiveFile.Close() //nolint:errcheck
 
 		type Format interface {
 			Extract(
@@ -262,7 +262,7 @@ func AppendToFile(file, format string, v ...any) Cmd {
 		if err != nil {
 			return errors.Wrap(err, "OpenFile")
 		}
-		defer f.Close()
+		defer f.Close() //nolint:errcheck
 		_, err = fmt.Fprintf(f, format, v...)
 		return errors.Wrap(err, "Fprintf")
 	}
@@ -278,7 +278,7 @@ func GitChangesExist(w io.Writer, dir string) (bool, error) {
 }
 
 func GitConfigureRepo(w io.Writer, dir string) error {
-	os.Setenv("GIT_TERMINAL_PROMPT", "0")
+	_ = os.Setenv("GIT_TERMINAL_PROMPT", "0")
 	err := ExecArgs(
 		"git",
 		[]string{"config", "user.name", os.Getenv("WRENCH_SECRET_GIT_CONFIG_USER_NAME")},
@@ -535,25 +535,25 @@ func moveCrossDevice(source, destination string) error {
 	}
 	dst, err := os.Create(destination)
 	if err != nil {
-		src.Close()
+		_ = src.Close()
 		return errors.Wrap(err, "Create(destination)")
 	}
 	_, err = io.Copy(dst, src)
-	src.Close()
-	dst.Close()
+	_ = src.Close()
+	_ = dst.Close()
 	if err != nil {
 		return errors.Wrap(err, "Copy")
 	}
 	fi, err := os.Stat(source)
 	if err != nil {
-		os.Remove(destination)
+		_ = os.Remove(destination)
 		return errors.Wrap(err, "Stat")
 	}
 	err = os.Chmod(destination, fi.Mode())
 	if err != nil {
-		os.Remove(destination)
+		_ = os.Remove(destination)
 		return errors.Wrap(err, "Stat")
 	}
-	os.Remove(source)
+	_ = os.Remove(source)
 	return nil
 }

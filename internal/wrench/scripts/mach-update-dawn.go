@@ -114,9 +114,9 @@ func init() {
 			}
 
 			// Wipe existing gclient download directories.
-			os.RemoveAll(filepath.Join(workDir, "build/"))
+			_ = os.RemoveAll(filepath.Join(workDir, "build/"))
 			if gclientClean {
-				os.RemoveAll(filepath.Join(workDir, "third_party/"))
+				_ = os.RemoveAll(filepath.Join(workDir, "third_party/"))
 				if err := GitCheckoutRestore(os.Stderr, workDir, "third_party/"); err != nil {
 					return errors.Wrap(err, "GitCheckoutRestore")
 				}

@@ -89,7 +89,7 @@ func QueryZigVersion(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	type Version struct {
 		Version string

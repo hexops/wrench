@@ -140,7 +140,7 @@ func (c *Config) WriteTo(file string) error {
 	if err != nil {
 		return errors.Wrap(err, "Create")
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	enc := toml.NewEncoder(f)
 	return errors.Wrap(enc.Encode(c), "Encode")
 }

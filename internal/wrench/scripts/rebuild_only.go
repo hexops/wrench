@@ -61,9 +61,9 @@ func init() {
 						// Rename wrench.exe -> wrench-old.exe
 						// Rename new build -> wrench.exe
 						exe2Path := strings.TrimSuffix(exePath, ".exe") + "-old.exe"
-						fmt.Fprintf(w, "$ rm -f %s\n", exe2Path)
+						_, _ = fmt.Fprintf(w, "$ rm -f %s\n", exe2Path)
 						_ = os.Remove(exe2Path)
-						fmt.Fprintf(w, "$ mv %s %s\n", exePath, exe2Path)
+						_, _ = fmt.Fprintf(w, "$ mv %s %s\n", exePath, exe2Path)
 						err = Move(exePath, exe2Path)
 						if err != nil {
 							return errors.Wrap(err, "Rename")
@@ -73,7 +73,7 @@ func init() {
 							return errors.Wrap(err, "Remove")
 						}
 					}
-					fmt.Fprintf(w, "$ mv %s %s\n", newBinary, exePath)
+					_, _ = fmt.Fprintf(w, "$ mv %s %s\n", newBinary, exePath)
 					err = Move("wrench/bin/wrench", exePath)
 					if err != nil {
 						return errors.Wrap(err, "Rename")
